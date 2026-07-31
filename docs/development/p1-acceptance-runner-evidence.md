@@ -2,14 +2,14 @@
 
 **Status:** `[x] COMPLETE`<br>
 **Evidence captured:** `2026-07-31T17:48:59-04:00`<br>
-**Formal acceptance result:** `NOT_RUN`<br>
+**Formal acceptance result:** `FAIL` (first `P1-AT-001` attempt)<br>
 **Decision basis:** ADR 0011, accepted catalog v2, and Acceptance Testing and Evidence v1<br>
 **Review decision:** Owner accepted synchronized set `2026-07-31T17:59:33-04:00`
 
 This record covers the accepted executable generation for the three Phase 1
 acceptance suites. It introduces no application runtime authority and makes no
-P1 exit claim. Formal execution follows the clean commit of this synchronized
-catalog, fixture, implementation-manifest, schema, and registry state.
+P1 exit claim. Its first formal execution is preserved as a harness failure;
+the separately accepted v4 remediation supersedes this runner for reruns.
 
 ## Accepted Set
 
@@ -97,12 +97,24 @@ assembly. Both simulated reports compile and validate under strict Draft
 | CLI preflight | Accepted v2 returns `SUITE_NOT_IMPLEMENTED`; accepted v3 refuses a dirty subject before execution |
 | `git diff --check` | PASS |
 
+## First Formal Attempt
+
+`P1-AT-001` against subject
+`eca82bf7abaf1eac3b6b38e10c9e0cf322da6823` returned FAIL at
+`BOUNDARY_PROBES`. Report
+`882bcae0-322e-4d65-84d8-7581d7bd15db` is preserved with SHA-256
+`c15a9de8e74f1f4da34f04ea4022bd4a5e0a517eb4b6262557477f98fd078597`.
+Cleanup and secret scan passed. Investigation found a runner scheduling race:
+the probe used `document.head` before document readiness. See
+`docs/development/p1-acceptance-runner-remediation-evidence.md` for the accepted
+v4 lineage and runner 0.1.1 correction.
+
 ## Remaining Gate
 
-1. The complete accepted state is committed so the formal clean-worktree precondition is true.
-2. All three P1 suites run against the package and write local ignored evidence.
+1. The complete accepted v4 remediation is committed so the formal clean-worktree precondition is true.
+2. All three P1 suites rerun against the package and write local ignored evidence.
 3. Reports, artifacts, cleanup, secret scan, subject digest, and package digest
    are independently reviewed before P1 exit is considered.
 
-Until those steps finish, formal evidence remains absent and every runtime
+Until those steps finish, formal PASS evidence remains absent and every runtime
 capability remains `UNVERIFIED`.

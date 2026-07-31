@@ -1,16 +1,17 @@
 # P1 Exit Engineering Evidence
 
 **Status:** `[~] IN_PROGRESS`<br>
-**Evidence captured:** `2026-07-31T17:12:46-04:00`<br>
+**Evidence captured:** `2026-07-31T18:12:47-04:00`<br>
 **Engineering audit result:** `PASS`<br>
-**Formal acceptance result:** `NOT_RUN`<br>
+**Formal acceptance result:** `FAIL` (first `P1-AT-001` attempt; harness fault)<br>
 **Decision basis:** Accepted P1 exit gate and Acceptance Testing and Evidence v1
 
 This record covers the packaged Phase 1 shell's recovery, malformed-request,
 navigation, renderer-compromise, and bounded-load behavior. It does not claim a
 formal acceptance-suite pass, activate a runtime capability, or authorize Phase
-2. The catalog conflict is resolved and the implementation generation is
-accepted; formal execution follows its clean baseline commit.
+2. The first formal attempt is preserved as a failure caused by a document
+readiness race in the harness. The isolated remediation is accepted; formal
+reruns follow its clean baseline commit.
 
 ## Implemented Controls
 
@@ -60,26 +61,30 @@ macOS version 15.0, but this host does not prove execution on that minimum.
 4. Packaging initially failed because the filesystem sandbox could not resolve
    GitHub while retrieving the exact pinned Electron archive. The unchanged
    package command passed with approved network access.
+5. Formal runner 0.1.0 began its first boundary probe before `document.head`
+   existed, producing `RUNTIME_EVALUATION_FAILED`. Runner 0.1.1 now waits for a
+   healthy document before probing and emits only safe stable exception codes.
 
-No unexpected behavior occurred in the final packaged runtime audits.
+No application fault or external effect was observed. The failed run completed
+cleanup and its evidence secret scan successfully.
 
 ## Formal Gate Progress
 
 ADR 0011, catalog v2, schemas v2, registry v3, and the nine-item relocation are
-Accepted. Catalog v3 is also Accepted as the first executable generation, marks
-only the three P1 suites `IMPLEMENTED`, and binds exact fixture, runner, schema,
-and dependency identities. Strict PASS and FAIL simulations validate.
+Accepted. Catalog v3 remains the immutable first executable generation and its
+first formal failure is retained. Catalog v4, runner 0.1.1, fixture manifests
+v2, evidence schema v4, remediation lineage, and registry v5 are Accepted.
 
 ## Current Gate Sequence
 
-The accepted digest-pinned state is committed to satisfy the clean-subject
-precondition, after which all three
-packaged suites run into the ignored managed evidence directory. Their reports
-and artifacts require independent review before any P1 exit decision.
+Commit the accepted v4 digest-pinned state to satisfy the clean-subject
+precondition, then rerun all three packaged suites into the ignored managed
+evidence directory. Their reports and artifacts require independent review
+before any P1 exit decision.
 
 ## Result
 
 The implemented Phase 1 shell satisfies its local engineering audit and retains
-zero execution authority. Formal `P1.EXIT` remains in progress pending a clean
-committed subject, three formal runs, and report review; every runtime capability
-remains `UNVERIFIED`.
+zero execution authority. Formal `P1.EXIT` remains in progress with one
+preserved harness failure, pending a clean remediated subject, three successful
+formal runs, and report review; every runtime capability remains `UNVERIFIED`.

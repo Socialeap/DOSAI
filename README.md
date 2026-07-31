@@ -14,10 +14,11 @@ Phase 0 governance is complete: ADRs 0001-0010, Baseline Contracts v1, and the
 P0.6 acceptance-test and evidence contracts are accepted. P1.1 through P1.5
 are accepted, and the packaged P1 engineering audit passes. ADR 0011, catalog
 v2, its machine-readable relocation, schemas v2, and registry v3 resolve the
-former phase conflict without weakening coverage. The governed runner, P1
-fixtures, catalog v3, report schema v3, and registry v4 are accepted as one
-synchronized implementation generation. Formal P1 evidence has not run. Every
-runtime capability remains `UNVERIFIED`.
+former phase conflict without weakening coverage. The first formal P1 run
+preserved a harness-readiness failure with successful cleanup and no secret
+exposure. The owner accepted the isolated runner 0.1.1 remediation, catalog v4,
+fixture manifests v2, report schema v4, and registry v5. Formal reruns are now
+pending; every runtime capability remains `UNVERIFIED`.
 
 **No production automation is authorized.** Current work permits documentation,
 local implementation, read-only investigation, local validation, and explicitly
@@ -35,6 +36,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P1 exit engineering evidence](docs/development/p1-exit-evidence.md)
 - [P1 catalog relocation evidence](docs/development/p1-catalog-relocation-evidence.md)
 - [P1 governed acceptance runner evidence](docs/development/p1-acceptance-runner-evidence.md)
+- [P1 acceptance runner remediation evidence](docs/development/p1-acceptance-runner-remediation-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)
@@ -43,12 +45,15 @@ access, deployment, and destructive mutations are out of scope.
 - [Schema registry v2](docs/architecture/schema-registry-v2.json)
 - [Schema registry v3](docs/architecture/schema-registry-v3.json)
 - [Schema registry v4](docs/architecture/schema-registry-v4.json)
+- [Schema registry v5](docs/architecture/schema-registry-v5.json)
 - [Acceptance-testing contract v1](docs/testing/acceptance-testing-v1.md)
 - [Acceptance-test catalog v1](docs/testing/acceptance-test-catalog-v1.json)
 - [Acceptance-test catalog v2](docs/testing/acceptance-test-catalog-v2.json)
 - [Acceptance-test catalog v3](docs/testing/acceptance-test-catalog-v3.json)
+- [Acceptance-test catalog v4](docs/testing/acceptance-test-catalog-v4.json)
 - [Catalog v1-to-v2 relocation plan](docs/testing/acceptance-catalog-v1-to-v2-relocation.md)
 - [Catalog v2-to-v3 implementation manifest](docs/testing/acceptance-catalog-v2-to-v3-implementation.json)
+- [Catalog v3-to-v4 remediation manifest](docs/testing/acceptance-catalog-v3-to-v4-remediation.json)
 - [Phase 0 discovery plan](docs/discovery/phase-0-plan.md)
 - [Capability matrix](docs/discovery/capability-matrix.md)
 - [Architecture decision records](docs/decisions/README.md)

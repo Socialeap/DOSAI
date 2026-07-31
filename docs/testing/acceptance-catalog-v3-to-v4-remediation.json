@@ -1,0 +1,55 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-runner-remediation:1",
+  "schema_version": 1,
+  "manifest_id": "1bcf21e0-f0f4-407e-95d5-f25a419edefb",
+  "created_at": "2026-07-31T22:06:47.000Z",
+  "data_class": "D5",
+  "status": "ACCEPTED",
+  "failed_attempt": {
+    "report_id": "882bcae0-322e-4d65-84d8-7581d7bd15db",
+    "run_id": "5d7a2e64-0233-421c-a5b9-fa865bb05a44",
+    "report_digest": { "algorithm": "SHA-256", "value": "c15a9de8e74f1f4da34f04ea4022bd4a5e0a517eb4b6262557477f98fd078597" },
+    "subject_commit": "eca82bf7abaf1eac3b6b38e10c9e0cf322da6823",
+    "suite_id": "P1-AT-001",
+    "result": "FAIL",
+    "failure_stage": "BOUNDARY_PROBES",
+    "failure_code": "RUNTIME_EVALUATION_FAILED",
+    "root_cause": "DOCUMENT_READINESS_RACE",
+    "cleanup_result": "PASS",
+    "secret_scan_result": "PASS"
+  },
+  "predecessor": {
+    "path": "docs/testing/acceptance-test-catalog-v3.json",
+    "version": 3,
+    "sha256": "cc5ab86d34be384d1a3150195dda247b8a1570f7bfd2e2dd5f3c961ed6fcedb1"
+  },
+  "successor": {
+    "path": "docs/testing/acceptance-test-catalog-v4.json",
+    "version": 4,
+    "sha256": "5339a14ddad7b79a127378b047e884b3ff3602659482b6029146bb1ab86b20ad"
+  },
+  "runner": {
+    "id": "dosai-acceptance",
+    "from_version": "0.1.0",
+    "to_version": "0.1.1",
+    "from_executable_digest": { "algorithm": "SHA-256", "value": "08403b8c6d18bac93cb506fa19187956ac59f3c3dfbc8885054a930e2e5eea4b" },
+    "to_executable_digest": { "algorithm": "SHA-256", "value": "19b9a97654a81dbb12ac0efeafe040b33e8628f51e1c76c97b200148ebd88886" },
+    "package_digest": { "algorithm": "SHA-256", "value": "527558a690a9ac530dbf2273a1c02105c15a26429b3bdc872263126259208c07" },
+    "dependency_lock_digest": { "algorithm": "SHA-256", "value": "cac0046b4187975b8e38329c501f40a1874beb493bf18d9217263d7215acaf79" },
+    "workspace_config_digest": { "algorithm": "SHA-256", "value": "f662a0607d5444cb923e1e7ccdcf51607113e6c1b2ca93a0f5d83ce7bd1befdc" },
+    "shell": false
+  },
+  "fixtures": [
+    { "suite_id": "P1-AT-001", "path": "tests/acceptance/manifests/p1-at-001-v2.json", "status": "ACCEPTED", "sha256": "d84b55ffab2898852e5294ac2c68a8d4aeeb12908c402b4c88d16d50cb7a6102" },
+    { "suite_id": "P1-AT-002", "path": "tests/acceptance/manifests/p1-at-002-v2.json", "status": "ACCEPTED", "sha256": "3eb872481850da329d980fa03c8ba596511793c530d98721bdb46aace7a642f7" },
+    { "suite_id": "P1-AT-003", "path": "tests/acceptance/manifests/p1-at-003-v2.json", "status": "ACCEPTED", "sha256": "ce55653c3238e40379798e011a92661eaa3d893e167afbd723cac990658aaac9" }
+  ],
+  "schemas": [
+    { "schema_id": "urn:dosai:schema:acceptance-test-catalog:4", "path": "docs/architecture/schemas/v4/acceptance-test-catalog.schema.json", "sha256": "1e1ade2918485bf62718c792c9eb8f8861e081837e4d394119a28ce192ab6cb3" },
+    { "schema_id": "urn:dosai:schema:evidence-report:4", "path": "docs/architecture/schemas/v4/evidence-report.schema.json", "sha256": "1bc6c00552fb3016586aa22c5a77ac5158a16fcfb3901dc10a5ded7b3ee0e6cf" },
+    { "schema_id": "urn:dosai:schema:acceptance-fixture-manifest:2", "path": "docs/architecture/schemas/v2/acceptance-fixture-manifest.schema.json", "sha256": "a7530c122843f2002a2029c7ef24f8f198e7c7de9f7ada34ce6ce63d3bedca4e" },
+    { "schema_id": "urn:dosai:schema:acceptance-runner-remediation:1", "path": "docs/architecture/schemas/v1/acceptance-runner-remediation.schema.json", "sha256": "741a50a32513c470199eebd64ee50e0fdb1374326f314b880ad071365473a200" }
+  ],
+  "changes": ["WAIT_FOR_HEALTHY_PAGE_BEFORE_BOUNDARY_PROBES", "SAFE_FAILURE_CODE_ONLY", "RUNNER_VERSION_ADVANCED", "NO_TEST_ASSERTION_REMOVED"],
+  "invariants": ["FAILED_ATTEMPT_PRESERVED", "SUITE_SCOPE_UNCHANGED", "ONLY_FIXTURE_IDENTITY_CHANGED", "NO_APPLICATION_AUTHORITY_CHANGE", "NO_EXTERNAL_EFFECT"]
+}

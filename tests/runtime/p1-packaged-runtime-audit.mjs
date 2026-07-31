@@ -249,7 +249,7 @@ export async function runP1PackagedRuntimeAudit() {
     started_at: startedAt,
     assertions: [],
     limitations: [
-      'FORMAL_ACCEPTANCE_RUNNER_NOT_IMPLEMENTED',
+      'FORMAL_ACCEPTANCE_REPORT_NOT_EMITTED',
       'MINIMUM_MACOS_PROFILE_NOT_EXECUTED',
       'FUTURE_WORKER_FIXTURES_NOT_IMPLEMENTED',
       'TRUSTED_STOP_UI_NOT_APPLICABLE_WITH_EXECUTION_UNAVAILABLE',
@@ -274,7 +274,7 @@ export async function runP1PackagedRuntimeAudit() {
     child = launchPackagedApplication(firstPort, profile);
 
     stage = 'BOUNDARY_PROBES';
-    ({ session } = await connectToPage(firstPort, child));
+    session = await waitForHealthyPage(firstPort, child);
     const boundary = await session.evaluate(`(async () => {
       const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
       globalThis.__dosai_inline_probe = false;
@@ -436,9 +436,12 @@ export async function runP1PackagedRuntimeAudit() {
     report.engineering_result = report.assertions.every(({ result }) => result === 'PASS')
       ? 'PASS'
       : 'FAIL';
-  } catch {
+  } catch (error) {
     report.engineering_result = 'ERROR';
     report.failure_stage = stage;
+    report.failure_code = /^[A-Z][A-Z0-9_]{2,63}$/.test(error?.message)
+      ? error.message
+      : 'UNEXPECTED_AUDIT_ERROR';
   } finally {
     session?.close();
     let processCleanup = true;

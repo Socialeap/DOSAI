@@ -24,7 +24,7 @@ test('toolchain and direct dependencies use exact accepted pins', async () => {
 
   for (const [name, version] of Object.entries(packageJson.devDependencies)) {
     if (name === 'dosai-acceptance') {
-      assert.equal(version, 'workspace:0.1.0');
+      assert.equal(version, 'workspace:0.1.1');
     } else {
       assert.match(version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
     }

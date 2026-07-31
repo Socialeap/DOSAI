@@ -98,7 +98,7 @@ zero; production access remains absent.
 ## P1: Hardened Electron Shell
 
 **Phase status:** `[~] IN_PROGRESS`<br>
-**Status updated:** `2026-07-31T17:59:33-04:00`
+**Status updated:** `2026-07-31T18:12:47-04:00`
 
 | ID | Status | Status updated | Sequential work item | Evidence |
 | --- | --- | --- | --- | --- |
@@ -107,14 +107,14 @@ zero; production access remains absent.
 | P1.3 | `[x] COMPLETE` | `2026-07-31T16:54:55-04:00` | Enforce sandboxing, context isolation, disabled renderer Node integration, CSP, navigation restrictions, sender validation, and typed allowlisted IPC. | Owner accepted `docs/development/p1-renderer-security-evidence.md` after packaged configuration and adversarial runtime inspection. |
 | P1.4 | `[x] COMPLETE` | `2026-07-31T17:04:44-04:00` | Add architecture checks forbidding raw process, filesystem, database, credential, and arbitrary IPC access from the renderer. | Owner accepted `docs/development/p1-renderer-authority-evidence.md` after AST enforcement, malicious fixtures, package, launch, and scanner fault review. |
 | P1.5 | `[x] COMPLETE` | `2026-07-31T17:28:39-04:00` | Repair the acceptance-gate phase conflict through immutable catalog lineage and complete requirement relocation. | Owner accepted ADR 0011, catalog v2, relocation manifest, schemas v2, registry v3, and the no-weakening evidence as one synchronized decision. |
-| P1.EXIT | `[~] IN_PROGRESS` | `2026-07-31T17:59:33-04:00` | Exercise packaged security, recovery, malformed-request, navigation, restart, and bounded-load behavior without enabling execution authority. | Owner accepted the governed runner, three P1 fixtures, catalog v3, evidence schema v3, implementation lineage, and registry v4; clean commit and formal current-host reports are active. |
+| P1.EXIT | `[~] IN_PROGRESS` | `2026-07-31T18:12:47-04:00` | Exercise packaged security, recovery, malformed-request, navigation, restart, and bounded-load behavior without enabling execution authority. | The first v3 formal run preserved a harness-readiness failure with cleanup and secret scan PASS. Owner accepted runner 0.1.1, catalog v4, fixture v2, evidence schema v4, remediation lineage, and registry v5 for clean-subject reruns. |
 
 **Exit gate (`P1.EXIT`):** A packaged local shell passes security configuration, sender
 validation, IPC rejection, navigation, crash, and renderer-compromise tests. It
 contains no process execution capability.
 
-**Active gate work:** Commit the accepted and digest-pinned subject, then run
-and independently inspect all three formal current-host reports.
+**Active gate work:** Commit the accepted v4 remediation subject, rerun all
+three formal current-host suites, and independently inspect every report.
 
 ## P2: Safety Kernel and Audit Journal
 
@@ -376,3 +376,6 @@ explicit owner release decision.
 | `2026-07-31T17:28:39-04:00` | Owner accepted the synchronized catalog repair; completed P1.5 and resumed P1 exit work. | ADR 0011, catalog v2, relocation manifest, schemas v2, and registry v3 are Accepted. Catalog v2 remains immutable with all suites `NOT_IMPLEMENTED`; the runner implementation will create a later generation for the three P1 suites. |
 | `2026-07-31T17:48:59-04:00` | Implemented and independently simulated the governed P1 acceptance generation; kept P1 exit in progress. | Catalog v3 marks only the three P1 suites implemented; exact fixtures, strict schemas, registry v4, a fixed-command runner, canonical evidence store, PASS/FAIL simulations, malformed-input tests, and symbolic-link containment pass 44 tests and all builds. Eight faults were remediated; synchronized owner acceptance is pending before digest pinning, commit, and formal packaged runs. |
 | `2026-07-31T17:59:33-04:00` | Owner accepted the synchronized P1 runner generation. | Catalog v3, all three P1 fixtures, report schema v3, implementation lineage, and registry v4 are Accepted. Exact accepted digests are pinned in the runner and manifest; the clean baseline commit now precedes formal packaged execution. |
+| `2026-07-31T18:03:05-04:00` | Preserved the first formal P1 acceptance failure and kept P1 exit in progress. | `P1-AT-001` built and launched the package, then runner 0.1.0 reached `BOUNDARY_PROBES` before document readiness and returned FAIL. The report, artifacts, cleanup PASS, secret-scan PASS, and clean subject `eca82bf7abaf1eac3b6b38e10c9e0cf322da6823` remain intact. |
+| `2026-07-31T18:06:47-04:00` | Proposed an immutable runner remediation generation. | Diagnosis isolated `document.head` readiness in the harness, while a corrected non-formal audit passed all 29 application assertions. Catalog v4, fixture v2, runner 0.1.1, report schema v4, registry v5, and remediation lineage preserve every v3 byte and every test assertion. |
+| `2026-07-31T18:12:47-04:00` | Owner accepted the synchronized v4 runner remediation. | Exact accepted catalog and fixture digests are pinned into runner 0.1.1; v2/v3 immutability, strict schemas, fixture equivalence, obsolete-runner rejection, and safe exception handling are enforced before clean-subject formal reruns. |

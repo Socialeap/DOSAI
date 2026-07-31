@@ -10,10 +10,9 @@ import { createSchemaValidator, requireValid } from './schema-validator.mjs';
 import { readStrictJson } from './strict-json.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
-const runnerVersion = '0.1.0';
+const runnerVersion = '0.1.1';
 const repositoryId = 'd68ec563-9da5-43a2-8ff5-2dbe435d0342';
 const commonSchemaPath = 'docs/architecture/schemas/v1/common.schema.json';
-const fixtureSchemaPath = 'docs/architecture/schemas/v1/acceptance-fixture-manifest.schema.json';
 
 const catalogPolicies = new Map([
   ['docs/testing/acceptance-test-catalog-v2.json', Object.freeze({
@@ -22,6 +21,7 @@ const catalogPolicies = new Map([
     catalogSchemaPath: 'docs/architecture/schemas/v2/acceptance-test-catalog.schema.json',
     evidenceSchemaId: 'urn:dosai:schema:evidence-report:2',
     evidenceSchemaPath: 'docs/architecture/schemas/v2/evidence-report.schema.json',
+    runnerVersion: null,
     registryId: 'urn:dosai:schema-registry:3',
   })],
   ['docs/testing/acceptance-test-catalog-v3.json', Object.freeze({
@@ -30,22 +30,60 @@ const catalogPolicies = new Map([
     catalogSchemaPath: 'docs/architecture/schemas/v3/acceptance-test-catalog.schema.json',
     evidenceSchemaId: 'urn:dosai:schema:evidence-report:3',
     evidenceSchemaPath: 'docs/architecture/schemas/v3/evidence-report.schema.json',
+    fixtureSchemaId: 'urn:dosai:schema:acceptance-fixture-manifest:1',
+    fixtureSchemaPath: 'docs/architecture/schemas/v1/acceptance-fixture-manifest.schema.json',
+    runnerVersion: '0.1.0',
     registryId: 'urn:dosai:schema-registry:4',
+  })],
+  ['docs/testing/acceptance-test-catalog-v4.json', Object.freeze({
+    catalogDigest: '5339a14ddad7b79a127378b047e884b3ff3602659482b6029146bb1ab86b20ad',
+    catalogSchemaId: 'urn:dosai:schema:acceptance-test-catalog:4',
+    catalogSchemaPath: 'docs/architecture/schemas/v4/acceptance-test-catalog.schema.json',
+    evidenceSchemaId: 'urn:dosai:schema:evidence-report:4',
+    evidenceSchemaPath: 'docs/architecture/schemas/v4/evidence-report.schema.json',
+    fixtureSchemaId: 'urn:dosai:schema:acceptance-fixture-manifest:2',
+    fixtureSchemaPath: 'docs/architecture/schemas/v2/acceptance-fixture-manifest.schema.json',
+    runnerVersion: '0.1.1',
+    registryId: 'urn:dosai:schema-registry:5',
   })],
 ]);
 
 const fixturePolicies = new Map([
-  ['P1-AT-001', Object.freeze({
+  ['3:P1-AT-001', Object.freeze({
+    catalogVersion: 3,
     digest: '1b5b76b43fd3c0050240e6307a99d6cf54135a7c618ec6985777db2ebe8c85f1',
     path: 'tests/acceptance/manifests/p1-at-001.json',
+    runnerVersion: '0.1.0',
   })],
-  ['P1-AT-002', Object.freeze({
+  ['3:P1-AT-002', Object.freeze({
+    catalogVersion: 3,
     digest: '847bec91d2806b7a8c98bedfdea677892a6de888bd46d275c135bc488d506b9c',
     path: 'tests/acceptance/manifests/p1-at-002.json',
+    runnerVersion: '0.1.0',
   })],
-  ['P1-AT-003', Object.freeze({
+  ['3:P1-AT-003', Object.freeze({
+    catalogVersion: 3,
     digest: '05d2930235ede9feb8178fee7171fd972af29bd4729f2f86ba3d99a91928112e',
     path: 'tests/acceptance/manifests/p1-at-003.json',
+    runnerVersion: '0.1.0',
+  })],
+  ['4:P1-AT-001', Object.freeze({
+    catalogVersion: 4,
+    digest: 'd84b55ffab2898852e5294ac2c68a8d4aeeb12908c402b4c88d16d50cb7a6102',
+    path: 'tests/acceptance/manifests/p1-at-001-v2.json',
+    runnerVersion: '0.1.1',
+  })],
+  ['4:P1-AT-002', Object.freeze({
+    catalogVersion: 4,
+    digest: '3eb872481850da329d980fa03c8ba596511793c530d98721bdb46aace7a642f7',
+    path: 'tests/acceptance/manifests/p1-at-002-v2.json',
+    runnerVersion: '0.1.1',
+  })],
+  ['4:P1-AT-003', Object.freeze({
+    catalogVersion: 4,
+    digest: 'ce55653c3238e40379798e011a92661eaa3d893e167afbd723cac990658aaac9',
+    path: 'tests/acceptance/manifests/p1-at-003-v2.json',
+    runnerVersion: '0.1.1',
   })],
 ]);
 
@@ -97,10 +135,10 @@ export function verifyFixtureContract(fixture, fixtureBytes, suite, policy) {
   if (
     policy.digest === null ||
     fixture.status !== 'ACCEPTED' ||
-    fixture.catalog_version !== 3 ||
+    fixture.catalog_version !== policy.catalogVersion ||
     fixture.suite_id !== suite.id ||
     fixture.runner.id !== 'dosai-acceptance' ||
-    fixture.runner.version !== runnerVersion ||
+    fixture.runner.version !== policy.runnerVersion ||
     sha256Bytes(fixtureBytes) !== policy.digest ||
     !exactArrayEqual(fixture.required_artifacts, suite.required_artifacts)
   ) {
@@ -469,6 +507,9 @@ async function loadAcceptedCatalog(catalogPath) {
   ) {
     throw new Error('CATALOG_IDENTITY_REJECTED');
   }
+  if (policy.runnerVersion !== null && policy.runnerVersion !== runnerVersion) {
+    throw new Error('RUNNER_IDENTITY_REJECTED');
+  }
   return { bytes, catalog, policy };
 }
 
@@ -489,7 +530,7 @@ async function executeAcceptedSuite(catalogPath, suiteId, catalogBytes, catalog,
     return safeResult('DOSAI_ACCEPTANCE_PHASE_NOT_IMPLEMENTED_0001', 2);
   }
 
-  const fixturePolicy = fixturePolicies.get(suiteId);
+  const fixturePolicy = fixturePolicies.get(`${catalog.catalog_version}:${suiteId}`);
   if (fixturePolicy === undefined || fixturePolicy.path !== suite.fixture_manifest) {
     return safeResult('DOSAI_ACCEPTANCE_FIXTURE_REJECTED_0001', 2);
   }
@@ -497,13 +538,13 @@ async function executeAcceptedSuite(catalogPath, suiteId, catalogBytes, catalog,
   const validator = await createSchemaValidator(root, [
     commonSchemaPath,
     policy.catalogSchemaPath,
-    fixtureSchemaPath,
+    policy.fixtureSchemaPath,
     policy.evidenceSchemaPath,
   ]);
   const { bytes: fixtureBytes, value: fixture } = await readStrictJson(
     join(root, fixturePolicy.path),
   );
-  requireValid(validator, 'urn:dosai:schema:acceptance-fixture-manifest:1', fixture);
+  requireValid(validator, policy.fixtureSchemaId, fixture);
   verifyFixtureContract(fixture, fixtureBytes, suite, fixturePolicy);
 
   if (!(await readCleanStatus())) {
@@ -575,6 +616,7 @@ export async function runCli(arguments_) {
     const blocked = new Set([
       'CATALOG_IDENTITY_REJECTED',
       'FIXTURE_IDENTITY_REJECTED',
+      'RUNNER_IDENTITY_REJECTED',
     ]);
     return safeResult(
       blocked.has(error?.message)

@@ -16,6 +16,7 @@ test('packaged runtime audit has fixed local inputs and bounded probes', () => {
   assert.match(auditSource, /shell: false/);
   assert.match(auditSource, /const requestCount = 2000/);
   assert.match(auditSource, /startupTimeoutMs = 20_000/);
+  assert.match(auditSource, /session = await waitForHealthyPage\(firstPort, child\)/);
   assert.match(auditSource, /AbortSignal\.timeout\(1_000\)/);
   assert.match(auditSource, /CDP_COMMAND_TIMEOUT/);
   assert.match(auditSource, /timeoutMs = 10_000/);
