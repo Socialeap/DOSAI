@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:audit-event-proposal:1",
+  "title": "DOSAI Audit Event Proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "message_id", "created_at", "producer", "producer_generation", "trace_id", "data_class", "event_kind", "payload"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:audit-event-proposal:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D1" },
+    "event_kind": { "const": "SYNTHETIC_AUDIT_PROBE" },
+    "payload": { "$ref": "#/$defs/synthetic_audit_probe" }
+  },
+  "$defs": {
+    "synthetic_audit_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["probe_id", "outcome", "policy_decision_digest"],
+      "properties": {
+        "probe_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "outcome": { "type": "string", "enum": ["PASS", "DENIED", "UNKNOWN"] },
+        "policy_decision_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" }
+      }
+    }
+  }
+}

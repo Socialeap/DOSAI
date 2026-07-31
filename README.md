@@ -20,8 +20,10 @@ exposure. The owner accepted the isolated runner 0.1.1 remediation, catalog v4,
 fixture manifests v2, report schema v4, and registry v5. All three remediated
 formal suites pass, and the owner accepted `P1.EXIT`. Phase 1 is complete. The
 owner accepted P2.1 immutable contracts and schema registry v6, then accepted
-P2.2's pure deny-by-default policy engine and its remediations. P2.3 durable
-journal work is active. Only `electron.typed_bridge` is
+P2.2's pure deny-by-default policy engine and its remediations. P2.3's isolated
+single-writer journal and six remediations are accepted. P2.4 protected
+checkpoint, key lifecycle, assurance, and anti-fork anchor work is active. Only
+`electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
 `UNVERIFIED`.
 
@@ -45,6 +47,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P1 formal acceptance evidence](docs/development/p1-formal-acceptance-evidence.md)
 - [P2.1 immutable contract evidence](docs/development/p2-immutable-contract-evidence.md)
 - [P2.2 deny-by-default policy evidence](docs/development/p2-policy-engine-evidence.md)
+- [P2.3 single-writer audit journal evidence](docs/development/p2-audit-journal-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)
