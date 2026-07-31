@@ -18,8 +18,9 @@ former phase conflict without weakening coverage. The first formal P1 run
 preserved a harness-readiness failure with successful cleanup and no secret
 exposure. The owner accepted the isolated runner 0.1.1 remediation, catalog v4,
 fixture manifests v2, report schema v4, and registry v5. All three remediated
-formal suites pass, and the owner accepted `P1.EXIT`. Phase 1 is complete and
-P2.1 contract work has begun. Only `electron.typed_bridge` is
+formal suites pass, and the owner accepted `P1.EXIT`. Phase 1 is complete. The
+owner accepted P2.1 immutable contracts and schema registry v6; P2.2
+deny-by-default policy work is active. Only `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
 `UNVERIFIED`.
 
@@ -41,6 +42,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P1 governed acceptance runner evidence](docs/development/p1-acceptance-runner-evidence.md)
 - [P1 acceptance runner remediation evidence](docs/development/p1-acceptance-runner-remediation-evidence.md)
 - [P1 formal acceptance evidence](docs/development/p1-formal-acceptance-evidence.md)
+- [P2.1 immutable contract evidence](docs/development/p2-immutable-contract-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)
@@ -50,6 +52,7 @@ access, deployment, and destructive mutations are out of scope.
 - [Schema registry v3](docs/architecture/schema-registry-v3.json)
 - [Schema registry v4](docs/architecture/schema-registry-v4.json)
 - [Schema registry v5](docs/architecture/schema-registry-v5.json)
+- [Schema registry v6](docs/architecture/schema-registry-v6.json)
 - [Acceptance-testing contract v1](docs/testing/acceptance-testing-v1.md)
 - [Acceptance-test catalog v1](docs/testing/acceptance-test-catalog-v1.json)
 - [Acceptance-test catalog v2](docs/testing/acceptance-test-catalog-v2.json)

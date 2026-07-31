@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:execution-grant:1",
+  "title": "DOSAI Single-Use Execution Grant v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "message_id", "created_at", "producer", "producer_generation", "trace_id", "data_class", "grant_id", "opaque_token_hash", "operation_digest", "plan_digest", "policy_decision_digest", "actor_id", "session_id", "effective_capabilities", "policy_version", "issuer_id", "nonce", "issued_at", "expires_at", "audit_ack_sequence", "grant_state", "use_limit"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:execution-grant:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "const": "dosai.grants" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D5" },
+    "grant_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "opaque_token_hash": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "operation_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "plan_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "policy_decision_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "actor_id": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "effective_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "urn:dosai:schema:common:1#/$defs/capability_id" }
+    },
+    "policy_version": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "issuer_id": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "nonce": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "issued_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "expires_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "audit_ack_sequence": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "grant_state": { "const": "ISSUED" },
+    "use_limit": { "const": 1 }
+  }
+}

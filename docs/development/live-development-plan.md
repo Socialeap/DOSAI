@@ -2,7 +2,7 @@
 
 **Plan status:** `[~] ACTIVE_DRAFT`<br>
 **Current delivery phase:** `P2 - Safety kernel and audit journal`<br>
-**Last status update:** `2026-07-31T18:23:38-04:00`<br>
+**Last status update:** `2026-07-31T18:37:14-04:00`<br>
 **Status owner:** Repository owner<br>
 **Execution rule:** No later phase begins before its dependencies and exit gate
 are complete.
@@ -66,7 +66,7 @@ evidence is not erased.
 | --- | --- | --- | --- | --- |
 | P0 | `[x] COMPLETE` | `2026-07-31T14:48:38-04:00` | Governance and architecture baseline | None |
 | P1 | `[x] COMPLETE` | `2026-07-31T18:23:38-04:00` | Hardened Electron shell | P0 |
-| P2 | `[~] IN_PROGRESS` | `2026-07-31T18:23:38-04:00` | Safety kernel and audit journal | P1 |
+| P2 | `[~] IN_PROGRESS` | `2026-07-31T18:37:14-04:00` | Safety kernel and audit journal | P1 |
 | P3 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Execution capsules, cancellation, and watchdog | P2 |
 | P4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Workspace lease and Git broker | P3 |
 | P5 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Authenticated packet bridge | P3 |
@@ -120,13 +120,13 @@ active without process execution authority.
 ## P2: Safety Kernel and Audit Journal
 
 **Phase status:** `[~] IN_PROGRESS`<br>
-**Status updated:** `2026-07-31T18:23:38-04:00`<br>
+**Status updated:** `2026-07-31T18:37:14-04:00`<br>
 **Controls:** F01, F07, F12
 
 | ID | Status | Status updated | Sequential work item | Evidence |
 | --- | --- | --- | --- | --- |
-| P2.1 | `[~] IN_PROGRESS` | `2026-07-31T18:23:38-04:00` | Implement immutable operation requests, action plans, resource preconditions, policy decisions, grants, and lifecycle states. | Contract implementation active; no process execution path authorized. |
-| P2.2 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement a deny-by-default policy engine with no spawn path and minimum-tier rules that unknown inputs cannot lower. | Pending |
+| P2.1 | `[x] COMPLETE` | `2026-07-31T18:37:14-04:00` | Implement immutable operation requests, action plans, resource preconditions, policy decisions, grants, and lifecycle states. | Owner accepted registry v6, six strict schemas, pure bounded immutable admission, exact tier/effect/approval bindings, lifecycle matrix, five-minute windows, and adversarial tests; no execution path exists. |
+| P2.2 | `[~] IN_PROGRESS` | `2026-07-31T18:37:14-04:00` | Implement a deny-by-default policy engine with no spawn path and minimum-tier rules that unknown inputs cannot lower. | Synthetic no-effect policy implementation active; `policy.preflight` remains `UNVERIFIED`. |
 | P2.3 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement the single-writer sanitized journal with atomic durable acknowledgement, versioned canonical encoding, sequence and epoch continuity, hash chaining, fixed provenance, and startup verification. | Pending |
 | P2.4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement constrained protected checkpoint signing, explicit key lifecycle and assurance states, then select and prove the independent anti-fork anchor contract. | Pending |
 | P2.5 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Prove that policy, schema, journal durability, verification, required assurance, key, or grant failure cannot authorize an effect while emergency stop remains available. | Pending |
@@ -382,3 +382,5 @@ explicit owner release decision.
 | `2026-07-31T18:12:47-04:00` | Owner accepted the synchronized v4 runner remediation. | Exact accepted catalog and fixture digests are pinned into runner 0.1.1; v2/v3 immutability, strict schemas, fixture equivalence, obsolete-runner rejection, and safe exception handling are enforced before clean-subject formal reruns. |
 | `2026-07-31T18:16:59-04:00` | Completed the remediated formal P1 suite set and moved Phase 1 to evidence pending. | `P1-AT-001`, `P1-AT-002`, and `P1-AT-003` pass on clean commit `80e2fc656025e38e26e7cb857b7b140b63ae8f33`. Independent review validates six scenarios, 39 assertions, 17 artifacts, shared package identity, cleanup, empty gaps, and no secret patterns; owner gate approval remains required. |
 | `2026-07-31T18:23:38-04:00` | Owner accepted `P1.EXIT`, completed Phase 1, and started P2.1. | The formal v4 report set is accepted. `electron.typed_bridge` advances to `SUPPORTED_WITH_CONSTRAINTS` for the exact current-host package; every effectful capability remains `UNVERIFIED`, and P2 begins at immutable no-spawn contracts. |
+| `2026-07-31T18:32:20-04:00` | Implemented and independently audited P2.1; moved it to evidence pending. | Proposed registry v6 defines six synchronized contracts for synthetic operations, resource preconditions, plans, decisions, grant envelopes, and lifecycle transitions. Strict schemas, bounded immutable admission, 53 tests, all typechecks, all builds, and no-execution architecture checks pass after five contract faults were remediated; owner review remains required. |
+| `2026-07-31T18:37:14-04:00` | Owner accepted P2.1 and started P2.2. | Registry v6 and all six contract schemas are Accepted without changing their reviewed bytes. All P2 capabilities remain `UNVERIFIED`; deny-by-default synthetic policy work begins with no process execution path. |
