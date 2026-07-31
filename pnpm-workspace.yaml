@@ -1,0 +1,12 @@
+allowBuilds:
+  electron: true
+blockExoticSubdeps: true
+engineStrict: true
+minimumReleaseAge: 1440
+minimumReleaseAgeIgnoreMissingTime: false
+minimumReleaseAgeStrict: true
+preferFrozenLockfile: true
+saveExact: true
+strictPeerDependencies: true
+trustLockfile: false
+verifyStoreIntegrity: true

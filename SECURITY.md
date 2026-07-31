@@ -1,6 +1,6 @@
 # Security Policy
 
-## Phase 0 Boundary
+## Phase 0 Boundary (`SECURITY.PHASE0`)
 
 DOSAI is in pre-launch discovery. Phase 0 authorizes documentation, read-only
 investigation, local validation, and explicitly bounded capability proofs only.

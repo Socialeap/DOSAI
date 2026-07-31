@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "status": "IMPLEMENTED",
+  "accepted_adr": "docs/decisions/0001-runtime-and-privilege-boundaries.md",
+  "source_boundaries": [
+    {
+      "id": "contracts",
+      "path": "src/contracts",
+      "trust_zone": "CROSS_BOUNDARY_CONTRACTS",
+      "runtime": "NONE",
+      "component_owner": "architecture-contracts",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts"],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "renderer",
+      "path": "src/renderer",
+      "trust_zone": "Z1",
+      "runtime": "CHROMIUM_SANDBOX",
+      "component_owner": "presentation",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "renderer"],
+      "allowed_external_imports": ["react", "react-dom/client"]
+    },
+    {
+      "id": "preload",
+      "path": "src/preload",
+      "trust_zone": "Z2",
+      "runtime": "ELECTRON_SANDBOXED_PRELOAD",
+      "component_owner": "bridge-adapters",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "preload"],
+      "allowed_external_imports": ["electron"]
+    },
+    {
+      "id": "main",
+      "path": "src/main",
+      "trust_zone": "Z3",
+      "runtime": "ELECTRON_MAIN",
+      "component_owner": "application-coordinator",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "main"],
+      "allowed_external_imports": ["electron", "node:fs/promises", "node:path"]
+    },
+    {
+      "id": "workers",
+      "path": "src/workers",
+      "trust_zone": "Z7",
+      "runtime": "NODE_WORKER_THREADS",
+      "component_owner": "bounded-processing",
+      "implementation_state": "NOT_IMPLEMENTED",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "workers"],
+      "allowed_external_imports": []
+    }
+  ],
+  "native_helper_root": "native-helpers",
+  "reserved_native_helpers": [
+    {
+      "id": "policy-helper",
+      "path": "native-helpers/policy",
+      "trust_zone": "Z4",
+      "component_owner": "policy-kernel",
+      "owner_phase": "P2",
+      "implementation_state": "RESERVED",
+      "authority": "POLICY_DECISION_ONLY"
+    },
+    {
+      "id": "effect-brokers",
+      "path": "native-helpers/effect-brokers",
+      "trust_zone": "Z5",
+      "component_owner": "effect-broker-services",
+      "owner_phase": "P3-P4",
+      "implementation_state": "RESERVED",
+      "authority": "SCOPED_EFFECT_WITH_VALID_GRANT_ONLY"
+    },
+    {
+      "id": "audit-helper",
+      "path": "native-helpers/audit",
+      "trust_zone": "Z6",
+      "component_owner": "audit-journal",
+      "owner_phase": "P2",
+      "implementation_state": "RESERVED",
+      "authority": "AUDIT_SIGNING_ONLY"
+    }
+  ],
+  "invariants": [
+    "Every source file belongs to exactly one declared source boundary.",
+    "First-party imports follow the declared directional allowlist.",
+    "Renderer code imports neither Electron nor Node modules.",
+    "Preload code exposes typed contract methods and never generic IPC authority.",
+    "Main coordinates application lifecycle and holds no execution, signing, credential, or database authority.",
+    "Workers accept bounded validated data and hold no effect authority.",
+    "Reserved native-helper roots contain no executable code before their owner phase."
+  ]
+}

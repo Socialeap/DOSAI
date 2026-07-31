@@ -5,11 +5,11 @@
 - **Former working name:** AgentControlShell
 - **Repository:** [Socialeap/DOSAI](https://github.com/Socialeap/DOSAI)
 
-> Phase 0 provenance note: this copy preserves the technical content supplied in
-> the repository-root `AACP.md`. The requested canonical source path,
-> `docs/architecture/agent-control-shell-v2.md`, was not present on the
-> Frontiers|3D repository's `main` branch when this bootstrap was prepared and
-> must be reconciled before the source location is considered verified.
+> Authority note: the repository owner confirmed on 2026-07-31 that this file is
+> the authoritative DOSAI product specification. The repository-root `AACP.md`
+> is a non-authoritative conceptual guide to possible end states. It may inform
+> design exploration but cannot override this specification, `SECURITY.md`, an
+> accepted ADR, or the live development plan.
 
 ## System Architecture and Specification for an Asymmetric Agent Control Panel
 

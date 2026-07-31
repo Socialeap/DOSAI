@@ -1,11 +1,13 @@
 # Dependencies
 node_modules/
+.pnpm-store/
 
 # Build and packaging output
 dist/
 build/
 out/
 release/
+.vite/
 *.dmg
 *.pkg
 

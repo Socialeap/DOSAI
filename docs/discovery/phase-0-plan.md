@@ -1,16 +1,26 @@
 # DOSAI Phase 0 Discovery Plan
 
-## Objective
+**Document status:** `HISTORICAL_DISCOVERY_RATIONALE`<br>
+**Delivery sequence authority:**
+[`docs/development/live-development-plan.md`](../development/live-development-plan.md)<br>
+**Status updated:** `2026-07-31T14:14:55-04:00`
 
-Establish a safe, evidence-based foundation for DOSAI before application
-implementation begins. Phase 0 must determine whether the proposed local-first,
-asymmetric agent workflow can be demonstrated through a read-only vertical slice
-without production access, secret handling, or unsupported capability claims.
+This document preserves the questions and initial vertical-slice criteria that
+shaped the threat model and accepted ADRs. It no longer defines phase order or a
+gate before P1. The owner-approved live development plan redistributes these
+proofs across P1-P11 after the P0 governance baseline is complete.
 
-This phase creates documentation and bounded proofs only. It does not authorize
-production automation or the complete Electron application.
+## Original Objective
 
-## Questions to Prove
+The original objective was to establish a safe, evidence-based foundation before
+application implementation and determine whether the proposed local-first,
+asymmetric agent workflow could be demonstrated through a read-only vertical
+slice without production access, secret handling, or unsupported claims.
+
+The original phase allowed documentation and bounded proofs only. It did not
+authorize production automation or the complete Electron application.
+
+## Original Questions to Prove
 
 1. Can a macOS Electron main process launch and stop a bounded local child
    process while exposing only typed, allowlisted IPC to its renderer?
@@ -28,18 +38,19 @@ production automation or the complete Electron application.
 7. Can branch and file ownership be checked without overwriting or rebasing work
    owned by another agent?
 8. What minimum evidence is required before any capability moves from
-   `Unverified` to `Supported`, `Unsupported`, or `Supported with constraints`?
+   `UNVERIFIED` to `SUPPORTED`, `UNSUPPORTED`, or
+   `SUPPORTED_WITH_CONSTRAINTS`?
 
 ## Capability Matrix
 
 The working inventory and proof requirements are maintained in the
-[Phase 0 capability matrix](capability-matrix.md). Every agent capability starts
-as `Unverified`; documentation, assumptions, and tool availability are not proof
+[DOSAI capability matrix](capability-matrix.md). Every capability starts as
+`UNVERIFIED`; documentation, assumptions, and tool availability are not proof
 of working behavior.
 
-## Threat-Model Deliverables
+## Original Threat-Model Deliverables
 
-Phase 0 must produce the following before a go decision:
+The original plan required the following before its go decision:
 
 - An asset and data-flow inventory covering prompts, commands, repository data,
   screenshots, browser state, logs, packets, approvals, and local databases.
@@ -59,9 +70,11 @@ Phase 0 must produce the following before a go decision:
 - Abuse and failure tests for untrusted browser text, terminal output, malformed
   packets, oversized input, interrupted processes, and unavailable integrations.
 
-## Read-Only Vertical-Slice Acceptance Criteria
+## Historical Read-Only Vertical-Slice Criteria
 
-The Phase 0 slice is accepted only when a reproducible local demonstration can:
+The original discovery slice proposed the following criteria. They remain useful
+acceptance-test inputs, but their implementation is governed by the mapped live
+plan phases rather than by this historical Phase 0 sequence:
 
 - Start from a clean, non-default development branch with no production
   credentials or endpoints configured.
@@ -81,30 +94,31 @@ The Phase 0 slice is accepted only when a reproducible local demonstration can:
 - Complete without remote mutation, deployment, Stripe access, production API
   calls, or a claim of direct Codex-to-Claude IPC.
 
-## Stop/Go Exit Gate
+## Historical Stop/Go Criteria
 
-Proceed to Phase 1 only when every Phase 0 acceptance criterion has evidence, the
-threat-model deliverables have owner review, no unresolved critical or high-risk
-finding remains, and required capabilities have explicit fallback paths.
+The current P0 exit gate is defined only in the live development plan. The
+following original criteria remain release-safety constraints and inputs to later
+phase gates; they do not independently block P1 after current P0 completion.
 
 Stop if any proof requires secrets, a production mutation, an authenticated
 Claude UI automation flow, destructive Git behavior, weakened Electron
 isolation, or an exception to the security policy. A stopped proof must be logged
-as `Blocked` or `Unsupported`; it must not be relabeled as successful.
+as `BLOCKED` or `UNSUPPORTED`; it must not be relabeled as successful.
 
-The owner records the final go, conditional-go, or stop decision. Silence and
-partial evidence are not approval.
+The original plan required the owner to record the final go, conditional-go, or
+stop decision. Silence and partial evidence were not approval.
 
-## Owner Decisions Still Required
+## Decision Disposition
 
-- Confirm the authoritative source and approval status of Specification v2.
-- Approve the exact Claude-facing integration surface to test in later work.
-- Define canonical Green, Yellow, Red, and Black command rules and who may amend
-  them.
-- Decide the evidence retention period, deletion behavior, and export format.
-- Approve the dedicated browser-profile lifecycle and allowed test accounts.
-- Define agent identity, packet authenticity, and audit-integrity requirements.
-- Select the minimum supported macOS and Apple Silicon versions.
-- Decide whether SQLite encryption is required and how keys would be managed.
-- Define the human approval UX and emergency-stop semantics for later phases.
-- Approve Phase 1 scope only after reviewing the Phase 0 exit evidence.
+| Original decision | Status | Governing source |
+| --- | --- | --- |
+| Authoritative Specification v2 | Resolved | Owner authority note in the specification and repository `README.md`. |
+| Claude-facing integration | Manual only; automated adapter deferred | Baseline integration register and ADR 0006. |
+| Green, Yellow, Red, and Black semantics | Resolved | ADR 0002 and Baseline Contracts v1. |
+| Evidence retention and deletion | Baseline proposed; implementation deferred | Baseline retention profiles, ADRs 0008 and 0010, P7 and P9. |
+| Browser profile and test identities | Resolved for architecture | ADR 0007; capability remains `UNVERIFIED`. |
+| Agent identity, packet authenticity, and audit integrity | Resolved for architecture | ADRs 0004 and 0006; capabilities remain `UNVERIFIED`. |
+| Minimum macOS and architecture | Baseline proposed | `MACOS_ARM64_V1` in Baseline Contracts v1. |
+| SQLite encryption and keys | Deferred | Subordinate P7 ADR required before persistent user data. |
+| Approval and emergency stop semantics | Resolved for architecture | ADRs 0002 and 0003; capabilities remain `UNVERIFIED`. |
+| P1 scope and start | Pending P0 completion | Live development plan P0 exit gate and owner decision. |
