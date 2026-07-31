@@ -17,8 +17,11 @@ v2, its machine-readable relocation, schemas v2, and registry v3 resolve the
 former phase conflict without weakening coverage. The first formal P1 run
 preserved a harness-readiness failure with successful cleanup and no secret
 exposure. The owner accepted the isolated runner 0.1.1 remediation, catalog v4,
-fixture manifests v2, report schema v4, and registry v5. Formal reruns are now
-pending; every runtime capability remains `UNVERIFIED`.
+fixture manifests v2, report schema v4, and registry v5. All three remediated
+formal suites pass, and the owner accepted `P1.EXIT`. Phase 1 is complete and
+P2.1 contract work has begun. Only `electron.typed_bridge` is
+`SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
+`UNVERIFIED`.
 
 **No production automation is authorized.** Current work permits documentation,
 local implementation, read-only investigation, local validation, and explicitly
@@ -37,6 +40,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P1 catalog relocation evidence](docs/development/p1-catalog-relocation-evidence.md)
 - [P1 governed acceptance runner evidence](docs/development/p1-acceptance-runner-evidence.md)
 - [P1 acceptance runner remediation evidence](docs/development/p1-acceptance-runner-remediation-evidence.md)
+- [P1 formal acceptance evidence](docs/development/p1-formal-acceptance-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)

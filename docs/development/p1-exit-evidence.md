@@ -1,17 +1,19 @@
 # P1 Exit Engineering Evidence
 
-**Status:** `[~] IN_PROGRESS`<br>
-**Evidence captured:** `2026-07-31T18:12:47-04:00`<br>
+**Status:** `[x] COMPLETE`<br>
+**Evidence captured:** `2026-07-31T18:16:59-04:00`<br>
 **Engineering audit result:** `PASS`<br>
-**Formal acceptance result:** `FAIL` (first `P1-AT-001` attempt; harness fault)<br>
+**Formal acceptance result:** `PASS` (v4 rerun; first v3 failure preserved)<br>
 **Decision basis:** Accepted P1 exit gate and Acceptance Testing and Evidence v1
+**Review decision:** Owner accepted `2026-07-31T18:23:38-04:00`
 
 This record covers the packaged Phase 1 shell's recovery, malformed-request,
-navigation, renderer-compromise, and bounded-load behavior. It does not claim a
-formal acceptance-suite pass, activate a runtime capability, or authorize Phase
-2. The first formal attempt is preserved as a failure caused by a document
-readiness race in the harness. The isolated remediation is accepted; formal
-reruns follow its clean baseline commit.
+navigation, renderer-compromise, and bounded-load behavior. The passing suites
+do not by themselves activate a runtime capability or authorize Phase 2. The
+first formal attempt is preserved as a failure caused by a document
+readiness race in the harness. After the accepted isolated remediation, all
+three formal v4 suites pass on one clean committed subject. The owner accepted
+the gate evidence.
 
 ## Implemented Controls
 
@@ -32,14 +34,14 @@ reruns follow its clean baseline commit.
 
 | Command or inspection | Result |
 | --- | --- |
-| `pnpm run check` | PASS; five typecheck surfaces, 27 tests, and three production builds |
+| `pnpm run check` | PASS; five typecheck surfaces, 47 tests, and three production builds |
 | `pnpm run package` | PASS after approved network retry; nine fuses, 11 ASAR entries, and least-privilege plist verified |
 | `pnpm run audit:p1` | PASS; 29 packaged assertions, cleanup, and secret scan |
-| Package identity | ASAR SHA-256 `b650cdea650335c18e2cb6ae99bcae971162af7dc919ced048cd834fe3652018` |
+| Formal package identity | SHA-256 `f17665f02b8b33062121bc74ec5cb69c33852702dc51469765614d4f385fdd95` |
 | Runtime identity | Electron 43.2.0, Chromium 150.0.7871.129, Node 24.18.0, V8 15.0.1240245-electron.0 |
 | Boundary corpus | PASS; Node globals and import absent, bridge exact and frozen, unknown method absent, extra and 1 MiB arguments rejected, 100 duplicate reads stable, subframe bridge unavailable |
 | Session and navigation corpus | PASS; inline script, external and file fetch, popup, permission, hostile navigation, and external protocol denied |
-| Bounded load | PASS; 2,000 typed reads in 23 ms, renderer timer delay 8 ms, shell remained reachable |
+| Bounded load | PASS; 2,000 typed reads in 24 ms, renderer timer delay 9 ms, shell remained reachable |
 | Recovery corpus | PASS; deliberate renderer crash reloaded a fresh trusted renderer; forced application termination restarted cleanly from the same isolated profile |
 | Cleanup | PASS; owned process group exited and isolated profile was removed |
 
@@ -77,14 +79,16 @@ v2, evidence schema v4, remediation lineage, and registry v5 are Accepted.
 
 ## Current Gate Sequence
 
-Commit the accepted v4 digest-pinned state to satisfy the clean-subject
-precondition, then rerun all three packaged suites into the ignored managed
-evidence directory. Their reports and artifacts require independent review
-before any P1 exit decision.
+The accepted v4 state was committed as
+`80e2fc656025e38e26e7cb857b7b140b63ae8f33`. All three suites passed and their
+39 assertions, 17 artifacts, subject identity, cleanup, empty gaps, and secret
+scans were independently revalidated. The accepted review record is
+`docs/development/p1-formal-acceptance-evidence.md`.
 
 ## Result
 
 The implemented Phase 1 shell satisfies its local engineering audit and retains
-zero execution authority. Formal `P1.EXIT` remains in progress with one
-preserved harness failure, pending a clean remediated subject, three successful
-formal runs, and report review; every runtime capability remains `UNVERIFIED`.
+zero execution authority. Formal `P1.EXIT` is complete after three successful
+v4 runs, independent report review, and owner acceptance. Only
+`electron.typed_bridge` advances, with current-host and pinned-runtime
+constraints; all effectful runtime capabilities remain `UNVERIFIED`.

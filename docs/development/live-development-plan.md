@@ -1,8 +1,8 @@
 # DOSAI Live Development Plan
 
 **Plan status:** `[~] ACTIVE_DRAFT`<br>
-**Current delivery phase:** `P1 - Hardened Electron shell`<br>
-**Last status update:** `2026-07-31T17:28:39-04:00`<br>
+**Current delivery phase:** `P2 - Safety kernel and audit journal`<br>
+**Last status update:** `2026-07-31T18:23:38-04:00`<br>
 **Status owner:** Repository owner<br>
 **Execution rule:** No later phase begins before its dependencies and exit gate
 are complete.
@@ -65,8 +65,8 @@ evidence is not erased.
 | Phase | Status | Status updated | Objective | Depends on |
 | --- | --- | --- | --- | --- |
 | P0 | `[x] COMPLETE` | `2026-07-31T14:48:38-04:00` | Governance and architecture baseline | None |
-| P1 | `[~] IN_PROGRESS` | `2026-07-31T17:28:39-04:00` | Hardened Electron shell | P0 |
-| P2 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Safety kernel and audit journal | P1 |
+| P1 | `[x] COMPLETE` | `2026-07-31T18:23:38-04:00` | Hardened Electron shell | P0 |
+| P2 | `[~] IN_PROGRESS` | `2026-07-31T18:23:38-04:00` | Safety kernel and audit journal | P1 |
 | P3 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Execution capsules, cancellation, and watchdog | P2 |
 | P4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Workspace lease and Git broker | P3 |
 | P5 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Authenticated packet bridge | P3 |
@@ -97,8 +97,8 @@ zero; production access remains absent.
 
 ## P1: Hardened Electron Shell
 
-**Phase status:** `[~] IN_PROGRESS`<br>
-**Status updated:** `2026-07-31T18:12:47-04:00`
+**Phase status:** `[x] COMPLETE`<br>
+**Status updated:** `2026-07-31T18:23:38-04:00`
 
 | ID | Status | Status updated | Sequential work item | Evidence |
 | --- | --- | --- | --- | --- |
@@ -107,24 +107,25 @@ zero; production access remains absent.
 | P1.3 | `[x] COMPLETE` | `2026-07-31T16:54:55-04:00` | Enforce sandboxing, context isolation, disabled renderer Node integration, CSP, navigation restrictions, sender validation, and typed allowlisted IPC. | Owner accepted `docs/development/p1-renderer-security-evidence.md` after packaged configuration and adversarial runtime inspection. |
 | P1.4 | `[x] COMPLETE` | `2026-07-31T17:04:44-04:00` | Add architecture checks forbidding raw process, filesystem, database, credential, and arbitrary IPC access from the renderer. | Owner accepted `docs/development/p1-renderer-authority-evidence.md` after AST enforcement, malicious fixtures, package, launch, and scanner fault review. |
 | P1.5 | `[x] COMPLETE` | `2026-07-31T17:28:39-04:00` | Repair the acceptance-gate phase conflict through immutable catalog lineage and complete requirement relocation. | Owner accepted ADR 0011, catalog v2, relocation manifest, schemas v2, registry v3, and the no-weakening evidence as one synchronized decision. |
-| P1.EXIT | `[~] IN_PROGRESS` | `2026-07-31T18:12:47-04:00` | Exercise packaged security, recovery, malformed-request, navigation, restart, and bounded-load behavior without enabling execution authority. | The first v3 formal run preserved a harness-readiness failure with cleanup and secret scan PASS. Owner accepted runner 0.1.1, catalog v4, fixture v2, evidence schema v4, remediation lineage, and registry v5 for clean-subject reruns. |
+| P1.EXIT | `[x] COMPLETE` | `2026-07-31T18:23:38-04:00` | Exercise packaged security, recovery, malformed-request, navigation, restart, and bounded-load behavior without enabling execution authority. | Owner accepted all three formal v4 PASS reports on clean commit `80e2fc656025e38e26e7cb857b7b140b63ae8f33` after independent validation of 39 assertions, 17 artifacts, cleanup, empty gaps, and secret scans. |
 
 **Exit gate (`P1.EXIT`):** A packaged local shell passes security configuration, sender
 validation, IPC rejection, navigation, crash, and renderer-compromise tests. It
 contains no process execution capability.
 
-**Active gate work:** Commit the accepted v4 remediation subject, rerun all
-three formal current-host suites, and independently inspect every report.
+**Gate decision:** Owner accepted
+`docs/development/p1-formal-acceptance-evidence.md`; P1 is complete and P2.1 is
+active without process execution authority.
 
 ## P2: Safety Kernel and Audit Journal
 
-**Phase status:** `[ ] NOT_STARTED`<br>
-**Status updated:** `2026-07-31T01:52:46-04:00`<br>
+**Phase status:** `[~] IN_PROGRESS`<br>
+**Status updated:** `2026-07-31T18:23:38-04:00`<br>
 **Controls:** F01, F07, F12
 
 | ID | Status | Status updated | Sequential work item | Evidence |
 | --- | --- | --- | --- | --- |
-| P2.1 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement immutable operation requests, action plans, resource preconditions, policy decisions, grants, and lifecycle states. | Pending |
+| P2.1 | `[~] IN_PROGRESS` | `2026-07-31T18:23:38-04:00` | Implement immutable operation requests, action plans, resource preconditions, policy decisions, grants, and lifecycle states. | Contract implementation active; no process execution path authorized. |
 | P2.2 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement a deny-by-default policy engine with no spawn path and minimum-tier rules that unknown inputs cannot lower. | Pending |
 | P2.3 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement the single-writer sanitized journal with atomic durable acknowledgement, versioned canonical encoding, sequence and epoch continuity, hash chaining, fixed provenance, and startup verification. | Pending |
 | P2.4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Implement constrained protected checkpoint signing, explicit key lifecycle and assurance states, then select and prove the independent anti-fork anchor contract. | Pending |
@@ -379,3 +380,5 @@ explicit owner release decision.
 | `2026-07-31T18:03:05-04:00` | Preserved the first formal P1 acceptance failure and kept P1 exit in progress. | `P1-AT-001` built and launched the package, then runner 0.1.0 reached `BOUNDARY_PROBES` before document readiness and returned FAIL. The report, artifacts, cleanup PASS, secret-scan PASS, and clean subject `eca82bf7abaf1eac3b6b38e10c9e0cf322da6823` remain intact. |
 | `2026-07-31T18:06:47-04:00` | Proposed an immutable runner remediation generation. | Diagnosis isolated `document.head` readiness in the harness, while a corrected non-formal audit passed all 29 application assertions. Catalog v4, fixture v2, runner 0.1.1, report schema v4, registry v5, and remediation lineage preserve every v3 byte and every test assertion. |
 | `2026-07-31T18:12:47-04:00` | Owner accepted the synchronized v4 runner remediation. | Exact accepted catalog and fixture digests are pinned into runner 0.1.1; v2/v3 immutability, strict schemas, fixture equivalence, obsolete-runner rejection, and safe exception handling are enforced before clean-subject formal reruns. |
+| `2026-07-31T18:16:59-04:00` | Completed the remediated formal P1 suite set and moved Phase 1 to evidence pending. | `P1-AT-001`, `P1-AT-002`, and `P1-AT-003` pass on clean commit `80e2fc656025e38e26e7cb857b7b140b63ae8f33`. Independent review validates six scenarios, 39 assertions, 17 artifacts, shared package identity, cleanup, empty gaps, and no secret patterns; owner gate approval remains required. |
+| `2026-07-31T18:23:38-04:00` | Owner accepted `P1.EXIT`, completed Phase 1, and started P2.1. | The formal v4 report set is accepted. `electron.typed_bridge` advances to `SUPPORTED_WITH_CONSTRAINTS` for the exact current-host package; every effectful capability remains `UNVERIFIED`, and P2 begins at immutable no-spawn contracts. |
