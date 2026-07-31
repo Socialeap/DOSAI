@@ -13,7 +13,7 @@ import {
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 const manifest = JSON.parse(
-  await readFile(join(root, 'docs/architecture/process-ownership-v1.json'), 'utf8'),
+  await readFile(join(root, 'docs/architecture/process-ownership-v2.json'), 'utf8'),
 );
 
 function containsPath(parent, child) {
@@ -28,12 +28,12 @@ function boundaryForPath(path) {
 }
 
 test('every source root has one explicit ownership boundary', async () => {
-  assert.equal(manifest.schema_version, 1);
-  assert.equal(manifest.status, 'IMPLEMENTED');
-  assert.equal(
-    manifest.accepted_adr,
+  assert.equal(manifest.schema_version, 2);
+  assert.equal(manifest.status, 'ACCEPTED');
+  assert.deepEqual(manifest.accepted_adrs, [
     'docs/decisions/0001-runtime-and-privilege-boundaries.md',
-  );
+    'docs/decisions/0002-typed-operations-policy-and-grants.md',
+  ]);
 
   const sourceDirectories = (await readdir(sourceRoot, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
@@ -51,6 +51,30 @@ test('every source root has one explicit ownership boundary', async () => {
     assert.notEqual(boundary.component_owner, '');
     assert.equal(boundary.may_hold_authority, false);
     assert.ok(boundary.allowed_first_party_imports.includes(boundary.id));
+  }
+});
+
+test('accepted process ownership v1 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v1.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    '60552dfd6d0e7d3020b22b84716ff5a9a4e8880da516ca71956dd94923635c1f',
+  );
+  assert.equal(manifest.supersedes.sha256, '60552dfd6d0e7d3020b22b84716ff5a9a4e8880da516ca71956dd94923635c1f');
+});
+
+test('policy boundary is pure, non-authoritative, and isolated from the application', () => {
+  const policy = manifest.source_boundaries.find(({ id }) => id === 'policy');
+  assert.equal(policy.trust_zone, 'Z4');
+  assert.equal(policy.runtime, 'PURE_TESTED_LIBRARY');
+  assert.equal(policy.may_hold_authority, false);
+  assert.deepEqual(policy.allowed_first_party_imports, ['contracts', 'policy']);
+  assert.deepEqual(policy.allowed_external_imports, []);
+
+  for (const id of ['main', 'preload', 'renderer', 'workers']) {
+    const boundary = manifest.source_boundaries.find((candidate) => candidate.id === id);
+    assert.equal(boundary.allowed_first_party_imports.includes('policy'), false, id);
   }
 });
 
