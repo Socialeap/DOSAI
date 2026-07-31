@@ -13,7 +13,7 @@ import {
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 const manifest = JSON.parse(
-  await readFile(join(root, 'docs/architecture/process-ownership-v3.json'), 'utf8'),
+  await readFile(join(root, 'docs/architecture/process-ownership-v4.json'), 'utf8'),
 );
 
 function containsPath(parent, child) {
@@ -28,13 +28,15 @@ function boundaryForPath(path) {
 }
 
 test('every source root has one explicit ownership boundary', async () => {
-  assert.equal(manifest.schema_version, 3);
+  assert.equal(manifest.schema_version, 4);
   assert.equal(manifest.status, 'ACCEPTED');
   assert.deepEqual(manifest.accepted_adrs, [
     'docs/decisions/0001-runtime-and-privilege-boundaries.md',
     'docs/decisions/0002-typed-operations-policy-and-grants.md',
     'docs/decisions/0004-audit-journal-keys-and-anchoring.md',
+    'docs/decisions/0012-secure-enclave-checkpoints-and-rekor-v2-anchoring.md',
   ]);
+  assert.equal('proposed_adrs' in manifest, false);
 
   const sourceDirectories = (await readdir(sourceRoot, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
@@ -70,12 +72,25 @@ test('accepted process ownership v1 remains byte-identical', async () => {
 
 test('accepted process ownership v2 remains byte-identical', async () => {
   const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v2.json'));
+  const v3 = JSON.parse(
+    await readFile(join(root, 'docs/architecture/process-ownership-v3.json'), 'utf8'),
+  );
   const { createHash } = await import('node:crypto');
   assert.equal(
     createHash('sha256').update(bytes).digest('hex'),
     'bc9fadd5f3e446ebc1935b488a338210c81409ef4092ba7ed6b2ebeeee22ab0e',
   );
-  assert.equal(manifest.supersedes.sha256, 'bc9fadd5f3e446ebc1935b488a338210c81409ef4092ba7ed6b2ebeeee22ab0e');
+  assert.equal(v3.supersedes.sha256, 'bc9fadd5f3e446ebc1935b488a338210c81409ef4092ba7ed6b2ebeeee22ab0e');
+});
+
+test('accepted process ownership v3 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v3.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    '403707ec24c938f0012891bccbef848db3bc87a3088d593953b5ff5a965cc4bf',
+  );
+  assert.equal(manifest.supersedes.sha256, '403707ec24c938f0012891bccbef848db3bc87a3088d593953b5ff5a965cc4bf');
 });
 
 test('policy boundary is pure, non-authoritative, and isolated from the application', () => {
@@ -144,12 +159,12 @@ test('worker and native-helper reservations expose no runtime capability', async
   }
 });
 
-test('audit helper has narrow journal authority and application source cannot import it', async () => {
+test('audit helper has journal and test-only checkpoint authority without network access', async () => {
   const helper = manifest.native_helpers.find(({ id }) => id === 'audit-helper');
   assert.equal(helper.trust_zone, 'Z6');
-  assert.equal(helper.runtime, 'ISOLATED_NODE_SQLITE_HELPER');
+  assert.equal(helper.runtime, 'ISOLATED_NODE_SQLITE_AND_CRYPTO_PROOF');
   assert.equal(helper.implementation_state, 'ACTIVE');
-  assert.equal(helper.authority, 'AUDIT_JOURNAL_WRITE_ONLY');
+  assert.equal(helper.authority, 'AUDIT_JOURNAL_WRITE_AND_TEST_ONLY_CHECKPOINT_PROOF');
   assert.deepEqual(helper.allowed_first_party_imports, ['audit-helper']);
   assert.deepEqual(
     helper.allowed_external_imports,
@@ -171,6 +186,12 @@ test('audit helper has narrow journal authority and application source cannot im
     const source = await readFile(path, 'utf8');
     assert.doesNotMatch(source, /native-helpers\/audit/);
   }
+
+  const helperSource = (await Promise.all(
+    helperFiles.map((path) => readFile(path, 'utf8')),
+  )).join('\n');
+  assert.doesNotMatch(helperSource, /\bfetch\s*\(|node:https|node:http|child_process|node:net/);
+  assert.doesNotMatch(helperSource, /createSecureEnclave|kSecAttrTokenIDSecureEnclave/);
 });
 
 test('source graph rejects uninspectable module loading', () => {

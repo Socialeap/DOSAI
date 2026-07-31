@@ -38,7 +38,9 @@ rewrite accepted history; supersede it with a new ADR.
 | [0009](0009-reviewed-skill-bundle-supply-chain.md) | Accepted | `2026-07-31T12:11:32-04:00` | Reviewed skill-bundle supply chain |
 | [0010](0010-canonical-evidence-and-lossy-derivations.md) | Accepted | `2026-07-31T14:12:44-04:00` | Canonical evidence and lossy derivations |
 | [0011](0011-acceptance-gate-phasing-and-coverage-preservation.md) | Accepted | `2026-07-31T17:28:39-04:00` | Acceptance gate phasing and coverage preservation |
+| [0012](0012-secure-enclave-checkpoints-and-rekor-v2-anchoring.md) | Accepted | `2026-07-31T19:41:14-04:00` | Secure Enclave checkpoints and Rekor v2 anchoring |
 
 The repository owner may accept, reject, or request revisions to each ADR
 individually. The register and ADR file must receive the same status update and
-date. P0.4 remains incomplete until the required set is accepted.
+date. Later proposed ADRs do not reopen the accepted P0.4 baseline; each remains
+owned by its named delivery phase until synchronized acceptance.

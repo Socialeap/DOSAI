@@ -123,6 +123,11 @@ export type AuditVerificationReport = Readonly<{
   limitations: readonly ['UNSIGNED', 'UNANCHORED', 'LOCAL_ROLLBACK_NOT_DETECTABLE'];
 }>;
 
+export type AuditRequiredHead = Readonly<{
+  sequence: string;
+  eventHash: Digest;
+}>;
+
 export type AuditDurabilityStatus = Readonly<{
   journalMode: 'DELETE';
   synchronous: 'EXTRA';
@@ -481,7 +486,11 @@ function expectedRequestDigest(event: AuditEvent): string {
   }));
 }
 
-function verifyOpenDatabase(database: DatabaseSync, expectedIdentity: JournalIdentity): VerifiedState {
+function verifyOpenDatabase(
+  database: DatabaseSync,
+  expectedIdentity: JournalIdentity,
+  requiredHead?: AuditRequiredHead,
+): VerifiedState {
   assertSchema(database);
   const state = readState(database);
   if (
@@ -504,6 +513,7 @@ function verifyOpenDatabase(database: DatabaseSync, expectedIdentity: JournalIde
   const writerEpochIds = new Set<string>();
 
   let eventCount = 0;
+  let requiredHeadFound = requiredHead === undefined;
   for (const candidateRow of rows) {
     eventCount += 1;
     if (!Number.isSafeInteger(eventCount)) {
@@ -516,6 +526,12 @@ function verifyOpenDatabase(database: DatabaseSync, expectedIdentity: JournalIde
     }
     const eventJson = stringCell(row, 'event_json');
     const eventHash = stringCell(row, 'event_hash');
+    if (requiredHead !== undefined && expectedSequence.toString() === requiredHead.sequence) {
+      if (eventHash !== requiredHead.eventHash.value) {
+        return fail('DOSAI_AUDIT_INTEGRITY_0001');
+      }
+      requiredHeadFound = true;
+    }
     const event = parseCanonicalEvent(eventJson);
     const acknowledgement = parseCanonicalAcknowledgement(stringCell(row, 'acknowledgement_json'));
     if (
@@ -578,6 +594,7 @@ function verifyOpenDatabase(database: DatabaseSync, expectedIdentity: JournalIde
     state.headHash !== previousHash ||
     state.latestWriterEpochId !== currentWriterEpochId ||
     state.latestBootId !== currentBootId
+    || !requiredHeadFound
   ) {
     return fail('DOSAI_AUDIT_INTEGRITY_0001');
   }
@@ -600,6 +617,60 @@ function validateExpectedIdentity(identity: JournalIdentity): JournalIdentity {
     return fail('DOSAI_AUDIT_PRECONDITION_0001');
   }
   return Object.freeze({ journalId: identity.journalId, journalEpochId: identity.journalEpochId });
+}
+
+function validateRequiredHead(value: AuditRequiredHead | undefined): AuditRequiredHead | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (
+    Object.getPrototypeOf(value) !== Object.prototype ||
+    Object.getOwnPropertySymbols(value).length !== 0 ||
+    Object.keys(value).sort().join(',') !== 'eventHash,sequence'
+  ) {
+    return fail('DOSAI_AUDIT_PRECONDITION_0001');
+  }
+  const sequenceDescriptor = Object.getOwnPropertyDescriptor(value, 'sequence');
+  const hashDescriptor = Object.getOwnPropertyDescriptor(value, 'eventHash');
+  if (
+    sequenceDescriptor === undefined ||
+    hashDescriptor === undefined ||
+    !('value' in sequenceDescriptor) ||
+    !('value' in hashDescriptor) ||
+    typeof sequenceDescriptor.value !== 'string' ||
+    !/^[1-9][0-9]{0,31}$/.test(sequenceDescriptor.value)
+  ) {
+    return fail('DOSAI_AUDIT_PRECONDITION_0001');
+  }
+  const hash = hashDescriptor.value;
+  const hashPrototype = hash !== null && typeof hash === 'object'
+    ? Object.getPrototypeOf(hash)
+    : undefined;
+  if (
+    hash === null ||
+    typeof hash !== 'object' ||
+    (hashPrototype !== Object.prototype && hashPrototype !== null) ||
+    Object.keys(hash).sort().join(',') !== 'algorithm,value'
+  ) {
+    return fail('DOSAI_AUDIT_PRECONDITION_0001');
+  }
+  const algorithm = Object.getOwnPropertyDescriptor(hash, 'algorithm');
+  const digestValue = Object.getOwnPropertyDescriptor(hash, 'value');
+  if (
+    algorithm === undefined ||
+    digestValue === undefined ||
+    !('value' in algorithm) ||
+    !('value' in digestValue) ||
+    algorithm.value !== 'SHA-256' ||
+    typeof digestValue.value !== 'string' ||
+    !/^[0-9a-f]{64}$/.test(digestValue.value)
+  ) {
+    return fail('DOSAI_AUDIT_PRECONDITION_0001');
+  }
+  return Object.freeze({
+    sequence: sequenceDescriptor.value,
+    eventHash: digest(digestValue.value),
+  });
 }
 
 function clearSourceTokens(records: ReadonlyMap<string, SourceRecord>): void {
@@ -1069,9 +1140,11 @@ export function openAuditJournal(options: OpenAuditJournalOptions): AuditJournal
 export function verifyAuditJournal(
   databasePath: string,
   expectedIdentity: JournalIdentity,
+  requiredHead?: AuditRequiredHead,
 ): AuditVerificationReport {
   assertExistingDatabasePath(databasePath);
   const identity = validateExpectedIdentity(expectedIdentity);
+  const required = validateRequiredHead(requiredHead);
   let database: DatabaseSync;
   try {
     database = new DatabaseSync(databasePath, {
@@ -1087,7 +1160,7 @@ export function verifyAuditJournal(
     return databaseFailure(error);
   }
   try {
-    return verifyOpenDatabase(database, identity).report;
+    return verifyOpenDatabase(database, identity, required).report;
   } catch (error) {
     if (error instanceof AuditJournalFailure) {
       throw error;

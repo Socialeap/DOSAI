@@ -21,8 +21,10 @@ fixture manifests v2, report schema v4, and registry v5. All three remediated
 formal suites pass, and the owner accepted `P1.EXIT`. Phase 1 is complete. The
 owner accepted P2.1 immutable contracts and schema registry v6, then accepted
 P2.2's pure deny-by-default policy engine and its remediations. P2.3's isolated
-single-writer journal and six remediations are accepted. P2.4 protected
-checkpoint, key lifecycle, assurance, and anti-fork anchor work is active. Only
+single-writer journal and six remediations are accepted. ADR 0012 and P2.4's
+local checkpoint and Rekor v2 protocol baseline are accepted, while P2.4 remains
+in progress. The implementation remains software-backed, offline, and test-only
+until packaged Secure Enclave and TUF-verified public-log evidence pass. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
 `UNVERIFIED`.
@@ -48,6 +50,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P2.1 immutable contract evidence](docs/development/p2-immutable-contract-evidence.md)
 - [P2.2 deny-by-default policy evidence](docs/development/p2-policy-engine-evidence.md)
 - [P2.3 single-writer audit journal evidence](docs/development/p2-audit-journal-evidence.md)
+- [P2.4 checkpoint and anchor protocol evidence](docs/development/p2-checkpoint-anchor-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)
@@ -58,6 +61,8 @@ access, deployment, and destructive mutations are out of scope.
 - [Schema registry v4](docs/architecture/schema-registry-v4.json)
 - [Schema registry v5](docs/architecture/schema-registry-v5.json)
 - [Schema registry v6](docs/architecture/schema-registry-v6.json)
+- [Schema registry v7](docs/architecture/schema-registry-v7.json)
+- [Schema registry v8](docs/architecture/schema-registry-v8.json)
 - [Acceptance-testing contract v1](docs/testing/acceptance-testing-v1.md)
 - [Acceptance-test catalog v1](docs/testing/acceptance-test-catalog-v1.json)
 - [Acceptance-test catalog v2](docs/testing/acceptance-test-catalog-v2.json)
