@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:acceptance-catalog-relocation:1",
+  "title": "DOSAI Acceptance Catalog Relocation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "created_at", "status", "finding_id", "predecessor", "successor", "invariants", "relocations"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:acceptance-catalog-relocation:1" },
+    "schema_version": { "const": 1 },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "status": { "type": "string", "enum": ["PROPOSED", "ACCEPTED", "SUPERSEDED"] },
+    "finding_id": { "const": "P1-GATE-001" },
+    "predecessor": { "$ref": "#/$defs/catalog_reference" },
+    "successor": { "$ref": "#/$defs/catalog_reference" },
+    "invariants": {
+      "const": ["NO_REQUIREMENT_REMOVED", "NO_AUTHORITY_INTRODUCED_EARLY", "OWNER_PHASE_PROOF_REQUIRED", "RELEASE_MATRIX_PRESERVED", "VERSIONED_EVIDENCE_ISOLATION"]
+    },
+    "relocations": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": { "$ref": "#/$defs/relocation" }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "scenario_id": { "type": "string", "pattern": "^P(?:[0-9]|1[01])-AT-[0-9]{3}-S[0-9]{2}$" },
+    "catalog_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "version", "sha256", "status"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^docs/testing/acceptance-test-catalog-v[12]\\.json$" },
+        "version": { "type": "integer", "enum": [1, 2] },
+        "sha256": { "$ref": "#/$defs/digest" },
+        "status": { "type": "string", "enum": ["PROPOSED", "ACCEPTED", "SUPERSEDED"] }
+      }
+    },
+    "relocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coverage_id", "disposition", "from_scenarios", "to_scenarios", "owner_phases", "coverage_statement"],
+      "properties": {
+        "coverage_id": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$" },
+        "disposition": { "type": "string", "enum": ["RETAINED_IN_PHASE", "RELOCATED_TO_OWNER_PHASE"] },
+        "from_scenarios": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/scenario_id" } },
+        "to_scenarios": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/scenario_id" } },
+        "owner_phases": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "enum": ["P1", "P3", "P7", "P9", "P11"] } },
+        "coverage_statement": { "type": "string", "minLength": 1, "maxLength": 300, "pattern": "^[ -~]+$" }
+      }
+    }
+  }
+}

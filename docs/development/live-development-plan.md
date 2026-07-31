@@ -2,7 +2,7 @@
 
 **Plan status:** `[~] ACTIVE_DRAFT`<br>
 **Current delivery phase:** `P1 - Hardened Electron shell`<br>
-**Last status update:** `2026-07-31T16:48:20-04:00`<br>
+**Last status update:** `2026-07-31T17:28:39-04:00`<br>
 **Status owner:** Repository owner<br>
 **Execution rule:** No later phase begins before its dependencies and exit gate
 are complete.
@@ -65,7 +65,7 @@ evidence is not erased.
 | Phase | Status | Status updated | Objective | Depends on |
 | --- | --- | --- | --- | --- |
 | P0 | `[x] COMPLETE` | `2026-07-31T14:48:38-04:00` | Governance and architecture baseline | None |
-| P1 | `[~] IN_PROGRESS` | `2026-07-31T16:48:20-04:00` | Hardened Electron shell | P0 |
+| P1 | `[~] IN_PROGRESS` | `2026-07-31T17:28:39-04:00` | Hardened Electron shell | P0 |
 | P2 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Safety kernel and audit journal | P1 |
 | P3 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Execution capsules, cancellation, and watchdog | P2 |
 | P4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Workspace lease and Git broker | P3 |
@@ -98,18 +98,23 @@ zero; production access remains absent.
 ## P1: Hardened Electron Shell
 
 **Phase status:** `[~] IN_PROGRESS`<br>
-**Status updated:** `2026-07-31T16:48:20-04:00`
+**Status updated:** `2026-07-31T17:59:33-04:00`
 
 | ID | Status | Status updated | Sequential work item | Evidence |
 | --- | --- | --- | --- | --- |
 | P1.1 | `[x] COMPLETE` | `2026-07-31T16:17:50-04:00` | Scaffold Electron, Vite, React, and TypeScript with reproducible dependency locks and supported Node/Electron versions. | Owner accepted `docs/development/p1-runtime-baseline.md` after package and runtime inspection. |
 | P1.2 | `[x] COMPLETE` | `2026-07-31T16:37:16-04:00` | Separate renderer, preload, main, workers, and future native helpers into explicit ownership boundaries. | Owner accepted `docs/development/p1-process-ownership-evidence.md` after source-graph and runtime inspection. |
-| P1.3 | `[?] EVIDENCE_PENDING` | `2026-07-31T16:48:20-04:00` | Enforce sandboxing, context isolation, disabled renderer Node integration, CSP, navigation restrictions, sender validation, and typed allowlisted IPC. | Custom protocol, CSP, request and navigation denial, typed sender-validated IPC, package and development launches, adversarial probes, remediated faults, and limitations are recorded in `docs/development/p1-renderer-security-evidence.md`; owner review pending. |
-| P1.4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Add architecture checks forbidding raw process, filesystem, database, credential, and arbitrary IPC access from the renderer. | Pending |
+| P1.3 | `[x] COMPLETE` | `2026-07-31T16:54:55-04:00` | Enforce sandboxing, context isolation, disabled renderer Node integration, CSP, navigation restrictions, sender validation, and typed allowlisted IPC. | Owner accepted `docs/development/p1-renderer-security-evidence.md` after packaged configuration and adversarial runtime inspection. |
+| P1.4 | `[x] COMPLETE` | `2026-07-31T17:04:44-04:00` | Add architecture checks forbidding raw process, filesystem, database, credential, and arbitrary IPC access from the renderer. | Owner accepted `docs/development/p1-renderer-authority-evidence.md` after AST enforcement, malicious fixtures, package, launch, and scanner fault review. |
+| P1.5 | `[x] COMPLETE` | `2026-07-31T17:28:39-04:00` | Repair the acceptance-gate phase conflict through immutable catalog lineage and complete requirement relocation. | Owner accepted ADR 0011, catalog v2, relocation manifest, schemas v2, registry v3, and the no-weakening evidence as one synchronized decision. |
+| P1.EXIT | `[~] IN_PROGRESS` | `2026-07-31T17:59:33-04:00` | Exercise packaged security, recovery, malformed-request, navigation, restart, and bounded-load behavior without enabling execution authority. | Owner accepted the governed runner, three P1 fixtures, catalog v3, evidence schema v3, implementation lineage, and registry v4; clean commit and formal current-host reports are active. |
 
 **Exit gate (`P1.EXIT`):** A packaged local shell passes security configuration, sender
 validation, IPC rejection, navigation, crash, and renderer-compromise tests. It
 contains no process execution capability.
+
+**Active gate work:** Commit the accepted and digest-pinned subject, then run
+and independently inspect all three formal current-host reports.
 
 ## P2: Safety Kernel and Audit Journal
 
@@ -363,3 +368,11 @@ explicit owner release decision.
 | `2026-07-31T16:25:02-04:00` | Implemented and independently audited P1.2; moved it to evidence pending. | Five explicit source owners, three reserved native-helper owners, directional import enforcement, non-literal module-load rejection, five isolated typecheck surfaces, nine architecture tests, and packaged plus development launch checks pass. Four boundary faults were remediated; owner review remains required. |
 | `2026-07-31T16:37:16-04:00` | Owner accepted P1.2; completed it and started P1.3. | The ownership boundaries and evidence were approved. P1.3 now hardens the local resource, navigation, and IPC surfaces without activating an agent capability. |
 | `2026-07-31T16:48:20-04:00` | Implemented and independently audited P1.3; moved it to evidence pending. | The packaged shell now uses `dosai://app/`, restrictive CSP and request policy, exact navigation checks, a one-method typed IPC bridge, main-frame and owner sender validation, and disabled file-protocol privileges. Fifteen tests, package checks, clean packaged and development launches, live response headers, and compromised-renderer probes pass; one canonicalization fault was remediated and owner review remains required. |
+| `2026-07-31T16:54:55-04:00` | Owner accepted P1.3; completed it and started P1.4. | The custom protocol, CSP, navigation, request, renderer isolation, and typed IPC evidence was approved. P1.4 now makes the renderer's no-authority rule independently machine-enforced. |
+| `2026-07-31T17:00:02-04:00` | Implemented and independently audited P1.4; moved it to evidence pending. | A versioned AST policy now rejects raw process, filesystem, database, credential, arbitrary IPC, debugger, protected-root bypass, and typed-bridge misuse from every renderer source file. Twenty tests, all typechecks and builds, package checks, and a clean launch pass; two scanner faults were remediated and owner review remains required. |
+| `2026-07-31T17:04:44-04:00` | Owner accepted P1.4 and started the P1 exit audit. | The renderer no-authority policy and its remediated scanner corpus were approved. Packaged crash recovery, unclean restart, malformed boundary, navigation, and bounded-load evidence are now active. |
+| `2026-07-31T17:12:46-04:00` | Packaged P1 engineering audit passed; marked the formal exit gate blocked. | Twenty-nine packaged assertions prove the current shell's security, load, crash recovery, unclean restart, cleanup, and secret scan. The accepted P1 load scenario depends on prohibited later-phase workers and stop UI; catalog v2, the governed runner, fixture manifests, and minimum-macOS evidence are required before formal completion. |
+| `2026-07-31T17:24:39-04:00` | Proposed the complete catalog v2 phase repair and moved P1.5 to evidence pending. | ADR 0011 and a nine-item machine relocation preserve current-host P1 proof, move worker recovery and trusted stop to P3, database-worker load to P7, derivation-worker load to P9, and physical minimum/current release proof to P11. V1 digests remain fixed and 34 tests pass; synchronized owner acceptance is pending. |
+| `2026-07-31T17:28:39-04:00` | Owner accepted the synchronized catalog repair; completed P1.5 and resumed P1 exit work. | ADR 0011, catalog v2, relocation manifest, schemas v2, and registry v3 are Accepted. Catalog v2 remains immutable with all suites `NOT_IMPLEMENTED`; the runner implementation will create a later generation for the three P1 suites. |
+| `2026-07-31T17:48:59-04:00` | Implemented and independently simulated the governed P1 acceptance generation; kept P1 exit in progress. | Catalog v3 marks only the three P1 suites implemented; exact fixtures, strict schemas, registry v4, a fixed-command runner, canonical evidence store, PASS/FAIL simulations, malformed-input tests, and symbolic-link containment pass 44 tests and all builds. Eight faults were remediated; synchronized owner acceptance is pending before digest pinning, commit, and formal packaged runs. |
+| `2026-07-31T17:59:33-04:00` | Owner accepted the synchronized P1 runner generation. | Catalog v3, all three P1 fixtures, report schema v3, implementation lineage, and registry v4 are Accepted. Exact accepted digests are pinned in the runner and manifest; the clean baseline commit now precedes formal packaged execution. |

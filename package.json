@@ -12,6 +12,7 @@
     "pnpm": "11.18.0"
   },
   "scripts": {
+    "audit:p1": "node tests/runtime/p1-packaged-runtime-audit.mjs",
     "build": "node scripts/build.mjs",
     "check": "pnpm run typecheck && pnpm run test && pnpm run build",
     "dev": "node scripts/dev.mjs",
@@ -34,6 +35,7 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.5",
+    "dosai-acceptance": "workspace:0.1.0",
     "electron": "43.2.0",
     "plist": "3.1.1",
     "react": "19.2.8",

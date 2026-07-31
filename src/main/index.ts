@@ -9,17 +9,24 @@ import { createMainWindow } from './window/main-window';
 app.setName('DOSAI');
 registerApplicationScheme();
 
+let isQuitting = false;
+const shouldRecoverRenderer = (): boolean => !isQuitting;
+
 void app.whenReady().then(async () => {
   installApplicationProtocol(join(__dirname, '../renderer'));
   configureDefaultSession(app.isPackaged);
   registerApplicationIpc(app.isPackaged);
-  await createMainWindow(app.isPackaged);
+  await createMainWindow(app.isPackaged, shouldRecoverRenderer);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      void createMainWindow(app.isPackaged);
+      void createMainWindow(app.isPackaged, shouldRecoverRenderer);
     }
   });
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
 });
 
 app.on('web-contents-created', (_event, contents) => {

@@ -1,9 +1,9 @@
 # P1.3 Renderer Security Evidence
 
-**Status:** `[?] EVIDENCE_PENDING`<br>
+**Status:** `[x] COMPLETE`<br>
 **Evidence captured:** `2026-07-31T16:48:20-04:00`<br>
 **Decision basis:** Accepted ADR 0001 and Electron security guidance<br>
-**Review decision:** Owner review pending
+**Review decision:** Owner accepted `2026-07-31T16:54:55-04:00`
 
 This record covers the P1.3 renderer resource, process-isolation, navigation,
 session, and IPC boundary. It introduces one read-only runtime query and does
@@ -76,8 +76,9 @@ other effect authority.
 
 ## Known Limitations
 
-- P1.3 is not the P1 exit gate. P1.4 still owns broader forbidden-authority
-  architecture checks and the remaining crash and renderer-compromise corpus.
+- P1.3 is not the P1 exit gate. P1.4 now owns the accepted broader
+  forbidden-authority architecture checks, and the packaged recovery corpus is
+  recorded separately in `p1-exit-evidence.md`.
 - Rejected sender states are exercised through the same deterministic policy
   function used by the main handler. The live app confirms the accepted sender;
   it intentionally exposes no generic primitive with which an untrusted frame

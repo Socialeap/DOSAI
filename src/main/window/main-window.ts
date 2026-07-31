@@ -3,8 +3,13 @@ import { join } from 'node:path';
 
 import { resolveDevelopmentRendererUrl } from '../development/renderer-url';
 import { isTrustedRendererUrl, PRODUCTION_RENDERER_URL } from '../security/application-policy';
+import { createRendererRecoveryBudget } from './renderer-recovery';
 
-export async function createMainWindow(isPackaged: boolean): Promise<BrowserWindow> {
+export async function createMainWindow(
+  isPackaged: boolean,
+  shouldRecoverRenderer: () => boolean,
+): Promise<BrowserWindow> {
+  const rendererRecovery = createRendererRecoveryBudget();
   const mainWindow = new BrowserWindow({
     backgroundColor: '#11100f',
     height: 760,
@@ -43,6 +48,15 @@ export async function createMainWindow(isPackaged: boolean): Promise<BrowserWind
   mainWindow.webContents.on('will-redirect', (details) => {
     if (!details.isMainFrame || !isTrustedRendererUrl(details.url, isPackaged)) {
       details.preventDefault();
+    }
+  });
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    if (
+      shouldRecoverRenderer() &&
+      !mainWindow.isDestroyed() &&
+      rendererRecovery.tryAcquire(details.reason)
+    ) {
+      mainWindow.webContents.reload();
     }
   });
   mainWindow.once('ready-to-show', () => mainWindow.show());
