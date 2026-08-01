@@ -29,6 +29,10 @@ deferred P2.4's unavailable persistent-Keychain and TUF-authorized Rekor v2
 proofs without weakening either contract. The owner accepted P2.5's registry
 v9, ownership v6, D1 approval contract, and app-unreachable no-effect
 authorization proof after 153 tests. Formal P2 acceptance artifacts remain.
+The owner accepted catalog v5, registry v10, six v3 fixtures, and runner 0.2.0
+as one synchronized generation after all three P2 handlers passed local
+adversarial and evidence-assembly simulations. No formal P2 PASS report exists
+yet, and the P2.4 external proof deferral still prevents `P2.EXIT` completion.
 No public entry or production grant exists. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
@@ -58,6 +62,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P2.4 checkpoint and anchor protocol evidence](docs/development/p2-checkpoint-anchor-evidence.md)
 - [P2.4 packaged Secure Enclave helper evidence](docs/development/p2-secure-enclave-helper-evidence.md)
 - [P2.5 synthetic authorization evidence](docs/development/p2-synthetic-authorization-evidence.md)
+- [P2 formal acceptance generation proposal](docs/development/p2-formal-acceptance-proposal.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)
@@ -71,14 +76,17 @@ access, deployment, and destructive mutations are out of scope.
 - [Schema registry v7](docs/architecture/schema-registry-v7.json)
 - [Schema registry v8](docs/architecture/schema-registry-v8.json)
 - [Schema registry v9](docs/architecture/schema-registry-v9.json)
+- [Schema registry v10](docs/architecture/schema-registry-v10.json)
 - [Acceptance-testing contract v1](docs/testing/acceptance-testing-v1.md)
 - [Acceptance-test catalog v1](docs/testing/acceptance-test-catalog-v1.json)
 - [Acceptance-test catalog v2](docs/testing/acceptance-test-catalog-v2.json)
 - [Acceptance-test catalog v3](docs/testing/acceptance-test-catalog-v3.json)
 - [Acceptance-test catalog v4](docs/testing/acceptance-test-catalog-v4.json)
+- [Acceptance-test catalog v5](docs/testing/acceptance-test-catalog-v5.json)
 - [Catalog v1-to-v2 relocation plan](docs/testing/acceptance-catalog-v1-to-v2-relocation.md)
 - [Catalog v2-to-v3 implementation manifest](docs/testing/acceptance-catalog-v2-to-v3-implementation.json)
 - [Catalog v3-to-v4 remediation manifest](docs/testing/acceptance-catalog-v3-to-v4-remediation.json)
+- [Catalog v4-to-v5 implementation manifest](docs/testing/acceptance-catalog-v4-to-v5-implementation.json)
 - [Phase 0 discovery plan](docs/discovery/phase-0-plan.md)
 - [Capability matrix](docs/discovery/capability-matrix.md)
 - [Architecture decision records](docs/decisions/README.md)

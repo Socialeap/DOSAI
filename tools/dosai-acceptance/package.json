@@ -1,6 +1,6 @@
 {
   "name": "dosai-acceptance",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Governed local acceptance runner for DOSAI",
   "private": true,
   "type": "module",

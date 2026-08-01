@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -6,11 +6,12 @@ import { canonicalJson, digestObject, sha256Bytes } from './canonical-json.mjs';
 import { createEvidenceStore, prepareArtifact } from './evidence-store.mjs';
 import { runFixed } from './fixed-process.mjs';
 import { executeP1Suite } from './p1-suite.mjs';
+import { executeP2Suite } from './p2-suite.mjs';
 import { createSchemaValidator, requireValid } from './schema-validator.mjs';
 import { readStrictJson } from './strict-json.mjs';
 
 const root = resolve(import.meta.dirname, '../../..');
-const runnerVersion = '0.1.1';
+const runnerVersion = '0.2.0';
 const repositoryId = 'd68ec563-9da5-43a2-8ff5-2dbe435d0342';
 const commonSchemaPath = 'docs/architecture/schemas/v1/common.schema.json';
 
@@ -45,6 +46,17 @@ const catalogPolicies = new Map([
     fixtureSchemaPath: 'docs/architecture/schemas/v2/acceptance-fixture-manifest.schema.json',
     runnerVersion: '0.1.1',
     registryId: 'urn:dosai:schema-registry:5',
+  })],
+  ['docs/testing/acceptance-test-catalog-v5.json', Object.freeze({
+    catalogDigest: '482887c6e3d7a24d09471428a6486c9926d11a5b3e31673e3c91bf2ebf55843a',
+    catalogSchemaId: 'urn:dosai:schema:acceptance-test-catalog:5',
+    catalogSchemaPath: 'docs/architecture/schemas/v5/acceptance-test-catalog.schema.json',
+    evidenceSchemaId: 'urn:dosai:schema:evidence-report:5',
+    evidenceSchemaPath: 'docs/architecture/schemas/v5/evidence-report.schema.json',
+    fixtureSchemaId: 'urn:dosai:schema:acceptance-fixture-manifest:3',
+    fixtureSchemaPath: 'docs/architecture/schemas/v3/acceptance-fixture-manifest.schema.json',
+    runnerVersion: '0.2.0',
+    registryId: 'urn:dosai:schema-registry:10',
   })],
 ]);
 
@@ -85,6 +97,42 @@ const fixturePolicies = new Map([
     path: 'tests/acceptance/manifests/p1-at-003-v2.json',
     runnerVersion: '0.1.1',
   })],
+  ['5:P1-AT-001', Object.freeze({
+    catalogVersion: 5,
+    digest: 'c929bd41e0ce58916d74a38b2fca9c23a9e00ce6d9539f77a5f856fbb38e852a',
+    path: 'tests/acceptance/manifests/p1-at-001-v3.json',
+    runnerVersion: '0.2.0',
+  })],
+  ['5:P1-AT-002', Object.freeze({
+    catalogVersion: 5,
+    digest: 'd6ed92cecf39c26eda947adeba05bd9615dabfbcac262f84d0d3d95f371d9e98',
+    path: 'tests/acceptance/manifests/p1-at-002-v3.json',
+    runnerVersion: '0.2.0',
+  })],
+  ['5:P1-AT-003', Object.freeze({
+    catalogVersion: 5,
+    digest: 'aee426d0357795169cfa2b136608c7d786a4d175ba310d6020b9d51c209e82c0',
+    path: 'tests/acceptance/manifests/p1-at-003-v3.json',
+    runnerVersion: '0.2.0',
+  })],
+  ['5:P2-AT-001', Object.freeze({
+    catalogVersion: 5,
+    digest: 'c4d3a8f4ebdb00fa31689f3ae8d7628f04f5c3cbd21f190ca251fd7703646e36',
+    path: 'tests/acceptance/manifests/p2-at-001-v3.json',
+    runnerVersion: '0.2.0',
+  })],
+  ['5:P2-AT-002', Object.freeze({
+    catalogVersion: 5,
+    digest: 'ec6b76591c10d6e5188c9fe82170fee105bf46f2c20c3afc90d4fad58887630e',
+    path: 'tests/acceptance/manifests/p2-at-002-v3.json',
+    runnerVersion: '0.2.0',
+  })],
+  ['5:P2-AT-003', Object.freeze({
+    catalogVersion: 5,
+    digest: 'e84e14fb6a1e81b4330646fc8c0e2b816a93afbcacbd00a8afd4f17ccc9a37ac',
+    path: 'tests/acceptance/manifests/p2-at-003-v3.json',
+    runnerVersion: '0.2.0',
+  })],
 ]);
 
 const expectedHandlers = new Map([
@@ -94,6 +142,12 @@ const expectedHandlers = new Map([
   ['P1-AT-002-S02', 'P1_AUTHORITY_CORPUS'],
   ['P1-AT-003-S01', 'P1_REQUEST_REJECTION'],
   ['P1-AT-003-S02', 'P1_TYPED_BRIDGE_LOAD'],
+  ['P2-AT-001-S01', 'P2_POLICY_TYPED_MATRIX'],
+  ['P2-AT-001-S02', 'P2_POLICY_ATTACK_CORPUS'],
+  ['P2-AT-002-S01', 'P2_AUTHORIZATION_BINDING'],
+  ['P2-AT-002-S02', 'P2_AUTHORIZATION_ATTACK_CORPUS'],
+  ['P2-AT-003-S01', 'P2_AUDIT_FAULT_CORPUS'],
+  ['P2-AT-003-S02', 'P2_DEGRADED_ASSURANCE_RECOVERY'],
 ]);
 
 const runnerSourcePaths = [
@@ -103,6 +157,7 @@ const runnerSourcePaths = [
   'tools/dosai-acceptance/src/evidence-store.mjs',
   'tools/dosai-acceptance/src/fixed-process.mjs',
   'tools/dosai-acceptance/src/p1-suite.mjs',
+  'tools/dosai-acceptance/src/p2-suite.mjs',
   'tools/dosai-acceptance/src/runner.mjs',
   'tools/dosai-acceptance/src/schema-validator.mjs',
   'tools/dosai-acceptance/src/strict-json.mjs',
@@ -260,14 +315,6 @@ async function runnerDigest() {
   return { algorithm: 'SHA-256', value: hash.digest('hex') };
 }
 
-function buildCanaries() {
-  return [
-    `ghp_${randomBytes(24).toString('hex')}`,
-    `sk-${randomBytes(24).toString('hex')}`,
-    `AKIA${randomBytes(8).toString('hex').toUpperCase()}`,
-  ];
-}
-
 function containsSecret(values, canaries) {
   const serialized = values.join('\n');
   const patterns = [
@@ -294,7 +341,10 @@ function artifactPayload(artifactClass, context) {
     case 'COMMAND':
       return {
         ...base,
-        operations: [
+        ...(context.operationTimeoutMs === undefined
+          ? {}
+          : { operation_timeout_ms: context.operationTimeoutMs }),
+        operations: context.operations ?? [
           'PACKAGE_BUILD_FIXED',
           'PACKAGE_SIGNATURE_VERIFY_FIXED',
           'PACKAGED_RUNTIME_AUDIT_FIXED',
@@ -311,6 +361,7 @@ function artifactPayload(artifactClass, context) {
       return {
         ...base,
         catalog_digest: context.catalogDigest,
+        corpus: context.corpusManifest ?? [],
         fixture_manifest_digest: context.fixtureDigest,
         inputs: context.fixture.cases.map(({ input_digest, input_profile }) => ({
           input_digest,
@@ -322,11 +373,27 @@ function artifactPayload(artifactClass, context) {
         ...base,
         measurements: context.measurements,
       };
+    case 'JOURNAL':
+      return {
+        ...base,
+        journal: context.journal ?? {
+          assurance: 'UNAVAILABLE',
+          reason_code: 'EXECUTION_FAILED',
+        },
+      };
+    case 'VERIFIER':
+      return {
+        ...base,
+        verifier: context.verifier ?? {
+          result: 'UNAVAILABLE',
+          reason_code: 'EXECUTION_FAILED',
+        },
+      };
     case 'CLEANUP':
       return {
         ...base,
         assertions: context.assertions
-          .filter(({ id }) => id.startsWith('P1_CLEANUP_') || id === 'P1_WORKTREE_REMAINS_CLEAN')
+          .filter(({ id }) => context.cleanupAssertionIds.has(id))
           .map(({ artifact_ids, ...item }) => item),
       };
     default:
@@ -391,8 +458,13 @@ export function buildEvidenceBundle({
     ? 'PASS'
     : 'FAIL';
   const exitCode = result === 'PASS' ? 0 : 1;
+  const cleanupAssertionIds = new Set(fixture.cases.flatMap((fixtureCase) =>
+    fixtureCase.assertions
+      .filter(({ artifact_classes: artifactClasses }) => artifactClasses.includes('CLEANUP'))
+      .map(({ id }) => id),
+  ));
   const cleanupIds = assertions
-    .filter(({ id }) => id.startsWith('P1_CLEANUP_') || id === 'P1_WORKTREE_REMAINS_CLEAN')
+    .filter(({ id }) => cleanupAssertionIds.has(id))
     .map(({ id }) => id);
   const limitations = [...new Set(fixture.cases.flatMap(({ limitations: items }) => items))];
   const measurements = [...execution.results.entries()]
@@ -401,13 +473,19 @@ export function buildEvidenceBundle({
   const artifactContext = {
     assertions,
     catalogDigest,
+    cleanupAssertionIds,
+    corpusManifest: execution.corpusManifest,
     environment,
     fixture,
     fixtureDigest,
+    journal: execution.journal,
     measurements,
+    operationTimeoutMs: execution.operationTimeoutMs,
+    operations: execution.operations,
     packageDigest: execution.packageDigest,
     runId,
     suite,
+    verifier: execution.verifier,
   };
   const preparedArtifacts = [...artifactIds].map(([artifactClass, artifactId]) =>
     prepareArtifact(artifactClass, artifactId, artifactPayload(artifactClass, artifactContext)),
@@ -488,7 +566,7 @@ export function buildEvidenceBundle({
     preparedArtifacts,
     report,
     result,
-    secretScanPassed: !containsSecret(serializedEvidence, buildCanaries()),
+    secretScanPassed: !containsSecret(serializedEvidence, execution.secretCanaries ?? []),
   });
 }
 
@@ -526,7 +604,7 @@ async function executeAcceptedSuite(catalogPath, suiteId, catalogBytes, catalog,
   if (suite.implementation_state !== 'IMPLEMENTED') {
     return safeResult('DOSAI_ACCEPTANCE_SUITE_NOT_IMPLEMENTED_0001', 2);
   }
-  if (suite.phase !== 'P1') {
+  if (!['P1', 'P2'].includes(suite.phase)) {
     return safeResult('DOSAI_ACCEPTANCE_PHASE_NOT_IMPLEMENTED_0001', 2);
   }
 
@@ -557,10 +635,15 @@ async function executeAcceptedSuite(catalogPath, suiteId, catalogBytes, catalog,
     readFile(join(root, 'pnpm-lock.yaml')),
     runnerDigest(),
   ]);
-  const execution = await executeP1Suite(root, suiteId);
+  const execution = suite.phase === 'P1'
+    ? await executeP1Suite(root, suiteId)
+    : await executeP2Suite(root, suiteId);
   const worktreeClean = await readCleanStatus();
-  execution.results.set('P1_WORKTREE_REMAINS_CLEAN', Object.freeze({ pass: worktreeClean }));
-  const environment = await readSafeEnvironment(execution.audit?.runtime);
+  execution.results.set(
+    `${suite.phase}_WORKTREE_REMAINS_CLEAN`,
+    Object.freeze({ pass: worktreeClean }),
+  );
+  const environment = await readSafeEnvironment(execution.audit?.runtime ?? execution.runtime);
   const finished = Date.now();
   const bundle = buildEvidenceBundle({
     catalog,

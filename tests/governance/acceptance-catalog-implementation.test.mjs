@@ -53,29 +53,6 @@ const [catalogV2, catalogV3, catalogV4, implementation, remediation] = await Pro
   readJson(paths.remediation),
 ]);
 
-const runnerSourcePaths = [
-  'tools/dosai-acceptance/bin/dosai-acceptance.mjs',
-  'tools/dosai-acceptance/package.json',
-  'tools/dosai-acceptance/src/canonical-json.mjs',
-  'tools/dosai-acceptance/src/evidence-store.mjs',
-  'tools/dosai-acceptance/src/fixed-process.mjs',
-  'tools/dosai-acceptance/src/p1-suite.mjs',
-  'tools/dosai-acceptance/src/runner.mjs',
-  'tools/dosai-acceptance/src/schema-validator.mjs',
-  'tools/dosai-acceptance/src/strict-json.mjs',
-];
-
-async function executableDigest() {
-  const hash = createHash('sha256');
-  for (const path of runnerSourcePaths) {
-    hash.update(path);
-    hash.update('\0');
-    hash.update(await readFile(join(root, path)));
-    hash.update('\0');
-  }
-  return hash.digest('hex');
-}
-
 test('accepted v2 generation remains byte-identical', async () => {
   const immutable = new Map([
     [paths.catalogV2, '5fe489ee6695aa5c42c477173753bf3ef6e233f293e8925be4aebd633bc4a914'],
@@ -272,12 +249,10 @@ test('v4 remediation advances only runner and fixture identity', async () => {
 
   assert.equal(remediation.runner.from_version, '0.1.0');
   assert.equal(remediation.runner.to_version, '0.1.1');
-  assert.equal(remediation.runner.package_digest.value, await sha256('tools/dosai-acceptance/package.json'));
-  assert.equal(remediation.runner.dependency_lock_digest.value, await sha256('pnpm-lock.yaml'));
-  assert.equal(remediation.runner.workspace_config_digest.value, await sha256('pnpm-workspace.yaml'));
-  assert.equal(remediation.runner.to_executable_digest.value, await executableDigest());
-  const packageManifest = await readJson('package.json');
-  assert.equal(packageManifest.devDependencies['dosai-acceptance'], 'workspace:0.1.1');
+  assert.equal(remediation.runner.package_digest.value, '527558a690a9ac530dbf2273a1c02105c15a26429b3bdc872263126259208c07');
+  assert.equal(remediation.runner.dependency_lock_digest.value, 'cac0046b4187975b8e38329c501f40a1874beb493bf18d9217263d7215acaf79');
+  assert.equal(remediation.runner.workspace_config_digest.value, 'f662a0607d5444cb923e1e7ccdcf51607113e6c1b2ca93a0f5d83ce7bd1befdc');
+  assert.equal(remediation.runner.to_executable_digest.value, '19b9a97654a81dbb12ac0efeafe040b33e8628f51e1c76c97b200148ebd88886');
 
   for (const schema of remediation.schemas) {
     assert.equal(schema.sha256, await sha256(schema.path), schema.path);

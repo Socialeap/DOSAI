@@ -9,7 +9,7 @@ import { collectSourceFiles, importedModules } from './source-graph.mjs';
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 
-test('toolchain and direct dependencies use exact accepted pins', async () => {
+test('toolchain and direct dependencies use exact governed pins', async () => {
   const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   const nodeVersion = (await readFile(join(root, '.node-version'), 'utf8')).trim();
 
@@ -24,7 +24,7 @@ test('toolchain and direct dependencies use exact accepted pins', async () => {
 
   for (const [name, version] of Object.entries(packageJson.devDependencies)) {
     if (name === 'dosai-acceptance') {
-      assert.equal(version, 'workspace:0.1.1');
+      assert.equal(version, 'workspace:0.2.0');
     } else {
       assert.match(version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
     }

@@ -293,6 +293,14 @@ for (const mutation of [
     name: 'acknowledgement rebinding',
     sql: `UPDATE events SET acknowledgement_json = replace(acknowledgement_json, '"producer_generation":"1"', '"producer_generation":"9"') WHERE sequence = 2`,
   },
+  {
+    name: 'partial event record',
+    sql: 'UPDATE events SET event_json = substr(event_json, 1, length(event_json) - 1) WHERE sequence = 2',
+  },
+  {
+    name: 'acknowledgement truncation',
+    sql: 'UPDATE events SET acknowledgement_json = substr(acknowledgement_json, 1, length(acknowledgement_json) - 1) WHERE sequence = 2',
+  },
   { name: 'event deletion', sql: 'DELETE FROM events WHERE sequence = 2' },
   { name: 'sequence reorder', sql: 'UPDATE events SET sequence = 99 WHERE sequence = 2' },
 ]) {
