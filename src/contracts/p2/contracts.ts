@@ -7,7 +7,13 @@ export const P2_SCHEMA_IDS = Object.freeze([
   'urn:dosai:schema:operation-lifecycle:1',
 ] as const);
 
-export type P2SchemaId = (typeof P2_SCHEMA_IDS)[number];
+export const P2_AUTHORIZATION_SCHEMA_IDS = Object.freeze([
+  'urn:dosai:schema:local-owner-approval:1',
+] as const);
+
+export type P2SchemaId =
+  | (typeof P2_SCHEMA_IDS)[number]
+  | (typeof P2_AUTHORIZATION_SCHEMA_IDS)[number];
 export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue = JsonPrimitive | readonly JsonValue[] | { readonly [key: string]: JsonValue };
 
@@ -108,6 +114,14 @@ function assertSemanticContract(
     }
     assertBoundedWindow(issuedAt, requireStringField(value, 'expires_at'));
   }
+  if (schemaId === 'urn:dosai:schema:local-owner-approval:1') {
+    const createdAt = requireStringField(value, 'created_at');
+    const approvedAt = requireStringField(value, 'approved_at');
+    if (createdAt !== approvedAt) {
+      throw new TypeError('DOSAI_PRECONDITION_0001');
+    }
+    assertBoundedWindow(approvedAt, requireStringField(value, 'expires_at'), 60_000);
+  }
 }
 
 export function admitContract<S extends P2SchemaId>(
@@ -115,7 +129,10 @@ export function admitContract<S extends P2SchemaId>(
   candidate: unknown,
   validate: ContractValidator,
 ): ImmutableContract<S> {
-  if (!P2_SCHEMA_IDS.includes(schemaId)) {
+  if (
+    !(P2_SCHEMA_IDS as readonly string[]).includes(schemaId) &&
+    !(P2_AUTHORIZATION_SCHEMA_IDS as readonly string[]).includes(schemaId)
+  ) {
     throw new TypeError('DOSAI_SCHEMA_0001');
   }
   const clone = clonePlainJson(candidate, 0, { remaining: maximumNodes });

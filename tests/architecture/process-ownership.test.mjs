@@ -13,7 +13,7 @@ import {
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 const manifest = JSON.parse(
-  await readFile(join(root, 'docs/architecture/process-ownership-v5.json'), 'utf8'),
+  await readFile(join(root, 'docs/architecture/process-ownership-v6.json'), 'utf8'),
 );
 
 function containsPath(parent, child) {
@@ -28,8 +28,8 @@ function boundaryForPath(path) {
 }
 
 test('every source root has one explicit ownership boundary', async () => {
-  assert.equal(manifest.schema_version, 5);
-  assert.equal(manifest.status, 'ACCEPTED');
+  assert.equal(manifest.schema_version, 6);
+  assert.equal(manifest.status, 'PROPOSED');
   assert.deepEqual(manifest.accepted_adrs, [
     'docs/decisions/0001-runtime-and-privilege-boundaries.md',
     'docs/decisions/0002-typed-operations-policy-and-grants.md',
@@ -98,12 +98,25 @@ test('accepted process ownership v3 remains byte-identical', async () => {
 
 test('accepted process ownership v4 remains byte-identical', async () => {
   const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v4.json'));
+  const v5 = JSON.parse(
+    await readFile(join(root, 'docs/architecture/process-ownership-v5.json'), 'utf8'),
+  );
   const { createHash } = await import('node:crypto');
   assert.equal(
     createHash('sha256').update(bytes).digest('hex'),
     '0d86608f3b71ce4b5af317d05978fb4d33c83c13df6ddb3f56e409fa967ea992',
   );
-  assert.equal(manifest.supersedes.sha256, '0d86608f3b71ce4b5af317d05978fb4d33c83c13df6ddb3f56e409fa967ea992');
+  assert.equal(v5.supersedes.sha256, '0d86608f3b71ce4b5af317d05978fb4d33c83c13df6ddb3f56e409fa967ea992');
+});
+
+test('accepted process ownership v5 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v5.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    '6417976e00bd8ea6db597f5020b8558ccb32244cb19e08469652d51469d53d87',
+  );
+  assert.equal(manifest.supersedes.sha256, '6417976e00bd8ea6db597f5020b8558ccb32244cb19e08469652d51469d53d87');
 });
 
 test('policy boundary is pure, non-authoritative, and isolated from the application', () => {
@@ -166,7 +179,13 @@ test('worker and native-helper reservations expose no runtime capability', async
 
   assert.deepEqual(
     manifest.native_helpers.map(({ id }) => id),
-    ['policy-helper', 'effect-brokers', 'audit-helper', 'secure-enclave-proof-helper'],
+    [
+      'policy-helper',
+      'grant-proof-helper',
+      'effect-brokers',
+      'audit-helper',
+      'secure-enclave-proof-helper',
+    ],
   );
   for (const helper of manifest.native_helpers.filter(
     ({ implementation_state }) => implementation_state === 'RESERVED',
@@ -175,6 +194,58 @@ test('worker and native-helper reservations expose no runtime capability', async
     assert.ok(helper.path.startsWith(`${manifest.native_helper_root}/`));
     assert.notEqual(helper.component_owner, '');
   }
+});
+
+test('grant proof helper is test-only, no-effect, and unreachable from the application', async () => {
+  const helper = manifest.native_helpers.find(({ id }) => id === 'grant-proof-helper');
+  assert.equal(helper.trust_zone, 'Z4');
+  assert.equal(helper.runtime, 'ISOLATED_NODE_SYNTHETIC_AUTHORIZATION_PROOF');
+  assert.equal(helper.implementation_state, 'ACTIVE');
+  assert.equal(
+    helper.authority,
+    'TEST_ONLY_OWNER_APPROVAL_AND_SINGLE_USE_NO_EFFECT_GRANT_PROOF',
+  );
+  assert.equal(helper.application_reachable, false);
+  assert.equal(helper.effect_authority, false);
+  assert.equal(helper.production_grant_authority, false);
+  assert.equal(helper.network_authority, false);
+  assert.deepEqual(
+    helper.allowed_first_party_imports,
+    ['contracts', 'policy', 'audit-helper', 'grant-proof-helper'],
+  );
+  assert.deepEqual(helper.allowed_external_imports, ['node:crypto']);
+
+  const helperFiles = await collectSourceFiles(join(root, helper.path));
+  const firstPartyOwner = (path) => {
+    if (containsPath(join(root, 'src/contracts'), path)) return 'contracts';
+    if (containsPath(join(root, 'src/policy'), path)) return 'policy';
+    if (containsPath(join(root, 'native-helpers/audit'), path)) return 'audit-helper';
+    if (containsPath(join(root, helper.path), path)) return 'grant-proof-helper';
+    return null;
+  };
+  for (const path of helperFiles) {
+    for (const specifier of await readImportedModules(path)) {
+      if (specifier.startsWith('.')) {
+        const owner = firstPartyOwner(resolve(dirname(path), specifier));
+        assert.ok(owner, `${relative(root, path)} imports unowned ${specifier}`);
+        assert.ok(helper.allowed_first_party_imports.includes(owner), owner);
+      } else {
+        assert.ok(helper.allowed_external_imports.includes(specifier), specifier);
+      }
+    }
+  }
+
+  for (const path of await collectSourceFiles(sourceRoot)) {
+    const source = await readFile(path, 'utf8');
+    assert.doesNotMatch(source, /native-helpers\/grants/);
+  }
+  const helperSource = (await Promise.all(
+    helperFiles.map((path) => readFile(path, 'utf8')),
+  )).join('\n');
+  assert.doesNotMatch(
+    helperSource,
+    /child_process|node:net|node:http|node:https|\bfetch\s*\(|\bspawn\s*\(|\bexec\s*\(/,
+  );
 });
 
 test('audit helper has journal and test-only checkpoint authority without network access', async () => {

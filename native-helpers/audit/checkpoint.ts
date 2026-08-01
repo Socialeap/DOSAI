@@ -27,6 +27,7 @@ import {
 } from './checkpoint-contracts.ts';
 import {
   verifyAuditJournal,
+  type AuditRequiredHead,
   type JournalIdentity,
 } from './journal.ts';
 import {
@@ -69,6 +70,7 @@ export type CreateCheckpointOptions = Readonly<{
   previousCheckpoint?: AuditCheckpoint;
   expectedPreviousCheckpointDigest: Digest | null;
   expectedPreviousAnchorReceiptDigest: Digest | null;
+  requiredJournalHead?: AuditRequiredHead;
 }>;
 
 export type AuditAssuranceState =
@@ -254,12 +256,15 @@ export function createSignedAuditCheckpoint(options: CreateCheckpointOptions): A
   const previousCandidate = options.previousCheckpoint === undefined
     ? undefined
     : verifyAuditCheckpoint(options.previousCheckpoint);
+  if (options.requiredJournalHead !== undefined && previousCandidate !== undefined) {
+    return fail('DOSAI_CHECKPOINT_PRECONDITION_0001');
+  }
   const report = verifyAuditJournal(
     options.databasePath,
     options.expectedIdentity,
-    previousCandidate === undefined
+    options.requiredJournalHead ?? (previousCandidate === undefined
       ? undefined
-      : { sequence: previousCandidate.sequence, eventHash: previousCandidate.event_hash },
+      : { sequence: previousCandidate.sequence, eventHash: previousCandidate.event_hash }),
   );
   const currentSequence = BigInt(report.verifiedThroughSequence);
   if (currentSequence < 1n || !/^[1-9][0-9]{0,31}$/.test(options.producerGeneration)) {

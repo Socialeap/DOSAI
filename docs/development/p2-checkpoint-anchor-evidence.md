@@ -6,6 +6,11 @@
 **Review decision:** `OWNER_AUTHORIZED_COMPLETION_RUN`<br>
 **Phase completion:** Blocked on a TUF-authorized Rekor v2 writer
 
+**Current scheduling:** `[-] DEFERRED_EXTERNAL` as of
+`2026-07-31T21:09:59-04:00`. The owner accepted partial completion so P2.5 could
+proceed. Deferral does not satisfy, remove, or weaken either the persistent
+Keychain proof or the TUF-authorized Rekor v2 publication proof.
+
 This record began as the accepted synthetic offline protocol proof. The
 completion generation adds an official Sigstore TUF client, strict v2 service
 selection, algorithm-explicit P-256 and Ed25519 C2SP verification, and a clean

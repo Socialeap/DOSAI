@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:local-owner-approval:1",
+  "title": "DOSAI Fresh Local Owner Approval v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "message_id", "created_at", "producer", "producer_generation", "trace_id", "data_class", "approval_id", "plan_id", "plan_digest", "operation_digest", "actor_id", "session_id", "owner_id", "approval_decision", "approval_method", "owner_presence_nonce", "approved_at", "expires_at"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:local-owner-approval:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "const": "dosai.owner-approval" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D1" },
+    "approval_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "plan_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "plan_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "operation_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "actor_id": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "owner_id": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "approval_decision": { "const": "APPROVE" },
+    "approval_method": { "const": "LOCAL_OWNER_CONFIRMATION_TEST_ONLY" },
+    "owner_presence_nonce": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "approved_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "expires_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" }
+  }
+}

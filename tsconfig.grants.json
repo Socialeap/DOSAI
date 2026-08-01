@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  "include": [
+    "native-helpers/audit/**/*.ts",
+    "native-helpers/grants/**/*.ts",
+    "src/contracts/**/*.ts",
+    "src/policy/**/*.ts"
+  ]
+}

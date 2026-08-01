@@ -24,10 +24,12 @@ P2.2's pure deny-by-default policy engine and its remediations. P2.3's isolated
 single-writer journal and six remediations are accepted. ADR 0012 and P2.4's
 local checkpoint and Rekor v2 protocol baseline are accepted. The packaged Swift
 helper proves process-scoped Secure Enclave signing and non-exportability on this
-Mac, and the official-client TUF bootstrap fails closed correctly. P2.4 is
-externally blocked because production SigningConfig authorizes no Rekor v2
-writer; no public entry exists and persistent Keychain proof still requires an
-Apple application signing identity. Only
+Mac, and the official-client TUF bootstrap fails closed correctly. The owner
+deferred P2.4's unavailable persistent-Keychain and TUF-authorized Rekor v2
+proofs without weakening either contract. P2.5's proposed registry v9,
+ownership v6, D1 approval contract, and app-unreachable no-effect authorization
+proof pass 153 tests and await owner review plus formal P2 acceptance artifacts.
+No public entry or production grant exists. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
 `UNVERIFIED`.
@@ -55,6 +57,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P2.3 single-writer audit journal evidence](docs/development/p2-audit-journal-evidence.md)
 - [P2.4 checkpoint and anchor protocol evidence](docs/development/p2-checkpoint-anchor-evidence.md)
 - [P2.4 packaged Secure Enclave helper evidence](docs/development/p2-secure-enclave-helper-evidence.md)
+- [P2.5 synthetic authorization evidence](docs/development/p2-synthetic-authorization-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)
@@ -67,6 +70,7 @@ access, deployment, and destructive mutations are out of scope.
 - [Schema registry v6](docs/architecture/schema-registry-v6.json)
 - [Schema registry v7](docs/architecture/schema-registry-v7.json)
 - [Schema registry v8](docs/architecture/schema-registry-v8.json)
+- [Proposed schema registry v9](docs/architecture/schema-registry-v9.json)
 - [Acceptance-testing contract v1](docs/testing/acceptance-testing-v1.md)
 - [Acceptance-test catalog v1](docs/testing/acceptance-test-catalog-v1.json)
 - [Acceptance-test catalog v2](docs/testing/acceptance-test-catalog-v2.json)

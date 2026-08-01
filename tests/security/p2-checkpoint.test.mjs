@@ -56,10 +56,10 @@ async function journalFixture() {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'dosai-checkpoint-test-')));
   const databasePath = join(directory, 'audit.sqlite3');
   const writer = openAuditJournal({ databasePath, sources });
-  writer.append('dosai.policy', policyToken, proposal());
+  const acknowledgement = writer.append('dosai.policy', policyToken, proposal());
   const identity = writer.identity;
   writer.close();
-  return { directory, databasePath, identity };
+  return { directory, databasePath, identity, acknowledgement };
 }
 
 function failure(code) {
@@ -126,6 +126,33 @@ test('software fixture signs only the freshly verified current journal head', as
       signing_keys: [{ ...checkpoint.signing_keys[0], protection: 'SECURE_ENCLAVE' }],
     };
     assert.throws(() => verifyAuditCheckpoint(relabeled), /DOSAI_CHECKPOINT_SCHEMA_0001/);
+  } finally {
+    await rm(fixture.directory, { recursive: true, force: true });
+  }
+});
+
+test('checkpoint creation can require the exact durable acknowledgement head', async () => {
+  const fixture = await journalFixture();
+  try {
+    const authority = createSoftwareCheckpointAuthorityForTesting();
+    const checkpoint = createSignedAuditCheckpoint(checkpointOptions(fixture, authority, {
+      requiredJournalHead: {
+        sequence: fixture.acknowledgement.sequence,
+        eventHash: fixture.acknowledgement.event_hash,
+      },
+    }));
+    assert.equal(checkpoint.sequence, fixture.acknowledgement.sequence);
+
+    const secondAuthority = createSoftwareCheckpointAuthorityForTesting();
+    assert.throws(
+      () => createSignedAuditCheckpoint(checkpointOptions(fixture, secondAuthority, {
+        requiredJournalHead: {
+          sequence: fixture.acknowledgement.sequence,
+          eventHash: { algorithm: 'SHA-256', value: 'f'.repeat(64) },
+        },
+      })),
+      /DOSAI_AUDIT_INTEGRITY_0001/,
+    );
   } finally {
     await rm(fixture.directory, { recursive: true, force: true });
   }
