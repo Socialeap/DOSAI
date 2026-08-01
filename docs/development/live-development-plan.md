@@ -2,7 +2,7 @@
 
 **Plan status:** `[~] ACTIVE_DRAFT`<br>
 **Current delivery phase:** `P2 - Safety kernel and audit journal`<br>
-**Last status update:** `2026-07-31T22:34:50-04:00`<br>
+**Last status update:** `2026-07-31T22:43:00-04:00`<br>
 **Status owner:** Repository owner<br>
 **Execution rule:** No later phase begins before its dependencies and exit gate
 are complete.
@@ -120,7 +120,7 @@ active without process execution authority.
 ## P2: Safety Kernel and Audit Journal
 
 **Phase status:** `[~] IN_PROGRESS`<br>
-**Status updated:** `2026-07-31T22:34:50-04:00`<br>
+**Status updated:** `2026-07-31T22:43:00-04:00`<br>
 **Controls:** F01, F07, F12
 
 | ID | Status | Status updated | Sequential work item | Evidence |
@@ -130,7 +130,7 @@ active without process execution authority.
 | P2.3 | `[x] COMPLETE` | `2026-07-31T19:13:53-04:00` | Implement the single-writer sanitized journal with atomic durable acknowledgement, versioned canonical encoding, sequence and epoch continuity, hash chaining, fixed provenance, and startup verification. | Owner accepted registry v7, process ownership v3, three audit contracts, the isolated SQLite writer, strongest configured local durability, authenticated fixed provenance, canonical chain and acknowledgement binding, restart verification, honest rollback limits, and all six remediations. |
 | P2.4 | `[-] DEFERRED_EXTERNAL` | `2026-07-31T21:09:59-04:00` | Implement constrained protected checkpoint signing, explicit key lifecycle and assurance states, then select and prove the independent anti-fork anchor contract. | Owner accepted partial completion and deferred the two unavailable production proofs. Existing gates remain exact: persistent Keychain proof still requires an Apple application signing identity, and public Rekor v2 proof still requires a TUF-authorized writer. No hardware, anchored, or completion claim is inferred. |
 | P2.5 | `[x] COMPLETE` | `2026-07-31T21:45:31-04:00` | Prove that policy, schema, journal durability, verification, required assurance, key, or grant failure cannot authorize an effect while emergency stop remains available. | Owner accepted registry v9, ownership v6, the D1 approval contract, app-unreachable proof service, exact acknowledged-head signing, and service-local single-use grant state after 153 tests, eight typechecks, three builds, and four remediations. Formal P2 acceptance remains separate; no effect path exists. |
-| P2.EXIT | `[?] EVIDENCE_PENDING` | `2026-07-31T22:34:50-04:00` | Execute and independently verify the three governed P2 suites without adding effect authority. | Owner accepted catalog v5, registry v10, six v3 fixtures, and runner 0.2.0 after 161 tests on two local Node runtimes, eight Node 24.14 typechecks, three builds, evidence assembly, secret-canary, cleanup, and fail-closed simulations. Exact Node 24.18/pnpm 11.18 validation and formal clean-commit runs remain pending; P2.4 external proofs remain deferred. |
+| P2.EXIT | `[?] EVIDENCE_PENDING` | `2026-07-31T22:43:00-04:00` | Execute and independently verify the three governed P2 suites without adding effect authority. | Exact Node 24.18/pnpm 11.18 validation passes eight typechecks, 161 tests, and three builds. All three formal suites pass on clean subject `878abad` with 25 assertions, six scenarios, 19 digest-verified artifacts, cleanup, empty gaps, no effects, and secret scans. Local formal acceptance is complete; P2.4 external proofs remain deferred and prevent phase completion. |
 
 **Exit gate (`P2.EXIT`):** The safety kernel can approve or deny synthetic intents and produce
 independently verifiable journal evidence, while executable process imports are
@@ -400,3 +400,4 @@ explicit owner release decision.
 | `2026-07-31T21:45:31-04:00` | Owner accepted P2.5 and started the formal P2 acceptance generation. | Registry v9, ownership v6, the D1 approval contract, no-effect authorization proof, and all four remediations are accepted. P2 remains in progress: formal P2 suites are not yet implemented, P2.4 external proofs remain deferred, and every effectful capability remains `UNVERIFIED`. |
 | `2026-07-31T22:03:36-04:00` | Proposed the governed P2 formal-acceptance generation and moved P2.EXIT to evidence pending. | Catalog v5 implements only the three P2 suites; runner 0.2.0 binds exact corpus digests, actual runtimes, operation timeouts, local-durable journal metadata, honest verifier ranges, cleanup, and secret scans. Six audit findings were remediated. Exact pinned-toolchain validation, owner acceptance, and formal clean-commit runs remain pending, and P2.4 external proofs remain deferred. |
 | `2026-07-31T22:34:50-04:00` | Owner accepted the synchronized P2 formal-acceptance generation. | Catalog v5, registry v10, implementation manifest v2, all six v3 fixtures, and runner 0.2.0 advanced together with final identity digests pinned. P2.EXIT remains evidence pending until exact-toolchain clean-commit runs are independently verified; P2.4 external proofs remain deferred. |
+| `2026-07-31T22:43:00-04:00` | Completed and independently verified all local formal P2 suites. | Exact pinned-toolchain validation and `P2-AT-001` through `P2-AT-003` pass on clean subject `878abad`: 25 assertions, six scenarios, 19 artifacts, cleanup, empty gaps, no effects, and secret scans all verify. P2.EXIT remains evidence pending solely because the owner-deferred P2.4 hardware-Keychain and public-Rekor proofs are still unavailable. |

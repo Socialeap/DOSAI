@@ -30,9 +30,11 @@ proofs without weakening either contract. The owner accepted P2.5's registry
 v9, ownership v6, D1 approval contract, and app-unreachable no-effect
 authorization proof after 153 tests. Formal P2 acceptance artifacts remain.
 The owner accepted catalog v5, registry v10, six v3 fixtures, and runner 0.2.0
-as one synchronized generation after all three P2 handlers passed local
-adversarial and evidence-assembly simulations. No formal P2 PASS report exists
-yet, and the P2.4 external proof deferral still prevents `P2.EXIT` completion.
+as one synchronized generation. Exact pinned-toolchain validation passes, and
+all three formal P2 suites pass on clean commit `878abad` with 25 assertions,
+six scenarios, 19 digest-verified artifacts, cleanup, empty gaps, no effects,
+and secret scans. The P2.4 external proof deferral still prevents `P2.EXIT`
+completion.
 No public entry or production grant exists. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
@@ -63,6 +65,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P2.4 packaged Secure Enclave helper evidence](docs/development/p2-secure-enclave-helper-evidence.md)
 - [P2.5 synthetic authorization evidence](docs/development/p2-synthetic-authorization-evidence.md)
 - [P2 formal acceptance generation proposal](docs/development/p2-formal-acceptance-proposal.md)
+- [P2 formal acceptance evidence](docs/development/p2-formal-acceptance-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)

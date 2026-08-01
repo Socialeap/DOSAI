@@ -114,10 +114,14 @@ obsolete catalog v4 identity and requires a clean committed worktree.
    all six v3 fixtures, and runner `0.2.0` as one synchronized decision.
 2. `[x]` Statuses and acceptance timestamps advanced immutably; final catalog,
    fixture, schema, package, lock, and executable digests are pinned.
-3. `[ ]` Commit the accepted generation on a clean subject commit.
-4. `[ ]` Run `P2-AT-001`, `P2-AT-002`, and `P2-AT-003` into the managed evidence root.
-5. `[ ]` Independently validate report schemas, artifacts, cleanup, gaps, external
+3. `[x]` Commit the accepted generation on clean subject
+   `878abad495c028c5b194f78b3e2eda175c081186`.
+4. `[x]` Run `P2-AT-001`, `P2-AT-002`, and `P2-AT-003` into the managed evidence root.
+5. `[x]` Independently validate report schemas, artifacts, cleanup, gaps, external
    effects, secret scans, subject commit, and stated limitations.
+
+Formal results are recorded in
+`docs/development/p2-formal-acceptance-evidence.md`.
 
 Even if all three local suites pass, `P2.EXIT` cannot be marked complete while
 the owner-approved P2.4 external proof deferral remains an unmet exit dependency.
