@@ -1,9 +1,9 @@
 # P2.5 Synthetic Authorization Failure-Path Evidence
 
-**Status:** `[?] EVIDENCE_PENDING`<br>
+**Status:** `[x] COMPLETE`<br>
 **Evidence captured:** `2026-07-31T21:09:59-04:00`<br>
 **Engineering result:** `PASS`<br>
-**Review decision:** Pending owner review
+**Review decision:** Owner accepted `2026-07-31T21:45:31-04:00`
 
 This generation proves a no-effect Red authorization workflow across strict
 schema admission, current deny-by-default policy, exact plan and precondition
@@ -12,20 +12,20 @@ exact acknowledged-head checkpoint signing, required assurance, and one-use
 grant consumption. No application, effect broker, process execution path, or
 production authority is added.
 
-## Proposed Generation
+## Accepted Generation
 
 | Artifact | State | SHA-256 |
 | --- | --- | --- |
-| Schema registry v9 | Proposed, additive | `6341266b82a4bee6d010f40e68fb37878bd77ee7da07bdb3d05bdce6fc819e0b` |
+| Schema registry v9 | Accepted, additive | `e222d2ade085848ff89c5e95e30cf122f74f1a9a1e91b7eae8b15d0570a3464e` |
 | Local owner approval schema v1 | Proposed D1 control contract | `029fb61083ba2774ef7506e4c996db2e80c37c13194e1cb7f66d849cfca44d9e` |
-| Process ownership v6 | Proposed proof boundary | `6fe97992693cda1ac4543e6ac64e3659e3c9a176323f5d0cbc8043f3fcd01778` |
+| Process ownership v6 | Accepted proof boundary | `a02bf6e7b4af2244e878f7f066aa246928ec881dc2a8c3f0279fe6ea08b7ad62` |
 | P2 contract admission | Additive approval family | `824342e6b46c31b6f0676346a84bc3fede9bde159d2048d99bab5c2b5073b46a` |
 | Synthetic authorization proof service | Implemented, app-unreachable | `bb0844cc1e84b850581319d802fe9b22e754101d7a63e2b9699ccd39200bdee2` |
 | Exact acknowledged-head checkpoint constraint | Implemented | `81c1bf69049ee03481c10d5468728a4fe86704d7a0cb5e8cfeb37e1f5d47ccad` |
-| Authorization contract corpus | Implemented | `ffade71a1900c2e3edbfc7cf6d53c96d4b7a0b8480fb16e930ac3d3eb1acd3cc` |
+| Authorization contract corpus | Implemented | `a307cf3da37c76f81864109f39c6b33a9ec9672a87ba58832deb528759ba62ac` |
 | Authorization security corpus | Implemented | `e143d14ec78b6ba944bbdac7bd30a072152bb0d0600333299aaf249ee9f4899d` |
 | Checkpoint security corpus | Extended | `be620d6e89562b92a24b79bcba7e4da223b77ebcca9b196429491b8c9ccc9011` |
-| Ownership and import corpus | Extended | `50a366aa3674368db7fd093a28d0190358b17da251c9a53dc33b5623814c9f67` |
+| Ownership and import corpus | Extended | `16b42e850686ae7f1f615a58207f93f2ea679eae1592e9e2301d84fcfb32de56` |
 
 Accepted schema registry v8 remains byte-identical at SHA-256
 `d98a4b0fe1739ae4924c67f7549134235c2bc28144849eaed89799c091ba8fcf`.
@@ -113,9 +113,10 @@ Accepted process ownership v5 remains byte-identical at SHA-256
 - Every effectful runtime capability remains `UNVERIFIED`; P3 is still the
   earliest phase allowed to introduce an execution broker.
 
-## Decision Request
+## Decision
 
-Review schema registry v9, process ownership v6, the D1 approval contract, and
-the synthetic authorization proof. Acceptance may complete P2.5 engineering
+The owner accepted schema registry v9, process ownership v6, the D1 approval
+contract, and the synthetic authorization proof. P2.5 engineering is complete
 without completing P2, changing any capability state, or satisfying the
-deferred P2.4 hardware and public-anchor contracts.
+deferred P2.4 hardware and public-anchor contracts. Formal P2 acceptance is the
+next active gate.

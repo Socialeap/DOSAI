@@ -3,8 +3,8 @@
   "registry_id": "urn:dosai:schema-registry:9",
   "registry_version": 9,
   "supersedes": "urn:dosai:schema-registry:8",
-  "status": "PROPOSED",
-  "updated_at": "2026-07-31T20:57:31.000-04:00",
+  "status": "ACCEPTED",
+  "updated_at": "2026-07-31T21:45:31.000-04:00",
   "schemas": [
     { "name": "common", "schema_id": "urn:dosai:schema:common:1", "version": 1, "owner_phase": "P0", "state": "DEFINED", "path": "schemas/v1/common.schema.json" },
     { "name": "error-envelope", "schema_id": "urn:dosai:schema:error-envelope:1", "version": 1, "owner_phase": "P0-P1", "state": "DEFINED", "path": "schemas/v1/error-envelope.schema.json" },

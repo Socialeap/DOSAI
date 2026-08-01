@@ -29,7 +29,7 @@ function boundaryForPath(path) {
 
 test('every source root has one explicit ownership boundary', async () => {
   assert.equal(manifest.schema_version, 6);
-  assert.equal(manifest.status, 'PROPOSED');
+  assert.equal(manifest.status, 'ACCEPTED');
   assert.deepEqual(manifest.accepted_adrs, [
     'docs/decisions/0001-runtime-and-privilege-boundaries.md',
     'docs/decisions/0002-typed-operations-policy-and-grants.md',

@@ -26,9 +26,9 @@ local checkpoint and Rekor v2 protocol baseline are accepted. The packaged Swift
 helper proves process-scoped Secure Enclave signing and non-exportability on this
 Mac, and the official-client TUF bootstrap fails closed correctly. The owner
 deferred P2.4's unavailable persistent-Keychain and TUF-authorized Rekor v2
-proofs without weakening either contract. P2.5's proposed registry v9,
-ownership v6, D1 approval contract, and app-unreachable no-effect authorization
-proof pass 153 tests and await owner review plus formal P2 acceptance artifacts.
+proofs without weakening either contract. The owner accepted P2.5's registry
+v9, ownership v6, D1 approval contract, and app-unreachable no-effect
+authorization proof after 153 tests. Formal P2 acceptance artifacts remain.
 No public entry or production grant exists. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
@@ -70,7 +70,7 @@ access, deployment, and destructive mutations are out of scope.
 - [Schema registry v6](docs/architecture/schema-registry-v6.json)
 - [Schema registry v7](docs/architecture/schema-registry-v7.json)
 - [Schema registry v8](docs/architecture/schema-registry-v8.json)
-- [Proposed schema registry v9](docs/architecture/schema-registry-v9.json)
+- [Schema registry v9](docs/architecture/schema-registry-v9.json)
 - [Acceptance-testing contract v1](docs/testing/acceptance-testing-v1.md)
 - [Acceptance-test catalog v1](docs/testing/acceptance-test-catalog-v1.json)
 - [Acceptance-test catalog v2](docs/testing/acceptance-test-catalog-v2.json)

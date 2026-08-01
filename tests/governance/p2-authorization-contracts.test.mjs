@@ -45,7 +45,7 @@ function validates(id, value) {
   return validator.getSchema(id)?.(value) === true;
 }
 
-test('proposed registry v9 is additive and preserves accepted v8 bytes', async () => {
+test('accepted registry v9 is additive and preserves accepted v8 bytes', async () => {
   const [v8Bytes, v8, v9] = await Promise.all([
     readFile(join(root, 'docs/architecture/schema-registry-v8.json')),
     readFile(join(root, 'docs/architecture/schema-registry-v8.json'), 'utf8').then(JSON.parse),
@@ -58,7 +58,7 @@ test('proposed registry v9 is additive and preserves accepted v8 bytes', async (
   assert.equal(v9.registry_id, 'urn:dosai:schema-registry:9');
   assert.equal(v9.registry_version, 9);
   assert.equal(v9.supersedes, v8.registry_id);
-  assert.equal(v9.status, 'PROPOSED');
+  assert.equal(v9.status, 'ACCEPTED');
 
   const v8Schemas = new Map(v8.schemas.map((schema) => [schema.name, schema]));
   const changed = v9.schemas

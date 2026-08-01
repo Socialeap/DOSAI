@@ -1,6 +1,6 @@
 {
   "schema_version": 6,
-  "status": "PROPOSED",
+  "status": "ACCEPTED",
   "supersedes": {
     "path": "docs/architecture/process-ownership-v5.json",
     "sha256": "6417976e00bd8ea6db597f5020b8558ccb32244cb19e08469652d51469d53d87"
