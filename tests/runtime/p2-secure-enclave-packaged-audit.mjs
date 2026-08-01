@@ -89,7 +89,12 @@ export async function runP2SecureEnclavePackagedAudit() {
       report,
       'P2-SECURE-HELPER-OPERATIONS-EXACT',
       JSON.stringify(description.result?.operations) ===
-        JSON.stringify(['describe', 'exercise-test-lifecycle', 'cleanup-test-key']),
+        JSON.stringify([
+          'describe',
+          'exercise-test-lifecycle',
+          'exercise-ephemeral-hardware',
+          'cleanup-test-key',
+        ]),
     );
 
     const packagedFiles = listPackage(asarPath, { isPack: false });

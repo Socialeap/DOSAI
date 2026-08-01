@@ -46,6 +46,8 @@ test('proof helper source exposes no arbitrary signing, input, network, or produ
   assert.match(source, /guard try !testKeyExists\(tag: tag\)/);
   assert.match(source, /cleanup-test-key/);
   assert.match(source, /signature_der_base64/);
+  assert.match(source, /exercise-ephemeral-hardware/);
+  assert.doesNotMatch(source, /kSecAttrAccessGroupToken/);
 });
 
 test('live audit has one exact proof command, independent verification, and mandatory cleanup', async () => {
@@ -77,7 +79,12 @@ test('proof helper compiles for the minimum target and read-only protocol reject
       minimum_macos_version: '15.0',
       mutation_performed: false,
       network_authority: false,
-      operations: ['describe', 'exercise-test-lifecycle', 'cleanup-test-key'],
+      operations: [
+        'describe',
+        'exercise-test-lifecycle',
+        'exercise-ephemeral-hardware',
+        'cleanup-test-key',
+      ],
       production_checkpoint_signing: false,
       protocol_version: 1,
       remote_attestation: 'UNAVAILABLE',

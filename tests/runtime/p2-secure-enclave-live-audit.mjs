@@ -23,14 +23,19 @@ function sha256(value) {
 }
 
 function exactRunID(arguments_) {
-  if (arguments_.length !== 2 || arguments_[0] !== '--run-id') {
+  if (
+    arguments_.length !== 4 ||
+    arguments_[0] !== '--run-id' ||
+    arguments_[2] !== '--mode' ||
+    !['ephemeral', 'persistent'].includes(arguments_[3])
+  ) {
     throw new Error('USAGE_INVALID');
   }
   const runID = arguments_[1];
   if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(runID)) {
     throw new Error('RUN_ID_INVALID');
   }
-  return runID;
+  return { mode: arguments_[3], runID };
 }
 
 function helperEnvironment() {
@@ -89,18 +94,22 @@ function record(report, id, condition, measurement) {
   report.assertions.push(assertion);
 }
 
-export async function runP2SecureEnclaveLiveAudit(runID) {
+export async function runP2SecureEnclaveLiveAudit(runID, mode) {
   const report = {
     schema,
     formal_acceptance_report: false,
     engineering_result: 'ERROR',
     run_id: runID,
+    mode,
     assertions: [],
     limitations: [
       'LOCAL_PLATFORM_EVIDENCE_ONLY',
       'REMOTE_HARDWARE_ATTESTATION_UNAVAILABLE',
       'AD_HOC_HELPER_SIGNATURE_ONLY',
       'PRODUCTION_CHECKPOINT_SIGNING_NOT_IMPLEMENTED',
+      ...(mode === 'ephemeral'
+        ? ['PERSISTENT_KEYCHAIN_PROOF_REQUIRES_APPLICATION_SIGNING_IDENTITY']
+        : []),
     ],
   };
   let cleanupResponse;
@@ -122,7 +131,7 @@ export async function runP2SecureEnclaveLiveAudit(runID) {
 
     lifecycleStarted = true;
     const envelope = await invokeHelper([
-      'exercise-test-lifecycle',
+      mode === 'persistent' ? 'exercise-test-lifecycle' : 'exercise-ephemeral-hardware',
       runID,
       authorizationPhrase,
     ]);
@@ -134,8 +143,12 @@ export async function runP2SecureEnclaveLiveAudit(runID) {
     record(report, 'P2-SECURE-LIVE-PRIVATE-KEY-NONEXPORTABLE',
       proof?.private_key_export === 'UNAVAILABLE');
     record(report, 'P2-SECURE-LIVE-HELPER-VERIFICATION', proof?.signature_verified === true);
-    record(report, 'P2-SECURE-LIVE-HELPER-CLEANUP',
-      proof?.cleanup_confirmed === true && proof?.mutation_performed === true);
+    record(report, 'P2-SECURE-LIVE-LIFECYCLE-SCOPE', mode === 'persistent'
+      ? proof?.cleanup_confirmed === true && proof?.mutation_performed === true
+      : proof?.keychain_item_created === false &&
+        proof?.keychain_persistence === 'NONE' &&
+        proof?.lifetime === 'PROCESS_SCOPED' &&
+        proof?.secure_enclave_operation_performed === true);
     record(report, 'P2-SECURE-LIVE-NO-REMOTE-ATTESTATION-CLAIM',
       proof?.remote_attestation === 'UNAVAILABLE');
 
@@ -196,7 +209,7 @@ export async function runP2SecureEnclaveLiveAudit(runID) {
     report.failure_code = 'SECRET_SCAN_FAILED';
   }
 
-  const evidencePath = join(evidenceRoot, `p2-secure-enclave-live-${runID}.json`);
+  const evidencePath = join(evidenceRoot, `p2-secure-enclave-live-${mode}-${runID}.json`);
   await writeEvidence(evidencePath, report);
   const evidenceBytes = await readFile(evidencePath);
   return {
@@ -207,12 +220,13 @@ export async function runP2SecureEnclaveLiveAudit(runID) {
 }
 
 if (import.meta.main) {
-  const runID = exactRunID(process.argv.slice(2));
-  const result = await runP2SecureEnclaveLiveAudit(runID);
+  const { mode, runID } = exactRunID(process.argv.slice(2));
+  const result = await runP2SecureEnclaveLiveAudit(runID, mode);
   console.log(JSON.stringify({
     engineering_result: result.report.engineering_result,
     evidence_path: join('evidence', basename(result.evidence_path)),
     evidence_sha256: result.evidence_sha256,
+    mode,
     run_id: runID,
     secret_scan: result.report.secret_scan,
     subject_commit: result.report.subject_commit,

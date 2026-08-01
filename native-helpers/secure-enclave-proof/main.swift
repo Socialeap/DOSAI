@@ -6,6 +6,7 @@ import Security
 
 private let authorizationPhrase = "DOSAI_OWNER_AUTHORIZED_LOCAL_SECURE_ENCLAVE_PROOF_V1"
 private let cleanupCommand = "cleanup-test-key"
+private let ephemeralCommand = "exercise-ephemeral-hardware"
 private let helperSchema = "DOSAI_SECURE_ENCLAVE_PROOF_HELPER_V1"
 private let lifecycleCommand = "exercise-test-lifecycle"
 private let proofTagPrefix = "com.socialeap.dosai.audit.secure-enclave.proof.v1."
@@ -13,6 +14,13 @@ private let proofTagPrefix = "com.socialeap.dosai.audit.secure-enclave.proof.v1.
 private struct HelperFailure: Error {
   let code: String
   let exitCode: Int32
+  let platformErrorCode: Int?
+
+  init(code: String, exitCode: Int32, platformErrorCode: Int? = nil) {
+    self.code = code
+    self.exitCode = exitCode
+    self.platformErrorCode = platformErrorCode
+  }
 }
 
 private func fail(_ code: String, exitCode: Int32 = 70) throws -> Never {
@@ -24,6 +32,22 @@ private func discard(_ error: inout Unmanaged<CFError>?) {
     _ = retained.takeRetainedValue()
     error = nil
   }
+}
+
+private func platformFailure(
+  _ code: String,
+  error: inout Unmanaged<CFError>?
+) -> HelperFailure {
+  guard let retained = error else {
+    return HelperFailure(code: code, exitCode: 70)
+  }
+  let value = retained.takeRetainedValue()
+  error = nil
+  return HelperFailure(
+    code: code,
+    exitCode: 70,
+    platformErrorCode: CFErrorGetCode(value)
+  )
 }
 
 private func digestHex(_ data: Data) -> String {
@@ -89,8 +113,7 @@ private func createTestKey(tag: Data) throws -> SecKey {
     [.privateKeyUsage],
     &accessError
   ) else {
-    discard(&accessError)
-    try fail("DOSAI_SECURE_ENCLAVE_ACCESS_CONTROL_0001")
+    throw platformFailure("DOSAI_SECURE_ENCLAVE_ACCESS_CONTROL_0001", error: &accessError)
   }
   discard(&accessError)
 
@@ -107,8 +130,7 @@ private func createTestKey(tag: Data) throws -> SecKey {
 
   var createError: Unmanaged<CFError>?
   guard let key = SecKeyCreateRandomKey(parameters as CFDictionary, &createError) else {
-    discard(&createError)
-    try fail("DOSAI_SECURE_ENCLAVE_KEY_CREATE_0001")
+    throw platformFailure("DOSAI_SECURE_ENCLAVE_KEY_CREATE_0001", error: &createError)
   }
   discard(&createError)
   return key
@@ -124,6 +146,21 @@ private func subjectPublicKeyInfo(_ x963: Data) throws -> Data {
     0x07, 0x03, 0x42, 0x00,
   ]
   return Data(p256SPKIPrefix) + x963
+}
+
+private func createEphemeralTestKey() throws -> SecKey {
+  let parameters: [String: Any] = [
+    kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
+    kSecAttrKeySizeInBits as String: 256,
+    kSecAttrTokenID as String: kSecAttrTokenIDSecureEnclave,
+    kSecAttrIsPermanent as String: false,
+  ]
+  var createError: Unmanaged<CFError>?
+  guard let key = SecKeyCreateRandomKey(parameters as CFDictionary, &createError) else {
+    throw platformFailure("DOSAI_SECURE_ENCLAVE_EPHEMERAL_CREATE_0001", error: &createError)
+  }
+  discard(&createError)
+  return key
 }
 
 private func inspectAndExercise(privateKey: SecKey, runID: String) throws -> [String: Any] {
@@ -201,6 +238,18 @@ private func inspectAndExercise(privateKey: SecKey, runID: String) throws -> [St
   ]
 }
 
+private func exerciseEphemeralHardware(runID: String) throws -> [String: Any] {
+  let privateKey = try createEphemeralTestKey()
+  var proof = try inspectAndExercise(privateKey: privateKey, runID: runID)
+  proof["keychain_item_created"] = false
+  proof["keychain_persistence"] = "NONE"
+  proof["lifetime"] = "PROCESS_SCOPED"
+  proof["mutation_performed"] = false
+  proof["run_id"] = runID
+  proof["secure_enclave_operation_performed"] = true
+  return proof
+}
+
 private func exerciseTestLifecycle(runID: String) throws -> [String: Any] {
   let tag = Data((proofTagPrefix + runID).utf8)
   guard try !testKeyExists(tag: tag) else {
@@ -215,7 +264,7 @@ private func exerciseTestLifecycle(runID: String) throws -> [String: Any] {
       try fail("DOSAI_SECURE_ENCLAVE_PERSISTENCE_0001")
     }
     proof = try inspectAndExercise(privateKey: privateKey, runID: runID)
-  } catch let failure as HelperFailure {
+    } catch let failure as HelperFailure {
     operationFailure = failure
   } catch {
     operationFailure = HelperFailure(code: "DOSAI_SECURE_ENCLAVE_INTERNAL_0001", exitCode: 70)
@@ -269,7 +318,7 @@ private func describe() -> [String: Any] {
     "minimum_macos_version": "15.0",
     "mutation_performed": false,
     "network_authority": false,
-    "operations": ["describe", lifecycleCommand, cleanupCommand],
+    "operations": ["describe", lifecycleCommand, ephemeralCommand, cleanupCommand],
     "production_checkpoint_signing": false,
     "protocol_version": 1,
     "remote_attestation": "UNAVAILABLE",
@@ -289,6 +338,8 @@ private func dispatch(_ arguments: [String]) throws -> [String: Any] {
     return describe()
   case lifecycleCommand:
     return try exerciseTestLifecycle(runID: authorizedRunID(arguments))
+  case ephemeralCommand:
+    return try exerciseEphemeralHardware(runID: authorizedRunID(arguments))
   case cleanupCommand:
     return try cleanupTestKey(runID: authorizedRunID(arguments))
   default:
@@ -313,8 +364,12 @@ private struct DOSAISecureEnclaveProofHelper {
     do {
       let result = try dispatch(Array(CommandLine.arguments.dropFirst()))
       emit(["ok": true, "result": result, "schema": helperSchema])
-    } catch let failure as HelperFailure {
-      emit(["error": ["code": failure.code], "ok": false, "schema": helperSchema])
+  } catch let failure as HelperFailure {
+      var error: [String: Any] = ["code": failure.code]
+      if let platformErrorCode = failure.platformErrorCode {
+        error["platform_error_code"] = platformErrorCode
+      }
+      emit(["error": error, "ok": false, "schema": helperSchema])
       Darwin.exit(failure.exitCode)
     } catch {
       emit([
