@@ -15,6 +15,7 @@ import {
 const execFileAsync = promisify(execFile);
 const root = resolve(import.meta.dirname, '../..');
 const sourcePath = join(root, 'native-helpers/secure-enclave-proof/main.swift');
+const liveAuditPath = join(root, 'tests/runtime/p2-secure-enclave-live-audit.mjs');
 
 async function rejectedInvocation(executable, arguments_) {
   try {
@@ -44,6 +45,17 @@ test('proof helper source exposes no arbitrary signing, input, network, or produ
   assert.match(source, /SecItemDelete/);
   assert.match(source, /guard try !testKeyExists\(tag: tag\)/);
   assert.match(source, /cleanup-test-key/);
+  assert.match(source, /signature_der_base64/);
+});
+
+test('live audit has one exact proof command, independent verification, and mandatory cleanup', async () => {
+  const source = await readFile(liveAuditPath, 'utf8');
+  assert.match(source, /exercise-test-lifecycle/);
+  assert.match(source, /createPublicKey/);
+  assert.match(source, /verify\('sha256', challenge, publicKey, signature\)/);
+  assert.match(source, /cleanup-test-key/);
+  assert.match(source, /finally/);
+  assert.doesNotMatch(source, /fetch\s*\(|https?:\/\//);
 });
 
 test('proof helper compiles for the minimum target and read-only protocol rejects unsafe input', {

@@ -14,6 +14,7 @@
   "scripts": {
     "audit:p1": "node tests/runtime/p1-packaged-runtime-audit.mjs",
     "audit:p2:secure-enclave-helper": "node tests/runtime/p2-secure-enclave-packaged-audit.mjs",
+    "audit:p2:secure-enclave-live": "node tests/runtime/p2-secure-enclave-live-audit.mjs",
     "build": "node scripts/build.mjs",
     "build:secure-enclave-helper": "node scripts/secure-enclave-helper.mjs",
     "check": "pnpm run typecheck && pnpm run test && pnpm run build",

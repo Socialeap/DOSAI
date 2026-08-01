@@ -195,6 +195,7 @@ private func inspectAndExercise(privateKey: SecKey, runID: String) throws -> [St
     "private_key_export": "UNAVAILABLE",
     "public_key_spki_der_base64": spki.base64EncodedString(),
     "remote_attestation": "UNAVAILABLE",
+    "signature_der_base64": signature.base64EncodedString(),
     "signature_verified": true,
     "token": "SECURE_ENCLAVE",
   ]
