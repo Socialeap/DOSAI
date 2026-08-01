@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-31
-- **Status updated:** 2026-07-31T19:41:14-04:00
+- **Status updated:** 2026-07-31T20:31:06-04:00
 - **Decision owner:** Repository owner
 - **Related controls:** F01, F05, F12
 - **Related plan phases:** P2, P7, P11
@@ -68,9 +68,13 @@ TUF SigningConfig and TrustedRoot, and fail closed on unknown versions.
 - Persist a self-contained normalized receipt containing the exact canonicalized
   body, log index, inclusion path, signed C2SP checkpoint, log identity, and
   digests of the trusted configuration used for verification.
-- The v1 verifier admits only the TUF-selected ECDSA P-256 checkpoint-key profile.
-  A Rekor shard using another signed-note algorithm requires a versioned verifier
-  update rather than runtime algorithm negotiation.
+- The verifier admits only TUF-selected ECDSA P-256 and Ed25519 checkpoint-key
+  profiles, validates each profile's C2SP key-ID construction, and binds the
+  selected algorithm before parsing a response. Any other signed-note algorithm
+  requires a versioned verifier update rather than runtime negotiation.
+- If the verified SigningConfig contains no active Rekor v2 service, DOSAI fails
+  closed without a public write. A shard URL present only in TrustedRoot or
+  documentation is not write authorization and cannot be used as a fallback.
 - Verify the canonicalized body against the DOSAI checkpoint, reconstruct the
   RFC 6962 leaf and inclusion root, verify the signed-note checkpoint under the
   selected trusted log key, and require exact tree size, root, origin, key ID,
@@ -144,6 +148,12 @@ real non-secret synthetic entry using TUF-derived trust material without DOSAI
 write authority. Secure Enclave evidence must verify non-exportability on each
 supported package and Mac profile without claiming unavailable remote hardware
 attestation.
+
+The 2026-07-31 implementation audit found that the current production
+SigningConfig still lists only Rekor v1, while TrustedRoot contains the Rekor v2
+shard with an Ed25519 checkpoint key. The implementation now verifies both
+approved key profiles, but the required real v2 entry remains externally blocked
+until Sigstore authorizes a v2 endpoint through SigningConfig.
 
 ## Revisit Conditions
 

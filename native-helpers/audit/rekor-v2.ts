@@ -36,6 +36,7 @@ export class RekorV2Failure extends Error {
 export type RekorV2PinnedTrustMaterial = Readonly<{
   logOrigin: string;
   checkpointKeyName: string;
+  checkpointKeyDetails?: 'PKIX_ECDSA_P256_SHA_256' | 'PKIX_ED25519';
   checkpointKeyIdBase64: string;
   checkpointPublicKeySpkiDerBase64: string;
   trustedRootDigest: Digest;
@@ -147,23 +148,49 @@ function validateTrust(trust: RekorV2PinnedTrustMaterial) {
     1024,
     'DOSAI_REKOR_TRUST_0001',
   );
-  const keyId = createHash('sha256').update(der).digest();
-  if (keyId.toString('base64') !== trust.checkpointKeyIdBase64) {
-    return fail('DOSAI_REKOR_TRUST_0001');
-  }
   let publicKey;
   try {
     publicKey = createPublicKey({ key: der, format: 'der', type: 'spki' });
   } catch {
     return fail('DOSAI_REKOR_TRUST_0001');
   }
-  if (
-    publicKey.asymmetricKeyType !== 'ec' ||
-    publicKey.asymmetricKeyDetails?.namedCurve !== 'prime256v1'
-  ) {
+  let keyId: Buffer;
+  let signatureAlgorithm: 'sha256' | null;
+  const keyDetails = trust.checkpointKeyDetails ?? 'PKIX_ECDSA_P256_SHA_256';
+  if (keyDetails === 'PKIX_ECDSA_P256_SHA_256') {
+    if (
+      publicKey.asymmetricKeyType !== 'ec' ||
+      publicKey.asymmetricKeyDetails?.namedCurve !== 'prime256v1'
+    ) {
+      return fail('DOSAI_REKOR_TRUST_0001');
+    }
+    keyId = createHash('sha256').update(der).digest();
+    signatureAlgorithm = 'sha256';
+  } else if (keyDetails === 'PKIX_ED25519') {
+    if (publicKey.asymmetricKeyType !== 'ed25519') {
+      return fail('DOSAI_REKOR_TRUST_0001');
+    }
+    const jwk = publicKey.export({ format: 'jwk' });
+    if (typeof jwk.x !== 'string') {
+      return fail('DOSAI_REKOR_TRUST_0001');
+    }
+    const rawKey = Buffer.from(jwk.x, 'base64url');
+    if (rawKey.byteLength !== 32) {
+      return fail('DOSAI_REKOR_TRUST_0001');
+    }
+    keyId = createHash('sha256')
+      .update(trust.checkpointKeyName, 'utf8')
+      .update(Buffer.from([0x0a, 0x01]))
+      .update(rawKey)
+      .digest();
+    signatureAlgorithm = null;
+  } else {
     return fail('DOSAI_REKOR_TRUST_0001');
   }
-  return { publicKey, keyId };
+  if (keyId.toString('base64') !== trust.checkpointKeyIdBase64) {
+    return fail('DOSAI_REKOR_TRUST_0001');
+  }
+  return { publicKey, keyId, signatureAlgorithm };
 }
 
 function activeSignature(checkpoint: AuditCheckpoint) {
@@ -279,7 +306,7 @@ function parseAndVerifyCheckpointEnvelope(
   }
   const treeSize = BigInt(lines[1]!);
   const rootHash = decodeBase64(lines[2]!, 32, 32, 'DOSAI_REKOR_CHECKPOINT_0001');
-  const { publicKey, keyId } = validateTrust(trust);
+  const { publicKey, keyId, signatureAlgorithm } = validateTrust(trust);
   let verifiedKnownSignature = false;
   for (const line of signatureLines) {
     if (!line.startsWith('\u2014 ')) {
@@ -300,7 +327,7 @@ function parseAndVerifyCheckpointEnvelope(
       continue;
     }
     const signature = signatureBlob.subarray(4);
-    if (!verifySignature('sha256', Buffer.from(noteText, 'utf8'), publicKey, signature)) {
+    if (!verifySignature(signatureAlgorithm, Buffer.from(noteText, 'utf8'), publicKey, signature)) {
       return fail('DOSAI_REKOR_CHECKPOINT_0001');
     }
     verifiedKnownSignature = true;

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import test from 'node:test';
 
 import * as rekorModule from '../../native-helpers/audit/rekor-v2.ts';
@@ -61,6 +62,34 @@ test('verified response and stored receipt pass offline under pinned trust mater
   assert.equal(repeated.log_index, '0');
   assert.equal(repeated.tree_size, '2');
   assert.equal(repeated.assurance, 'INCLUSION_PROOF_VERIFIED_NO_TRUSTED_TIME');
+  assert.deepEqual(verifyStoredRekorV2Receipt(checkpoint, receipt, trust), receipt);
+});
+
+test('Ed25519 C2SP checkpoints pass under algorithm-explicit pinned trust', async () => {
+  const { checkpoint } = await checkpointFixture();
+  const { response: p256Response, trust: p256Trust } = await receiptFixture(checkpoint);
+  const response = structuredClone(p256Response);
+  const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  const der = publicKey.export({ format: 'der', type: 'spki' });
+  const raw = Buffer.from(publicKey.export({ format: 'jwk' }).x, 'base64url');
+  const keyId = createHash('sha256')
+    .update(p256Trust.checkpointKeyName, 'utf8')
+    .update(Buffer.from([0x0a, 0x01]))
+    .update(raw)
+    .digest();
+  const noteText = `${p256Trust.logOrigin}\n${response.inclusionProof.treeSize}\n${response.inclusionProof.rootHash}\n`;
+  const signature = sign(null, Buffer.from(noteText, 'utf8'), privateKey);
+  response.logId.keyId = keyId.toString('base64');
+  response.inclusionProof.checkpoint.envelope =
+    `${noteText}\n\u2014 ${p256Trust.checkpointKeyName} ${Buffer.concat([keyId.subarray(0, 4), signature]).toString('base64')}\n`;
+  const trust = {
+    ...p256Trust,
+    checkpointKeyDetails: 'PKIX_ED25519',
+    checkpointKeyIdBase64: keyId.toString('base64'),
+    checkpointPublicKeySpkiDerBase64: der.toString('base64'),
+  };
+  const receipt = verify(checkpoint, response, trust);
+  assert.equal(receipt.log_key_id_base64, trust.checkpointKeyIdBase64);
   assert.deepEqual(verifyStoredRekorV2Receipt(checkpoint, receipt, trust), receipt);
 });
 
