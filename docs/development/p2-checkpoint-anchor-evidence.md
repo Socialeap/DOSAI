@@ -1,16 +1,17 @@
 # P2.4 Checkpoint and Anchor Protocol Evidence
 
-**Status:** `[~] IN_PROGRESS`<br>
-**Evidence captured:** `2026-07-31T19:35:39-04:00`<br>
-**Engineering result:** `PASS_LOCAL_PROTOCOL_PROOF`<br>
-**Review decision:** `ACCEPTED_LOCAL_BASELINE` at `2026-07-31T19:41:14-04:00`<br>
-**Phase completion:** Not claimed
+**Status:** `[!] BLOCKED_EXTERNAL`<br>
+**Evidence captured:** `2026-07-31T20:33:46-04:00`<br>
+**Engineering result:** `PASS_LOCAL_AND_TUF_FAIL_CLOSED`<br>
+**Review decision:** `OWNER_AUTHORIZED_COMPLETION_RUN`<br>
+**Phase completion:** Blocked on a TUF-authorized Rekor v2 writer
 
-This record covers a synthetic, offline checkpoint-signing and Rekor v2 receipt
-verification proof inside the isolated Z6 audit library. It sends no network
-request, creates no Keychain item, uses no production credential, contacts no
-anchor, and is not connected to Electron. Every runtime capability remains
-`UNVERIFIED`.
+This record began as the accepted synthetic offline protocol proof. The
+completion generation adds an official Sigstore TUF client, strict v2 service
+selection, algorithm-explicit P-256 and Ed25519 C2SP verification, and a clean
+read-only production TUF audit. Production SigningConfig authorized only Rekor
+v1, so the runner failed closed before any public write. Every runtime capability
+remains `UNVERIFIED`.
 
 ## Accepted Local Baseline
 
@@ -36,22 +37,33 @@ Accepted process ownership v3 remains byte-identical at SHA-256
 Accepted schema registry v7 remains byte-identical at SHA-256
 `6a41d62c2f22683573f211d4c6012ac17bad6fe08ba9a1443792e0adcb0e6ff7`.
 
+## Completion Generation
+
+| Artifact | State | SHA-256 |
+| --- | --- | --- |
+| Subject commit | Clean audit subject | `537675e5433c72b6733a5ca7ac9fdc38f348aea4` |
+| ADR 0012 amended compatibility decision | Accepted implementation boundary | `ff86171b1deb0f6ae0200e364bf54c33d37045b568f4953723ff99b74ed9b590` |
+| TUF target resolver | Implemented, pure, fail-closed | `1f04c3d5f65b5094a67b5b7dae87ea11e9eeb73980617fdb5cebf46731edfc9c` |
+| Rekor verifier | P-256 and Ed25519 | `995b25028451b3ea6835334f6515dffacc3d44f3ba54c9ead2fd11b16a9b4b5b` |
+| Isolated official TUF client manifest | Exact `@sigstore/tuf@5.0.0` | `019589c9ffe4dcd66dcd201537cadd588ae09ec8ffb08b51935ae4a1986b1bd3` |
+| Isolated dependency lock | 11 integrity-locked packages | `ba82e29115dabfacb5954a00eed1cd8c2fe27a1b99f51ab3f31e5109be0ec55f` |
+| Formal TUF evidence | Secret scan PASS; no publication | `6c7edbfde0e65b2b23390c5247ee789f203a9cd1fc5c6cba4cbefa4507b531b2` |
+
 ## Architecture Selection
 
-- Production checkpoint signing targets Apple's Security framework with a
-  permanent, non-exportable Secure Enclave P-256 key. The local proof exposes
-  only an opaque ephemeral software authority permanently labeled
-  `SOFTWARE_BACKED_TEST_ONLY`; there is no Secure Enclave factory or hardware
-  assurance path in the current code.
+- Production checkpoint signing still targets a permanent, non-exportable Secure
+  Enclave P-256 key. A separate packaged proof now demonstrates process-scoped
+  Secure Enclave signing and non-exportability; the TypeScript signer remains an
+  isolated `SOFTWARE_BACKED_TEST_ONLY` fixture.
 - Sigstore's public-good Rekor v2 transparency log is the selected independent
   anchor. Active shards and log keys must come from TUF SigningConfig and
   TrustedRoot material. No shard URL is hardcoded.
 - Rekor receives only the checkpoint signing-input SHA-256 digest, active P-256
   signature, and public SPKI key through `hashedrekord` v0.0.2. Journal and event
   payloads are absent from the request.
-- The verifier accepts one fixed ECDSA P-256 log-checkpoint profile, reconstructs
-  the exact canonical Rekor body, verifies the RFC 6962 inclusion path, and
-  verifies the signed C2SP checkpoint under pinned trust material.
+- The verifier accepts only TUF-selected ECDSA P-256 or Ed25519 log-checkpoint
+  profiles, reconstructs the exact canonical Rekor body, verifies the RFC 6962
+  inclusion path, and verifies the signed C2SP checkpoint under pinned trust.
 - Rekor v2 `integratedTime` is required to be zero and grants no time claim.
   Trusted duration policy requires a later RFC 3161 or witnessed-checkpoint proof.
 
@@ -98,6 +110,15 @@ Accepted schema registry v7 remains byte-identical at SHA-256
 5. A caller-provided boolean could have upgraded a parsed key label to hardware
    assurance. No current input can produce hardware assurance; Secure Enclave
    state remains degraded until a packaged native proof exists.
+6. The accepted verifier assumed a P-256 log checkpoint, but production
+   TrustedRoot advertises the v2 shard with Ed25519. Verification now binds an
+   exact TUF-selected profile and validates each C2SP key-ID construction.
+7. Adding TUF to the application lock would invalidate accepted supply-chain
+   evidence. The official client now has a separate exact, integrity-locked audit
+   dependency closure; the application lock remains byte-identical.
+8. Current production SigningConfig contains no Rekor v2 service. The live runner
+   records `BLOCKED_EXTERNAL_TUF_NO_REKOR_V2_SERVICE` and cannot substitute the
+   URL found in TrustedRoot or documentation.
 
 ## Validation
 
@@ -114,7 +135,12 @@ Accepted schema registry v7 remains byte-identical at SHA-256
 | Unknown C2SP signature handling and selected known-key failure | PASS |
 | Receipt replay, trust substitution, deterministic reconciliation, and offline revalidation | PASS |
 | Architecture import and no-network checks | PASS; no fetch, HTTP, socket, or process execution path |
-| `pnpm run check` under Node 24.18.0 and pnpm 11.18.0 | PASS; seven typechecks, 103 tests, three production builds |
+| TUF service, window, operator, URL, key, key-ID, algorithm, and substitution corpus | PASS; fail-closed |
+| P-256 and Ed25519 signed C2SP checkpoints | PASS; independently verified |
+| `pnpm run audit:p2:rekor-live --run-id 6ce3dae4-f5c6-4eba-8822-2e0979fc1827 --mode trust-only` | PASS_FAIL_CLOSED; metadata current, no v2 writer, no publication, secret scan PASS |
+| Production TUF metadata | Root v15, timestamp v743, snapshot v165, targets v14; all current at audit |
+| `pnpm run check` under Node 24.18.0 and pnpm 11.18.0 | PASS; seven typechecks, 117 tests, three production builds |
+| Packaged GUI audit | PASS; 29 assertions, secret scan PASS, cleanup PASS |
 | Runtime capability matrix | Unchanged; all effectful capabilities remain `UNVERIFIED` |
 
 ## Remaining Gates and Limitations
@@ -122,15 +148,17 @@ Accepted schema registry v7 remains byte-identical at SHA-256
 - ADR 0012, process ownership v4, schema registry v8, and both schemas are the
   accepted local baseline. Acceptance does not prove or authorize their pending
   hardware and public-log operations.
-- The production Security-framework helper does not exist. No Keychain or Secure
-  Enclave key was created, no private-key non-exportability was tested, and no
-  package entitlement or supported-hardware matrix was exercised.
+- A packaged process-scoped Secure Enclave proof passed on this Mac. Persistent
+  Keychain creation remains unavailable to the ad hoc helper because the host has
+  no Apple application signing identity; production checkpoint signing is not
+  implemented or connected to Electron.
 - The software fixture protects a private `KeyObject` only from its JavaScript
   API. It is not hardware-backed, restart-persistent, administrator-resistant, or
   approved for product use.
-- TUF retrieval and verification are not implemented. The offline verifier
-  assumes its exact pinned trust-material input came from a future trusted
-  bootstrap; arbitrary local input cannot support a product `ANCHORED` claim.
+- TUF retrieval and strict target resolution are implemented for the isolated
+  audit. Production SigningConfig currently authorizes only Rekor v1, while
+  TrustedRoot lists a v2 Ed25519 shard; no safe v2 submission is presently
+  possible under the accepted contract.
 - No Rekor request was transmitted and no public entry exists. The synthetic log
   key and tree prove protocol behavior, not independent administration,
   availability, consistency monitoring, or anti-fork discovery in production.
@@ -142,15 +170,13 @@ Accepted schema registry v7 remains byte-identical at SHA-256
 - Checkpoints, receipts, protected lineage state, transport, retries, anchor lag
   persistence, startup reconciliation, and read-only export are not connected to
   an OS service, Electron, or P7's independent verifier.
-- The Sigstore public log publishes checkpoint digest, signature, and public key.
-  Owner acceptance of this architecture is not authorization to publish even a
-  synthetic entry; that action receives its own explicit gate.
+- No public entry was created. The live runner requires an exact publication
+  authorization phrase in addition to a TUF-authorized v2 service.
 
 ## Gate Decision
 
-The owner accepted ADR 0012 and the local protocol artifacts as the design
-baseline while keeping P2.4 incomplete and every capability unchanged. The next
-sequential gate is a packaged Security-framework helper and local Secure Enclave
-lifecycle proof. Only after that proof may the owner separately authorize one
-non-secret synthetic Rekor entry using TUF-derived trust material and a clean
-offline verifier.
+All locally controllable P2.4 completion work is green, including the packaged
+hardware proof, TUF bootstrap, current-key compatibility, complete regression,
+and packaged GUI audit. P2.4 remains blocked rather than complete because the
+required real Rekor v2 proof cannot be submitted until Sigstore distributes an
+active v2 writer through production SigningConfig. No capability state changes.

@@ -22,10 +22,12 @@ formal suites pass, and the owner accepted `P1.EXIT`. Phase 1 is complete. The
 owner accepted P2.1 immutable contracts and schema registry v6, then accepted
 P2.2's pure deny-by-default policy engine and its remediations. P2.3's isolated
 single-writer journal and six remediations are accepted. ADR 0012 and P2.4's
-local checkpoint and Rekor v2 protocol baseline are accepted, while P2.4 remains
-in progress. The accepted packaged Swift helper passes compile, package, isolation,
-and read-only protocol audits without touching Keychain state. Secure Enclave
-lifecycle and TUF-verified public-log evidence remain separately gated. Only
+local checkpoint and Rekor v2 protocol baseline are accepted. The packaged Swift
+helper proves process-scoped Secure Enclave signing and non-exportability on this
+Mac, and the official-client TUF bootstrap fails closed correctly. P2.4 is
+externally blocked because production SigningConfig authorizes no Rekor v2
+writer; no public entry exists and persistent Keychain proof still requires an
+Apple application signing identity. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
 `UNVERIFIED`.

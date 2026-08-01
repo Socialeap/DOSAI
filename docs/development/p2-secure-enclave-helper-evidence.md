@@ -1,17 +1,15 @@
 # P2.4 Packaged Secure Enclave Helper Evidence
 
-**Status:** `[~] IN_PROGRESS`<br>
-**Evidence captured:** `2026-07-31T19:56:41-04:00`<br>
-**Engineering result:** `PASS_PACKAGED_READ_ONLY_PROOF`<br>
+**Status:** `[x] LOCAL_HARDWARE_PROOF_COMPLETE`<br>
+**Evidence captured:** `2026-07-31T20:33:46-04:00`<br>
+**Engineering result:** `PASS_PROCESS_SCOPED_HARDWARE_PROOF`<br>
 **Review decision:** `ACCEPTED_PACKAGED_HELPER_BASELINE` at `2026-07-31T20:04:03-04:00`<br>
 **Phase completion:** Not claimed
 
-This record covers a packaged, standalone Swift Security-framework proof helper.
-It compiles and appears outside `app.asar`, but Electron cannot invoke it and it
-has no production checkpoint API, database path, network authority, stdin
-protocol, or arbitrary-message signing operation. Only read-only and deliberately
-rejected invocations were executed. No Keychain query, key creation, signature,
-or deletion operation was reached.
+This record covers the packaged, standalone Swift Security-framework proof
+helper and its owner-authorized live run. Electron cannot invoke the helper, and
+it has no production checkpoint API, database path, network authority, stdin
+protocol, or arbitrary-message signing operation.
 
 ## Accepted Packaged Helper Baseline
 
@@ -39,6 +37,9 @@ Accepted process ownership v4 remains byte-identical at SHA-256
   P-256 test key under a fixed UUID-derived application-tag namespace, signs one
   internally constructed domain-separated challenge, verifies the signature and
   private-key export failure, then deletes and re-queries the exact tag.
+- `exercise-ephemeral-hardware` uses the same bounded challenge with one
+  process-scoped, non-persistent Secure Enclave key. It creates no Keychain item
+  and reports no cleanup mutation.
 - `cleanup-test-key` is the separately authorized recovery path for a process
   interruption. It can address only the same UUID-derived proof namespace and
   must verify absence before reporting success.
@@ -67,6 +68,20 @@ The package command used the cached Electron archive only after matching the
 checksum owned by the exact pinned Electron dependency; a missing or mismatched
 archive retains the existing checksummed download path.
 
+## Live Hardware Result
+
+| Property | Result |
+| --- | --- |
+| Subject commit | `5deb09d4779acbda32619a221bb80c91837657a0` |
+| Run ID | `2241ab67-4beb-435a-9fa6-dcfaf9a5dbac` |
+| Evidence SHA-256 | `59e7baee70b4434c7d56909da2d9d47fb017d8ad16dcc9ad3110a15e5b93b869` |
+| Packaged helper SHA-256 | `1ec778b0bf4a89715a0d46f2a2a6b6f7907db8d4b0179704883379b11b3452e7` |
+| Token and algorithm | Secure Enclave; ECDSA P-256 SHA-256 |
+| Private-key export | Unavailable |
+| Independent challenge verification | PASS |
+| Persistence and cleanup | Process-scoped; no Keychain item; recovery cleanup PASS |
+| Secret scan | PASS |
+
 ## Faults Found and Remediated
 
 1. Swift 6 rejected the initial single-file `@main` compile and compiler caches
@@ -80,44 +95,47 @@ archive retains the existing checksummed download path.
 3. A process interruption after test-key creation could leave the proof item in
    Keychain. The protocol now includes an explicitly authorized, exact-namespace
    cleanup operation and verifies absence after normal or recovery deletion.
+4. Permanent key creation failed with Security.framework error `-34018` because
+   the ad hoc helper has no application signing entitlement. No valid code-signing
+   identity is installed on this Mac, so the proof was split into an honest
+   process-scoped hardware operation and a separately blocked persistence claim.
 
 ## Validation
 
 | Command or inspection | Result |
 | --- | --- |
-| `pnpm run check` under Node 24.18.0 and pnpm 11.18.0 | PASS; seven typechecks, 107 tests, three production builds |
+| `pnpm run check` under Node 24.18.0 and pnpm 11.18.0 | PASS; seven typechecks, 117 tests, three production builds |
 | `pnpm run build:secure-enclave-helper` twice | PASS; identical helper digest |
 | `pnpm run package` with checksum-verified local Electron archive | PASS; nine fuses, 11 ASAR entries, helper description, plist |
 | `pnpm run audit:p2:secure-enclave-helper` | PASS; 12 packaged assertions and secret scan |
 | Empty, unknown, extra, missing, unauthorized, and malformed protocol calls | PASS; rejected before any key operation |
 | Architecture and source scans | PASS; no application reachability, stdin, network, generic signing, or production checkpoint API |
 | `codesign --verify --strict`, `lipo`, `vtool`, and undefined-symbol scan | PASS for current ad hoc arm64/macOS 15 artifact |
-| Existing packaged GUI audit | Not rerun; local app-launch approval was unavailable after the package check |
+| Formal process-scoped Secure Enclave audit | PASS; 13 assertions, independent verification, cleanup and secret scan PASS |
+| Packaged GUI audit | PASS; 29 assertions, secret scan and process/profile cleanup PASS |
 | Runtime capability matrix | Unchanged; every P2 runtime capability remains `UNVERIFIED` |
 
 ## Remaining Gates and Limitations
 
-- Process ownership v5 and this implementation set await synchronized owner
-  review. Acceptance would not authorize a Keychain mutation by itself.
-- The packaged lifecycle command has not run. Secure Enclave availability,
-  persistence, token attributes, signing, private-key non-exportability, exact
-  cleanup, and recovery cleanup are therefore unproven on this Mac.
+- Persistent Keychain lifecycle proof requires an Apple application signing
+  identity. The failed attempt created no key and the recovery query confirmed no
+  residue; no self-signed identity or broader entitlement was introduced.
 - The helper has an ad hoc linker signature, no Team ID, and no hardened-runtime,
   notarization, entitlement, or distribution-profile proof. P11 owns those gates.
-- A forced termination can leave a proof key until the owner-authorized cleanup
-  command runs. No automatic cleanup service or startup reconciliation exists.
+- The successful process-scoped proof cannot leave a persistent key after exit.
+  The permanent proof path retains its exact cleanup operation for a future
+  signed-package run.
 - The helper is a lifecycle probe, not a production checkpoint authority. It
   does not bind journal state, persist checkpoint lineage, rotate production
   keys, or supply hardware assurance to the TypeScript evaluator.
 - Apple supplies local token and non-exportability evidence, not portable remote
   attestation for this key. Hardware assurance remains a local platform claim.
-- No TUF trust bootstrap, Rekor network request, public entry, receipt, trusted
-  time, or independent log-monitor proof was added or authorized.
+- TUF bootstrap now passes separately, but no public Rekor entry exists because
+  production SigningConfig authorizes no v2 writer.
 
 ## Gate Decision
 
-The owner accepted the process v5 boundary and packaged proof-only helper as the
-next P2.4 test generation while keeping P2.4 incomplete and capabilities
-unchanged. The next gate is one exact packaged lifecycle run with a fresh
-recorded UUID, followed by an independently invoked cleanup check for that same
-UUID. Public-log work remains separately evidence-gated after the hardware proof.
+The local hardware and non-exportability gate is complete for this Mac's
+process-scoped profile. Persistent production signing remains assigned to the
+future signed-package identity, entitlement, lineage, and integration work. This
+result does not upgrade a runtime capability or complete P2.4 by itself.
