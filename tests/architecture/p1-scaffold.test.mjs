@@ -63,6 +63,9 @@ test('packaging enables ASAR integrity and authority-reducing fuses', async () =
 
   assert.match(config, /asar:\s*true/);
   assert.match(config, /electronVersion:\s*'43\.2\.0'/);
+  assert.match(config, /node_modules\/electron\/checksums\.json/);
+  assert.match(config, /sha256\(candidate\) === expected/);
+  assert.match(config, /electronZipDir === undefined/);
   assert.match(config, /RunAsNode\]:\s*false/);
   assert.match(config, /EnableNodeOptionsEnvironmentVariable\]:\s*false/);
   assert.match(config, /EnableNodeCliInspectArguments\]:\s*false/);
@@ -75,6 +78,8 @@ test('packaging enables ASAR integrity and authority-reducing fuses', async () =
   assert.match(config, /unusedPermissionKeys/);
   assert.match(config, /delete infoPlist\[key\]/);
   assert.match(config, /LSMinimumSystemVersion:\s*'15\.0'/);
+  assert.match(config, /extraResource:\s*\[builtSecureEnclaveHelper\]/);
+  assert.match(config, /describeSecureEnclaveProofHelper\(packagedSecureEnclaveHelper\)/);
 });
 
 test('development starts through the Electron CLI for on-demand binary installation', async () => {

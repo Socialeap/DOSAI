@@ -13,7 +13,7 @@ import {
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 const manifest = JSON.parse(
-  await readFile(join(root, 'docs/architecture/process-ownership-v4.json'), 'utf8'),
+  await readFile(join(root, 'docs/architecture/process-ownership-v5.json'), 'utf8'),
 );
 
 function containsPath(parent, child) {
@@ -28,7 +28,7 @@ function boundaryForPath(path) {
 }
 
 test('every source root has one explicit ownership boundary', async () => {
-  assert.equal(manifest.schema_version, 4);
+  assert.equal(manifest.schema_version, 5);
   assert.equal(manifest.status, 'ACCEPTED');
   assert.deepEqual(manifest.accepted_adrs, [
     'docs/decisions/0001-runtime-and-privilege-boundaries.md',
@@ -85,12 +85,25 @@ test('accepted process ownership v2 remains byte-identical', async () => {
 
 test('accepted process ownership v3 remains byte-identical', async () => {
   const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v3.json'));
+  const v4 = JSON.parse(
+    await readFile(join(root, 'docs/architecture/process-ownership-v4.json'), 'utf8'),
+  );
   const { createHash } = await import('node:crypto');
   assert.equal(
     createHash('sha256').update(bytes).digest('hex'),
     '403707ec24c938f0012891bccbef848db3bc87a3088d593953b5ff5a965cc4bf',
   );
-  assert.equal(manifest.supersedes.sha256, '403707ec24c938f0012891bccbef848db3bc87a3088d593953b5ff5a965cc4bf');
+  assert.equal(v4.supersedes.sha256, '403707ec24c938f0012891bccbef848db3bc87a3088d593953b5ff5a965cc4bf');
+});
+
+test('accepted process ownership v4 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v4.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    '0d86608f3b71ce4b5af317d05978fb4d33c83c13df6ddb3f56e409fa967ea992',
+  );
+  assert.equal(manifest.supersedes.sha256, '0d86608f3b71ce4b5af317d05978fb4d33c83c13df6ddb3f56e409fa967ea992');
 });
 
 test('policy boundary is pure, non-authoritative, and isolated from the application', () => {
@@ -141,18 +154,23 @@ test('worker and native-helper reservations expose no runtime capability', async
 
   const nativeHelperRoot = join(root, manifest.native_helper_root);
   const nativeFiles = await collectFiles(nativeHelperRoot);
+  const activeHelperRoots = manifest.native_helpers
+    .filter(({ implementation_state }) => implementation_state === 'ACTIVE')
+    .map(({ path }) => `${relative(nativeHelperRoot, join(root, path))}/`);
   assert.deepEqual(
     nativeFiles
       .map((path) => relative(nativeHelperRoot, path))
-      .filter((path) => !path.startsWith('audit/')),
+      .filter((path) => !activeHelperRoots.some((rootPath) => path.startsWith(rootPath))),
     ['README.md'],
   );
 
   assert.deepEqual(
-    manifest.native_helpers.map(({ trust_zone }) => trust_zone),
-    ['Z4', 'Z5', 'Z6'],
+    manifest.native_helpers.map(({ id }) => id),
+    ['policy-helper', 'effect-brokers', 'audit-helper', 'secure-enclave-proof-helper'],
   );
-  for (const helper of manifest.native_helpers.filter(({ id }) => id !== 'audit-helper')) {
+  for (const helper of manifest.native_helpers.filter(
+    ({ implementation_state }) => implementation_state === 'RESERVED',
+  )) {
     assert.equal(helper.implementation_state, 'RESERVED');
     assert.ok(helper.path.startsWith(`${manifest.native_helper_root}/`));
     assert.notEqual(helper.component_owner, '');
@@ -192,6 +210,37 @@ test('audit helper has journal and test-only checkpoint authority without networ
   )).join('\n');
   assert.doesNotMatch(helperSource, /\bfetch\s*\(|node:https|node:http|child_process|node:net/);
   assert.doesNotMatch(helperSource, /createSecureEnclave|kSecAttrTokenIDSecureEnclave/);
+});
+
+test('Secure Enclave proof helper is packaged, bounded, and unreachable from the application', async () => {
+  const helper = manifest.native_helpers.find(({ id }) => id === 'secure-enclave-proof-helper');
+  assert.equal(helper.trust_zone, 'Z6');
+  assert.equal(helper.runtime, 'PACKAGED_SWIFT_SECURITY_FRAMEWORK_PROOF');
+  assert.equal(helper.implementation_state, 'ACTIVE');
+  assert.equal(
+    helper.authority,
+    'OWNER_GATED_TRANSIENT_SECURE_ENCLAVE_TEST_KEY_LIFECYCLE_ONLY',
+  );
+  assert.equal(helper.application_reachable, false);
+  assert.equal(helper.network_authority, false);
+  assert.equal(helper.production_checkpoint_authority, false);
+  assert.deepEqual(
+    helper.allowed_external_imports,
+    ['CryptoKit', 'Darwin', 'Foundation', 'LocalAuthentication', 'Security'],
+  );
+
+  const helperSource = await readFile(join(root, helper.path, 'main.swift'), 'utf8');
+  const imports = [...helperSource.matchAll(/^import ([A-Za-z0-9_]+)$/gm)].map((match) => match[1]);
+  assert.deepEqual(imports, helper.allowed_external_imports);
+  assert.doesNotMatch(helperSource, /URLSession|Network\.|CFNetwork|NWConnection|socket\s*\(/);
+  assert.doesNotMatch(helperSource, /readToEnd|standardInput|sign-message|sign-digest/);
+  assert.match(helperSource, /DOSAI-SECURE-ENCLAVE-LIFECYCLE-PROOF-V1/);
+  assert.match(helperSource, /cleanup_confirmed/);
+
+  for (const path of await collectSourceFiles(sourceRoot)) {
+    const source = await readFile(path, 'utf8');
+    assert.doesNotMatch(source, /dosai-secure-enclave-proof|secure-enclave-proof/);
+  }
 });
 
 test('source graph rejects uninspectable module loading', () => {

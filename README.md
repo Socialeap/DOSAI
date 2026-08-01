@@ -23,8 +23,9 @@ owner accepted P2.1 immutable contracts and schema registry v6, then accepted
 P2.2's pure deny-by-default policy engine and its remediations. P2.3's isolated
 single-writer journal and six remediations are accepted. ADR 0012 and P2.4's
 local checkpoint and Rekor v2 protocol baseline are accepted, while P2.4 remains
-in progress. The implementation remains software-backed, offline, and test-only
-until packaged Secure Enclave and TUF-verified public-log evidence pass. Only
+in progress. The accepted packaged Swift helper passes compile, package, isolation,
+and read-only protocol audits without touching Keychain state. Secure Enclave
+lifecycle and TUF-verified public-log evidence remain separately gated. Only
 `electron.typed_bridge` is
 `SUPPORTED_WITH_CONSTRAINTS`; every effectful runtime capability remains
 `UNVERIFIED`.
@@ -51,6 +52,7 @@ access, deployment, and destructive mutations are out of scope.
 - [P2.2 deny-by-default policy evidence](docs/development/p2-policy-engine-evidence.md)
 - [P2.3 single-writer audit journal evidence](docs/development/p2-audit-journal-evidence.md)
 - [P2.4 checkpoint and anchor protocol evidence](docs/development/p2-checkpoint-anchor-evidence.md)
+- [P2.4 packaged Secure Enclave helper evidence](docs/development/p2-secure-enclave-helper-evidence.md)
 - [Renderer authority policy v1](docs/architecture/renderer-authority-policy-v1.json)
 - [Audit remediation register](docs/security/audit-remediation-register.md)
 - [Trust-boundary and threat model](docs/architecture/trust-boundary-and-threat-model.md)

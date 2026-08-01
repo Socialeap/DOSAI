@@ -2,7 +2,7 @@
 
 **Plan status:** `[~] ACTIVE_DRAFT`<br>
 **Current delivery phase:** `P2 - Safety kernel and audit journal`<br>
-**Last status update:** `2026-07-31T19:41:14-04:00`<br>
+**Last status update:** `2026-07-31T20:04:03-04:00`<br>
 **Status owner:** Repository owner<br>
 **Execution rule:** No later phase begins before its dependencies and exit gate
 are complete.
@@ -66,7 +66,7 @@ evidence is not erased.
 | --- | --- | --- | --- | --- |
 | P0 | `[x] COMPLETE` | `2026-07-31T14:48:38-04:00` | Governance and architecture baseline | None |
 | P1 | `[x] COMPLETE` | `2026-07-31T18:23:38-04:00` | Hardened Electron shell | P0 |
-| P2 | `[~] IN_PROGRESS` | `2026-07-31T19:41:14-04:00` | Safety kernel and audit journal | P1 |
+| P2 | `[~] IN_PROGRESS` | `2026-07-31T20:04:03-04:00` | Safety kernel and audit journal | P1 |
 | P3 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Execution capsules, cancellation, and watchdog | P2 |
 | P4 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Workspace lease and Git broker | P3 |
 | P5 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Authenticated packet bridge | P3 |
@@ -120,7 +120,7 @@ active without process execution authority.
 ## P2: Safety Kernel and Audit Journal
 
 **Phase status:** `[~] IN_PROGRESS`<br>
-**Status updated:** `2026-07-31T19:41:14-04:00`<br>
+**Status updated:** `2026-07-31T20:04:03-04:00`<br>
 **Controls:** F01, F07, F12
 
 | ID | Status | Status updated | Sequential work item | Evidence |
@@ -128,7 +128,7 @@ active without process execution authority.
 | P2.1 | `[x] COMPLETE` | `2026-07-31T18:37:14-04:00` | Implement immutable operation requests, action plans, resource preconditions, policy decisions, grants, and lifecycle states. | Owner accepted registry v6, six strict schemas, pure bounded immutable admission, exact tier/effect/approval bindings, lifecycle matrix, five-minute windows, and adversarial tests; no execution path exists. |
 | P2.2 | `[x] COMPLETE` | `2026-07-31T18:46:28-04:00` | Implement a deny-by-default policy engine with no spawn path and minimum-tier rules that unknown inputs cannot lower. | Owner accepted process ownership v2, the pure isolated classifier, strict runtime admission, exact identity and capability intersection, four-tier floors, envelope semantics, immutable output, adversarial corpus, and all four remediations; `policy.preflight` remains `UNVERIFIED`. |
 | P2.3 | `[x] COMPLETE` | `2026-07-31T19:13:53-04:00` | Implement the single-writer sanitized journal with atomic durable acknowledgement, versioned canonical encoding, sequence and epoch continuity, hash chaining, fixed provenance, and startup verification. | Owner accepted registry v7, process ownership v3, three audit contracts, the isolated SQLite writer, strongest configured local durability, authenticated fixed provenance, canonical chain and acknowledgement binding, restart verification, honest rollback limits, and all six remediations. |
-| P2.4 | `[~] IN_PROGRESS` | `2026-07-31T19:41:14-04:00` | Implement constrained protected checkpoint signing, explicit key lifecycle and assurance states, then select and prove the independent anti-fork anchor contract. | Owner accepted ADR 0012, registry v8, ownership v4, and the local checkpoint/Rekor v2 protocol baseline in `docs/development/p2-checkpoint-anchor-evidence.md`. Packaged Secure Enclave lifecycle and real TUF-verified Rekor proofs remain required before completion. |
+| P2.4 | `[~] IN_PROGRESS` | `2026-07-31T20:04:03-04:00` | Implement constrained protected checkpoint signing, explicit key lifecycle and assurance states, then select and prove the independent anti-fork anchor contract. | Owner accepted the local protocol baseline, ownership v5, and the packaged app-unreachable helper in `docs/development/p2-checkpoint-anchor-evidence.md` and `docs/development/p2-secure-enclave-helper-evidence.md`. One exact packaged lifecycle run and real TUF-verified Rekor proof remain required. |
 | P2.5 | `[ ] NOT_STARTED` | `2026-07-31T01:52:46-04:00` | Prove that policy, schema, journal durability, verification, required assurance, key, or grant failure cannot authorize an effect while emergency stop remains available. | Pending |
 
 **Exit gate (`P2.EXIT`):** The safety kernel can approve or deny synthetic intents and produce
@@ -390,3 +390,5 @@ explicit owner release decision.
 | `2026-07-31T19:13:53-04:00` | Owner accepted P2.3 and its remediations; started P2.4. | Registry v7, process ownership v3, three audit contracts, and the isolated single-writer journal are accepted without broadening assurance. Every runtime capability remains `UNVERIFIED`; protected checkpoint and independent anti-fork anchor work begins with no process execution path. |
 | `2026-07-31T19:35:39-04:00` | Completed the local P2.4 protocol proof and moved it to evidence pending without claiming phase completion. | Proposed ADR 0012 selects Secure Enclave P-256 and Sigstore Rekor v2. Registry v8, ownership v4, strict checkpoint and receipt contracts, generation-fenced software signing, exact journal-fork binding, offline C2SP and RFC 6962 verification, deterministic receipts, and exact assurance ranges pass 103 tests, seven typechecks, and three builds after five faults were remediated. Owner review, packaged Secure Enclave proof, TUF trust bootstrap, and one non-secret public-log proof remain required. |
 | `2026-07-31T19:41:14-04:00` | Owner accepted ADR 0012 and the local P2.4 protocol baseline; resumed P2.4 implementation. | Registry v8, ownership v4, strict checkpoint and receipt contracts, and all five remediations are accepted without broadening runtime assurance. P2.4 remains incomplete while packaged Secure Enclave lifecycle proof, TUF trust bootstrap, and one separately authorized non-secret public-log proof remain gated. No Keychain item was created and no network request or publication was authorized. |
+| `2026-07-31T19:56:41-04:00` | Built and independently audited the packaged P2.4 Secure Enclave proof helper; moved P2.4 to evidence pending. | Proposed ownership v5 isolates an app-unreachable Swift helper with exact describe, lifecycle, and recovery-cleanup operations. Arm64/macOS 15 packaging, deterministic builds, 12 packaged assertions, 107 repository tests, malformed and unauthorized protocol rejection, exact Electron archive verification, and secret scans pass after three faults were remediated. No valid lifecycle command, Keychain operation, network request, or public write occurred; owner review and a separately authorized test-key lifecycle remain required. |
+| `2026-07-31T20:04:03-04:00` | Owner accepted ownership v5 and the packaged proof-only helper; resumed P2.4 completion work. | The accepted helper remains unreachable from Electron and has no production checkpoint or network authority. The owner authorized the remaining P2.4 proof sequence; hardware lifecycle and independently verified public-log evidence are captured in a later generation before any completion claim. |
