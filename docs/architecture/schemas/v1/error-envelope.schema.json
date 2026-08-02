@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:error-envelope:1",
+  "title": "DOSAI Error Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "schema_version",
+    "message_id",
+    "created_at",
+    "producer",
+    "producer_generation",
+    "trace_id",
+    "data_class",
+    "error_id",
+    "code",
+    "category",
+    "safe_message",
+    "retry_disposition",
+    "effect_state"
+  ],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:error-envelope:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D1" },
+    "error_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "code": {
+      "type": "string",
+      "pattern": "^DOSAI_[A-Z][A-Z0-9_]*_[0-9]{4}$",
+      "maxLength": 64
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "SCHEMA",
+        "POLICY",
+        "AUTHORIZATION",
+        "PRECONDITION",
+        "IDENTITY",
+        "CONFLICT",
+        "RESOURCE",
+        "TIMEOUT",
+        "CANCELLED",
+        "INTEGRATION",
+        "INTEGRITY",
+        "PERSISTENCE",
+        "UNAVAILABLE",
+        "INTERNAL",
+        "UNKNOWN_OUTCOME"
+      ]
+    },
+    "safe_message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[ -~]+$"
+    },
+    "retry_disposition": {
+      "type": "string",
+      "enum": ["NEVER", "SAFE_SAME_PLAN", "REPLAN_REQUIRED", "OWNER_ACTION", "RECONCILE"]
+    },
+    "effect_state": {
+      "type": "string",
+      "enum": ["NO_EFFECT", "COMMITTED", "PARTIAL", "UNKNOWN"]
+    },
+    "audit_sequence": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "operation_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "cause_error_ids": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" }
+    }
+  }
+}

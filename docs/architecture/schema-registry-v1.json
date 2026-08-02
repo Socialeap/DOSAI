@@ -1,0 +1,28 @@
+{
+  "schema_dialect": "https://json-schema.org/draft/2020-12/schema",
+  "registry_id": "urn:dosai:schema-registry:1",
+  "registry_version": 1,
+  "status": "ACCEPTED",
+  "updated_at": "2026-07-31T18:25:05.000Z",
+  "schemas": [
+    { "name": "common", "schema_id": "urn:dosai:schema:common:1", "version": 1, "owner_phase": "P0", "state": "DEFINED", "path": "schemas/v1/common.schema.json" },
+    { "name": "error-envelope", "schema_id": "urn:dosai:schema:error-envelope:1", "version": 1, "owner_phase": "P0-P1", "state": "DEFINED", "path": "schemas/v1/error-envelope.schema.json" },
+    { "name": "capability-record", "schema_id": "urn:dosai:schema:capability-record:1", "version": 1, "owner_phase": "P0-P11", "state": "DEFINED", "path": "schemas/v1/capability-record.schema.json" },
+    { "name": "operation", "schema_id": "urn:dosai:schema:operation:1", "version": 1, "owner_phase": "P2", "state": "RESERVED" },
+    { "name": "action-plan", "schema_id": "urn:dosai:schema:action-plan:1", "version": 1, "owner_phase": "P2", "state": "RESERVED" },
+    { "name": "policy-decision", "schema_id": "urn:dosai:schema:policy-decision:1", "version": 1, "owner_phase": "P2", "state": "RESERVED" },
+    { "name": "execution-grant", "schema_id": "urn:dosai:schema:execution-grant:1", "version": 1, "owner_phase": "P2", "state": "RESERVED" },
+    { "name": "audit-event", "schema_id": "urn:dosai:schema:audit-event:1", "version": 1, "owner_phase": "P2", "state": "RESERVED" },
+    { "name": "audit-checkpoint", "schema_id": "urn:dosai:schema:audit-checkpoint:1", "version": 1, "owner_phase": "P2-P11", "state": "RESERVED" },
+    { "name": "workspace-lease", "schema_id": "urn:dosai:schema:workspace-lease:1", "version": 1, "owner_phase": "P4", "state": "RESERVED" },
+    { "name": "git-object-manifest", "schema_id": "urn:dosai:schema:git-object-manifest:1", "version": 1, "owner_phase": "P4", "state": "RESERVED" },
+    { "name": "packet-frame", "schema_id": "urn:dosai:schema:packet-frame:1", "version": 1, "owner_phase": "P5", "state": "RESERVED" },
+    { "name": "browser-capture-plan", "schema_id": "urn:dosai:schema:browser-capture-plan:1", "version": 1, "owner_phase": "P6", "state": "RESERVED" },
+    { "name": "persistence-record", "schema_id": "urn:dosai:schema:persistence-record:1", "version": 1, "owner_phase": "P7", "state": "RESERVED" },
+    { "name": "deletion-job", "schema_id": "urn:dosai:schema:deletion-job:1", "version": 1, "owner_phase": "P7", "state": "RESERVED" },
+    { "name": "skill-bundle-manifest", "schema_id": "urn:dosai:schema:skill-bundle-manifest:1", "version": 1, "owner_phase": "P8", "state": "RESERVED" },
+    { "name": "evidence-manifest", "schema_id": "urn:dosai:schema:evidence-manifest:1", "version": 1, "owner_phase": "P9", "state": "RESERVED" },
+    { "name": "derivation-record", "schema_id": "urn:dosai:schema:derivation-record:1", "version": 1, "owner_phase": "P9", "state": "RESERVED" },
+    { "name": "evidence-report", "schema_id": "urn:dosai:schema:evidence-report:1", "version": 1, "owner_phase": "P0.6-P11", "state": "RESERVED" }
+  ]
+}

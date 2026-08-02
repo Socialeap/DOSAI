@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:acceptance-test-catalog:1",
+  "title": "DOSAI Acceptance-Test Catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "schema_version",
+    "message_id",
+    "created_at",
+    "producer",
+    "producer_generation",
+    "trace_id",
+    "data_class",
+    "catalog_id",
+    "catalog_version",
+    "status",
+    "platform_profiles",
+    "runner_contract",
+    "gate_pass_conditions",
+    "suites"
+  ],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:acceptance-test-catalog:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D5" },
+    "catalog_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "catalog_version": { "const": 1 },
+    "status": { "type": "string", "enum": ["PROPOSED", "ACCEPTED", "SUPERSEDED"] },
+    "platform_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "const": "MACOS_ARM64_V1" }
+    },
+    "runner_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "fixed_args", "suite_arg", "report_dir_arg", "report_dir_env", "shell", "report_schema_id"],
+      "properties": {
+        "executable": { "const": "pnpm" },
+        "fixed_args": { "const": ["exec", "dosai-acceptance", "run", "--catalog", "docs/testing/acceptance-test-catalog-v1.json"] },
+        "suite_arg": { "const": "--suite" },
+        "report_dir_arg": { "const": "--report-dir-env" },
+        "report_dir_env": { "const": "DOSAI_EVIDENCE_DIR" },
+        "shell": { "const": false },
+        "report_schema_id": { "const": "urn:dosai:schema:evidence-report:1" }
+      }
+    },
+    "gate_pass_conditions": {
+      "const": ["ALL_REQUIRED_SCENARIOS_PASS", "NO_PROHIBITED_DATA", "NO_UNKNOWN_OUTCOME", "CLEANUP_VERIFIED", "REPORT_SCHEMA_VALID", "ARTIFACTS_VERIFIED", "NO_UNAPPROVED_EFFECT"]
+    },
+    "suites": {
+      "type": "array",
+      "minItems": 36,
+      "maxItems": 36,
+      "items": { "$ref": "#/$defs/suite" }
+    }
+  },
+  "$defs": {
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "phase",
+        "title",
+        "test_types",
+        "controls",
+        "capabilities",
+        "requirement_ids",
+        "fixture_manifest",
+        "scenarios",
+        "required_artifacts",
+        "timeout_seconds",
+        "required_for_gate",
+        "implementation_state"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^P(?:[0-9]|1[01])-AT-[0-9]{3}$" },
+        "phase": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[ -~]+$" },
+        "test_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["POSITIVE", "NEGATIVE", "SECURITY", "FAULT", "RECOVERY", "LOAD", "PERFORMANCE", "ACCESSIBILITY", "PACKAGING", "REVIEW"] }
+        },
+        "controls": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^F(?:0[1-9]|1[0-2])$" }
+        },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:dosai:schema:common:1#/$defs/capability_id" }
+        },
+        "requirement_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9._-]*$", "maxLength": 32 }
+        },
+        "fixture_manifest": { "type": "string", "pattern": "^tests/acceptance/manifests/p(?:[0-9]|1[01])-at-[0-9]{3}\\.json$" },
+        "scenarios": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/scenario" }
+        },
+        "required_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CANARY", "PACKAGE", "SCREENSHOT", "PERFORMANCE", "CLEANUP", "VERIFIER"] }
+        },
+        "timeout_seconds": { "type": "integer", "minimum": 30, "maximum": 7200 },
+        "required_for_gate": { "const": true },
+        "implementation_state": { "type": "string", "enum": ["NOT_IMPLEMENTED", "IMPLEMENTED", "BLOCKED", "RETIRED"] }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode", "requirement"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^P(?:[0-9]|1[01])-AT-[0-9]{3}-S[0-9]{2}$" },
+        "mode": { "type": "string", "enum": ["POSITIVE", "NEGATIVE", "SECURITY", "FAULT", "RECOVERY", "LOAD", "PERFORMANCE", "ACCESSIBILITY", "PACKAGING", "REVIEW"] },
+        "requirement": { "type": "string", "minLength": 1, "maxLength": 300, "pattern": "^[ -~]+$" }
+      }
+    }
+  }
+}

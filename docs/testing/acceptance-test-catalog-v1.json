@@ -1,0 +1,206 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-test-catalog:1",
+  "schema_version": 1,
+  "message_id": "da7a705a-8ff7-4ceb-b528-7e4efa7e51a3",
+  "created_at": "2026-07-31T18:26:29.000Z",
+  "producer": "dosai.governance",
+  "producer_generation": "1",
+  "trace_id": "ef10276b-08c4-4b33-b56b-7be8322580de",
+  "data_class": "D5",
+  "catalog_id": "60eab5aa-4364-42e2-968e-cda443065bf0",
+  "catalog_version": 1,
+  "status": "ACCEPTED",
+  "platform_profiles": ["MACOS_ARM64_V1"],
+  "runner_contract": {
+    "executable": "pnpm",
+    "fixed_args": ["exec", "dosai-acceptance", "run", "--catalog", "docs/testing/acceptance-test-catalog-v1.json"],
+    "suite_arg": "--suite",
+    "report_dir_arg": "--report-dir-env",
+    "report_dir_env": "DOSAI_EVIDENCE_DIR",
+    "shell": false,
+    "report_schema_id": "urn:dosai:schema:evidence-report:1"
+  },
+  "gate_pass_conditions": ["ALL_REQUIRED_SCENARIOS_PASS", "NO_PROHIBITED_DATA", "NO_UNKNOWN_OUTCOME", "CLEANUP_VERIFIED", "REPORT_SCHEMA_VALID", "ARTIFACTS_VERIFIED", "NO_UNAPPROVED_EFFECT"],
+  "suites": [
+    {
+      "id": "P0-AT-001", "phase": "P0", "title": "Governing authority and status consistency", "test_types": ["REVIEW", "SECURITY", "NEGATIVE"], "controls": ["F01", "F12"], "capabilities": [], "requirement_ids": ["P0.1", "P0.2", "P0.3", "P0.4", "P0.5"], "fixture_manifest": "tests/acceptance/manifests/p0-at-001.json",
+      "scenarios": [{"id": "P0-AT-001-S01", "mode": "REVIEW", "requirement": "Resolve document precedence and verify every owner-approved baseline has synchronized Accepted status and timestamp."}, {"id": "P0-AT-001-S02", "mode": "NEGATIVE", "requirement": "Inject conflicting status, authority, or phase-order fixtures and require deterministic failure without modifying source documents."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CLEANUP"], "timeout_seconds": 120, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P0-AT-002", "phase": "P0", "title": "Schema registry and contract integrity", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY"], "controls": ["F01", "F03", "F12"], "capabilities": [], "requirement_ids": ["P0.5", "P0.6"], "fixture_manifest": "tests/acceptance/manifests/p0-at-002.json",
+      "scenarios": [{"id": "P0-AT-002-S01", "mode": "POSITIVE", "requirement": "Validate every defined schema against the pinned dialect, resolve every reference, and verify registry identity, version, path, and immutable predecessor."}, {"id": "P0-AT-002-S02", "mode": "NEGATIVE", "requirement": "Reject unknown versions, duplicate keys, unresolved references, extra fields, invalid UTF-8, negative zero, and mismatched registry identities."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CLEANUP"], "timeout_seconds": 180, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P0-AT-003", "phase": "P0", "title": "Control coverage, capability non-claims, and production absence", "test_types": ["REVIEW", "NEGATIVE", "SECURITY"], "controls": ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"], "capabilities": [], "requirement_ids": ["P0.EXIT", "SECURITY.PHASE0"], "fixture_manifest": "tests/acceptance/manifests/p0-at-003.json",
+      "scenarios": [{"id": "P0-AT-003-S01", "mode": "REVIEW", "requirement": "Map every Critical and High control to planned work and proof while every unproven capability remains UNVERIFIED with a fallback."}, {"id": "P0-AT-003-S02", "mode": "SECURITY", "requirement": "Verify production credentials, endpoints, deployment, Stripe Live, default-branch mutation, telemetry upload, and undocumented integrations are absent or prohibited."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CLEANUP"], "timeout_seconds": 180, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P1-AT-001", "phase": "P1", "title": "Packaged shell boot and platform profile", "test_types": ["POSITIVE", "PACKAGING", "RECOVERY"], "controls": ["F01", "F05"], "capabilities": ["electron.typed_bridge"], "requirement_ids": ["P1.1", "P1.2", "P1.EXIT"], "fixture_manifest": "tests/acceptance/manifests/p1-at-001.json",
+      "scenarios": [{"id": "P1-AT-001-S01", "mode": "PACKAGING", "requirement": "Build, install, launch, quit, and relaunch a clean package on the minimum and current MACOS_ARM64_V1 operating systems with pinned runtime versions."}, {"id": "P1-AT-001-S02", "mode": "RECOVERY", "requirement": "Recover from renderer, worker, and unclean application termination without enabling execution authority or retaining unmanaged state."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PACKAGE", "MANIFEST", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P1-AT-002", "phase": "P1", "title": "Renderer, preload, and main privilege boundaries", "test_types": ["NEGATIVE", "SECURITY"], "controls": ["F01", "F04"], "capabilities": ["electron.typed_bridge"], "requirement_ids": ["P1.2", "P1.3", "P1.4", "I02", "I03"], "fixture_manifest": "tests/acceptance/manifests/p1-at-002.json",
+      "scenarios": [{"id": "P1-AT-002-S01", "mode": "SECURITY", "requirement": "Prove sandboxing, context isolation, disabled Node integration, CSP, navigation denial, sender validation, and narrow typed preload methods in the packaged app."}, {"id": "P1-AT-002-S02", "mode": "NEGATIVE", "requirement": "Reject generic IPC, raw process, filesystem, database, credential, debugger, and arbitrary message access from renderer and preload compromise fixtures."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PACKAGE", "MANIFEST", "CLEANUP"], "timeout_seconds": 900, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P1-AT-003", "phase": "P1", "title": "IPC rejection, navigation safety, and main-loop responsiveness", "test_types": ["NEGATIVE", "FAULT", "LOAD", "PERFORMANCE"], "controls": ["F01", "F05"], "capabilities": ["electron.typed_bridge"], "requirement_ids": ["P1.3", "P1.4", "T04", "T07"], "fixture_manifest": "tests/acceptance/manifests/p1-at-003.json",
+      "scenarios": [{"id": "P1-AT-003-S01", "mode": "NEGATIVE", "requirement": "Reject malformed, oversized, duplicate, unknown, stale, cross-window, subframe, navigation, permission, and external-protocol requests without side effects."}, {"id": "P1-AT-003-S02", "mode": "LOAD", "requirement": "Saturate parser, stream, image, and database worker fixtures while the main loop remains responsive and trusted stop UI remains reachable."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PERFORMANCE", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P2-AT-001", "phase": "P2", "title": "Typed operation normalization and tier policy", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY"], "controls": ["F01", "F02", "F07"], "capabilities": ["policy.preflight"], "requirement_ids": ["P2.1", "P2.2", "I01", "I03"], "fixture_manifest": "tests/acceptance/manifests/p2-at-001.json",
+      "scenarios": [{"id": "P2-AT-001-S01", "mode": "POSITIVE", "requirement": "Classify complete typed Green, Yellow, Red, and Black synthetic plans from exact actor, target, environment, capability, data, and effect fields."}, {"id": "P2-AT-001-S02", "mode": "NEGATIVE", "requirement": "Reject unknown schemas, generic command strings, label spoofing, capability expansion, omitted effects, production targets, and every attempted tier downgrade."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 600, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P2-AT-002", "phase": "P2", "title": "Approval, action-plan binding, and single-use grants", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY", "FAULT"], "controls": ["F01", "F07"], "capabilities": ["approval.local", "policy.preflight"], "requirement_ids": ["P2.1", "P2.4", "P2.5", "I08"], "fixture_manifest": "tests/acceptance/manifests/p2-at-002.json",
+      "scenarios": [{"id": "P2-AT-002-S01", "mode": "POSITIVE", "requirement": "Bind fresh trusted owner approval and one short-lived single-use grant to the exact immutable Red action plan and current policy."}, {"id": "P2-AT-002-S02", "mode": "NEGATIVE", "requirement": "Deny stale, replayed, forged, expired, reused, cross-session, changed-target, changed-evidence, self-approved, and Black-tier grant attempts."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "JOURNAL", "MANIFEST", "CLEANUP"], "timeout_seconds": 900, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P2-AT-003", "phase": "P2", "title": "Audit durability, keys, continuity, and degraded safety", "test_types": ["SECURITY", "FAULT", "RECOVERY"], "controls": ["F01", "F05", "F12"], "capabilities": ["policy.preflight", "safety.emergency_stop"], "requirement_ids": ["P2.3", "P2.4", "I11", "I12", "I13"], "fixture_manifest": "tests/acceptance/manifests/p2-at-003.json",
+      "scenarios": [{"id": "P2-AT-003-S01", "mode": "FAULT", "requirement": "Inject partial writes, disk full, flush failure, key loss, sequence races, fork, rollback, truncation, anchor outage, and restart at every durable boundary."}, {"id": "P2-AT-003-S02", "mode": "RECOVERY", "requirement": "Deny new effects when required assurance is unavailable while emergency stop proceeds without audit acknowledgement and exact assurance ranges remain honest."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "JOURNAL", "MANIFEST", "VERIFIER", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P3-AT-001", "phase": "P3", "title": "Typed execution and capsule isolation contract", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY"], "controls": ["F02", "F05", "F06"], "capabilities": ["process.command_readonly", "process.owned_child"], "requirement_ids": ["P3.1", "P3.3", "P3.5", "I01"], "fixture_manifest": "tests/acceptance/manifests/p3-at-001.json",
+      "scenarios": [{"id": "P3-AT-001-S01", "mode": "POSITIVE", "requirement": "Execute a proven typed local test operation through the selected capsule with exact executable, arguments, mounts, network, environment, limits, and generation."}, {"id": "P3-AT-001-S02", "mode": "SECURITY", "requirement": "Block shells, wrappers, interpreters, hooks, aliases, inherited credentials, undeclared network, mount escape, detachment, and direct spawn imports."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P3-AT-002", "phase": "P3", "title": "Scoped cancellation and verified cleanup", "test_types": ["FAULT", "RECOVERY", "SECURITY"], "controls": ["F05", "F06"], "capabilities": ["process.owned_child", "safety.emergency_stop"], "requirement_ids": ["P3.2", "P3.3", "I06", "I07"], "fixture_manifest": "tests/acceptance/manifests/p3-at-002.json",
+      "scenarios": [{"id": "P3-AT-002-S01", "mode": "FAULT", "requirement": "Cancel during spawn, descendant creation, output flood, file hold, network request, graceful stop, forced stop, and supervisor crash."}, {"id": "P3-AT-002-S02", "mode": "SECURITY", "requirement": "Terminate every owned descendant, handle, mount, browser, and remote request in scope while unrelated processes and workspaces survive unchanged."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "JOURNAL", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P3-AT-003", "phase": "P3", "title": "Independent watchdog under saturation and crash recovery", "test_types": ["LOAD", "PERFORMANCE", "FAULT", "RECOVERY"], "controls": ["F05", "F06", "F12"], "capabilities": ["safety.emergency_stop", "process.owned_child"], "requirement_ids": ["P3.2", "P3.4", "T07", "T17"], "fixture_manifest": "tests/acceptance/manifests/p3-at-003.json",
+      "scenarios": [{"id": "P3-AT-003-S01", "mode": "LOAD", "requirement": "Saturate renderer, main, workers, IPC, audit, persistence, CPU, memory, disk, descriptors, and output while the independent watchdog still stops owned effects within its deadline."}, {"id": "P3-AT-003-S02", "mode": "RECOVERY", "requirement": "Reconcile orphaned capsules and external requests after crash without blind retry, false cleanup success, or invented effect outcome."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PERFORMANCE", "JOURNAL", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P4-AT-001", "phase": "P4", "title": "Generation-fenced leases and workspace containment", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY", "RECOVERY"], "controls": ["F07", "F08"], "capabilities": ["repository.read", "workspace.lease_enforce"], "requirement_ids": ["P4.1", "P4.2", "I08", "I09"], "fixture_manifest": "tests/acceptance/manifests/p4-at-001.json",
+      "scenarios": [{"id": "P4-AT-001-S01", "mode": "SECURITY", "requirement": "Reject stale or forged leases, path replacement, symlink, hard link, case or Unicode collision, nested repository, mount crossing, and ownership conflict."}, {"id": "P4-AT-001-S02", "mode": "RECOVERY", "requirement": "Reconcile worktrees, leases, open handles, metadata, and interrupted cleanup after restart without adopting an unknown workspace."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P4-AT-002", "phase": "P4", "title": "Typed local Git object and ref mutation", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY"], "controls": ["F07", "F08"], "capabilities": ["workspace.lease_enforce"], "requirement_ids": ["P4.2", "P4.3", "T10", "T11"], "fixture_manifest": "tests/acceptance/manifests/p4-at-002.json",
+      "scenarios": [{"id": "P4-AT-002-S01", "mode": "POSITIVE", "requirement": "Create only the reviewed commit and topic-ref update from an immutable manifest through fixed Git plumbing and current lease identity."}, {"id": "P4-AT-002-S02", "mode": "NEGATIVE", "requirement": "Block hooks, filters, aliases, config, environment, replacement binaries, symbolic refs, detached refs, refspec substitution, path escape, and default-ref mutation."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P4-AT-003", "phase": "P4", "title": "Remote Git compare-and-swap and reconciliation", "test_types": ["NEGATIVE", "FAULT", "RECOVERY", "SECURITY"], "controls": ["F07", "F08", "F12"], "capabilities": ["github.draft_pr"], "requirement_ids": ["P4.3", "P4.4", "T17", "T19"], "fixture_manifest": "tests/acceptance/manifests/p4-at-003.json",
+      "scenarios": [{"id": "P4-AT-003-S01", "mode": "NEGATIVE", "requirement": "Deny remote identity, URL, ref, expected-old-object, credential scope, policy, or environment mismatch before push."}, {"id": "P4-AT-003-S02", "mode": "RECOVERY", "requirement": "Reconcile timeout, disconnect, concurrent update, server rejection, and unknown push outcome without force, duplicate mutation, merge, or default-branch write."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P5-AT-001", "phase": "P5", "title": "Protected packet channel and bounded framing", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY"], "controls": ["F03", "F12"], "capabilities": ["packet.assemble", "content.untrusted_boundary"], "requirement_ids": ["P5.1", "P5.2", "I04"], "fixture_manifest": "tests/acceptance/manifests/p5-at-001.json",
+      "scenarios": [{"id": "P5-AT-001-S01", "mode": "POSITIVE", "requirement": "Establish a fresh process-bound protected channel and exchange a valid versioned frame with exact peer, session, generation, provenance, size, and sequence."}, {"id": "P5-AT-001-S02", "mode": "SECURITY", "requirement": "Treat stdout and stderr markers as text and reject endpoint theft, peer substitution, malformed lengths, unknown versions, oversized frames, and untrusted control injection."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 900, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P5-AT-002", "phase": "P5", "title": "Packet authentication, sequence, replay, and backpressure", "test_types": ["NEGATIVE", "SECURITY", "LOAD", "FAULT"], "controls": ["F03", "F05", "F12"], "capabilities": ["packet.assemble", "content.untrusted_boundary"], "requirement_ids": ["P5.2", "P5.3", "T03", "T24"], "fixture_manifest": "tests/acceptance/manifests/p5-at-002.json",
+      "scenarios": [{"id": "P5-AT-002-S01", "mode": "NEGATIVE", "requirement": "Reject forged authentication, nonce reuse, replay, reorder, duplicate, gap, session rollover, stale acknowledgement, and structural authority claims."}, {"id": "P5-AT-002-S02", "mode": "LOAD", "requirement": "Enforce frame, queue, memory, rate, and time limits under flood while preserving emergency stop and reporting exact dropped or failed delivery state."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PERFORMANCE", "JOURNAL", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P5-AT-003", "phase": "P5", "title": "Durable delivery, reconnect reconciliation, and provenance", "test_types": ["FAULT", "RECOVERY", "SECURITY", "REVIEW"], "controls": ["F03", "F12"], "capabilities": ["packet.assemble", "agent.claude_relay"], "requirement_ids": ["P5.3", "P5.4", "T18"], "fixture_manifest": "tests/acceptance/manifests/p5-at-003.json",
+      "scenarios": [{"id": "P5-AT-003-S01", "mode": "RECOVERY", "requirement": "Reconcile disconnect and crash before and after durable receipt without false acknowledgement, duplicate authority, skipped sequence, or invented recipient state."}, {"id": "P5-AT-003-S02", "mode": "REVIEW", "requirement": "Preserve authenticated source separately from truth, approval, and observation claims and retain a manifested sanitized manual fallback for unavailable adapters."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P6-AT-001", "phase": "P6", "title": "Ephemeral browser session, navigation, and permission isolation", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY"], "controls": ["F04", "F11"], "capabilities": ["browser.evidence_capture"], "requirement_ids": ["P6.1", "P6.2", "T05", "T06"], "fixture_manifest": "tests/acceptance/manifests/p6-at-001.json",
+      "scenarios": [{"id": "P6-AT-001-S01", "mode": "POSITIVE", "requirement": "Create one fresh non-persistent dedicated test view for an exact approved origin and prove profile, frame, navigation, partition, and capture-state identity."}, {"id": "P6-AT-001-S02", "mode": "SECURITY", "requirement": "Deny redirects, popups, subframes, private network, certificate errors, external protocols, downloads, devices, permissions, storage reuse, and personal profiles."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "SCREENSHOT", "CANARY", "CLEANUP"], "timeout_seconds": 1200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P6-AT-002", "phase": "P6", "title": "CDP allowlist and secret-safe canonical evidence", "test_types": ["NEGATIVE", "SECURITY", "FAULT"], "controls": ["F04", "F10", "F11"], "capabilities": ["browser.evidence_capture", "content.untrusted_boundary"], "requirement_ids": ["P6.2", "P6.3", "I05", "I10"], "fixture_manifest": "tests/acceptance/manifests/p6-at-002.json",
+      "scenarios": [{"id": "P6-AT-002-S01", "mode": "SECURITY", "requirement": "Reject unallowlisted CDP methods, targets, fields, runtime evaluation, bodies, cookies, storage, console, authorization data, and capture during authentication."}, {"id": "P6-AT-002-S02", "mode": "FAULT", "requirement": "Place synthetic canaries across every browser source and require either bounded canonical sanitized evidence or a typed gap with no canary in UI, prompt, packet, audit, file, database, cache, crash report, or export."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "SCREENSHOT", "CANARY", "JOURNAL", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P6-AT-003", "phase": "P6", "title": "Browser capture races, bounded load, and verified teardown", "test_types": ["FAULT", "RECOVERY", "LOAD", "PERFORMANCE"], "controls": ["F04", "F05", "F06"], "capabilities": ["browser.evidence_capture", "safety.emergency_stop"], "requirement_ids": ["P6.3", "P6.4", "T23", "T25"], "fixture_manifest": "tests/acceptance/manifests/p6-at-003.json",
+      "scenarios": [{"id": "P6-AT-003-S01", "mode": "FAULT", "requirement": "Race navigation, frame replacement, debugger detach, target change, renderer crash, timeout, cancellation, and teardown interruption and reject stale or partial evidence."}, {"id": "P6-AT-003-S02", "mode": "LOAD", "requirement": "Bound DOM, pixel, CPU, memory, network, worker, and event floods and verify view, debugger, storage, service-worker, connection, handler, and buffer teardown after stop or restart."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PERFORMANCE", "CANARY", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P7-AT-001", "phase": "P7", "title": "Persistence admission, authoritative visibility, and bounded search", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY", "LOAD"], "controls": ["F05", "F10", "F12"], "capabilities": ["persistence.timeline", "search.fts5", "content.untrusted_boundary"], "requirement_ids": ["P7.1", "P7.2", "I05"], "fixture_manifest": "tests/acceptance/manifests/p7-at-001.json",
+      "scenarios": [{"id": "P7-AT-001-S01", "mode": "SECURITY", "requirement": "Reject D0, raw packets, logs, browser bodies, malformed fields, arbitrary SQL, unrestricted FTS syntax, extensions, attach operations, and unknown storage paths before persistence."}, {"id": "P7-AT-001-S02", "mode": "LOAD", "requirement": "Bound search tokens, operators, prefixes, results, time, memory, cancellation, pagination, and stale caches while every result rejoins current lifecycle and generation."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CANARY", "PERFORMANCE", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P7-AT-002", "phase": "P7", "title": "Retention clocks, resumable deletion, and SQLite cleanup", "test_types": ["FAULT", "RECOVERY", "SECURITY"], "controls": ["F10", "F12"], "capabilities": ["persistence.timeline", "search.fts5"], "requirement_ids": ["P7.2", "P7.3", "T15"], "fixture_manifest": "tests/acceptance/manifests/p7-at-002.json",
+      "scenarios": [{"id": "P7-AT-002-S01", "mode": "FAULT", "requirement": "Exercise clock rollback and jump, overdue retention, open readers, crash, busy database, disk full, corrupt index, and every deletion checkpoint without restoring visibility."}, {"id": "P7-AT-002-S02", "mode": "RECOVERY", "requirement": "Verify source, FTS, WAL, journals, temporary files, caches, artifacts, exports, and managed-copy state reach exact honest deletion outcomes with no stronger physical-erasure claim."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CANARY", "JOURNAL", "VERIFIER", "CLEANUP"], "timeout_seconds": 2400, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P7-AT-003", "phase": "P7", "title": "Backup, restore, encryption, export, and independent verification", "test_types": ["SECURITY", "FAULT", "RECOVERY", "REVIEW"], "controls": ["F10", "F12"], "capabilities": ["persistence.timeline"], "requirement_ids": ["P7.4", "P7.5", "I11", "I12"], "fixture_manifest": "tests/acceptance/manifests/p7-at-003.json",
+      "scenarios": [{"id": "P7-AT-003-S01", "mode": "RECOVERY", "requirement": "Restore isolated managed backups through the deletion ledger and retention policy before exposure, then verify expiry, rewrite, key, and remaining-copy state."}, {"id": "P7-AT-003-S02", "mode": "REVIEW", "requirement": "Run a read-only independent verifier over binary-safe exports and report exact assurance ranges, provenance, gaps, key transitions, missing evidence, and unmanaged limitations."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CANARY", "JOURNAL", "VERIFIER", "CLEANUP"], "timeout_seconds": 2400, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P8-AT-001", "phase": "P8", "title": "Skill discovery isolation and pre-admission snapshot", "test_types": ["NEGATIVE", "SECURITY", "FAULT", "LOAD"], "controls": ["F09", "F10"], "capabilities": ["skill.reviewed_publish"], "requirement_ids": ["P8.1", "P8.2", "T13"], "fixture_manifest": "tests/acceptance/manifests/p8-at-001.json",
+      "scenarios": [{"id": "P8-AT-001-S01", "mode": "SECURITY", "requirement": "Prove agents cannot discover proposal inbox bytes or write active roots and mark unsupported any platform whose ambient discovery cannot be isolated."}, {"id": "P8-AT-001-S02", "mode": "FAULT", "requirement": "Reconcile dropped watch events and race root replacement, links, mounts, hard links, special files, source mutation, secret canaries, limits, and crashes before persistence."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CANARY", "PERFORMANCE", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P8-AT-002", "phase": "P8", "title": "Strict bundle validation, complete manifest, review, and activation", "test_types": ["POSITIVE", "NEGATIVE", "SECURITY", "REVIEW"], "controls": ["F09"], "capabilities": ["skill.reviewed_publish"], "requirement_ids": ["P8.2", "P8.3", "T14"], "fixture_manifest": "tests/acceptance/manifests/p8-at-002.json",
+      "scenarios": [{"id": "P8-AT-002-S01", "mode": "NEGATIVE", "requirement": "Reject malformed or ambiguous metadata, duplicate YAML keys, aliases, tags, name collisions, active formats, parser abuse, dependency drift, and incomplete manifests."}, {"id": "P8-AT-002-S02", "mode": "REVIEW", "requirement": "Bind inert complete-bundle review, tiered owner approval, target scope, expiry, dependency closure, and separate activation to one immutable admitted digest."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P8-AT-003", "phase": "P8", "title": "Exact skill invocation, effect routing, revocation, and cross-agent publication", "test_types": ["NEGATIVE", "SECURITY", "FAULT", "RECOVERY"], "controls": ["F02", "F09"], "capabilities": ["skill.reviewed_publish", "process.owned_child"], "requirement_ids": ["P8.4", "I01", "T14"], "fixture_manifest": "tests/acceptance/manifests/p8-at-003.json",
+      "scenarios": [{"id": "P8-AT-003-S01", "mode": "SECURITY", "requirement": "Load and execute only exact active broker bytes with progressive disclosure and capability intersection while every requested effect re-enters normal typed policy and grant paths."}, {"id": "P8-AT-003-S02", "mode": "RECOVERY", "requirement": "Revoke metadata, queued and future loads, dependent bundles, running scripts, caches, and target publication across restart while disclosing already-delivered context as non-recallable."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P9-AT-001", "phase": "P9", "title": "Canonical evidence admission, manifests, chunks, and capacity", "test_types": ["POSITIVE", "NEGATIVE", "FAULT", "RECOVERY"], "controls": ["F05", "F10", "F11"], "capabilities": ["persistence.timeline", "content.untrusted_boundary"], "requirement_ids": ["P9.1", "P9.2", "I05", "I10"], "fixture_manifest": "tests/acceptance/manifests/p9-at-001.json",
+      "scenarios": [{"id": "P9-AT-001-S01", "mode": "POSITIVE", "requirement": "Capture exact permitted bytes before loss, bind immutable manifests and deterministic ordered chunks, and reconstruct and verify every retained range."}, {"id": "P9-AT-001-S02", "mode": "FAULT", "requirement": "Exercise policy-forbidden capture, truncation, queue and disk exhaustion, crash during commit, missing, duplicate, reordered, corrupt, expired, and deleted chunks with explicit gaps and no false success."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CANARY", "CLEANUP"], "timeout_seconds": 1800, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P9-AT-002", "phase": "P9", "title": "Code, log, DOM, and visual derivation safety", "test_types": ["NEGATIVE", "SECURITY", "FAULT", "PERFORMANCE"], "controls": ["F11"], "capabilities": ["compression.ast", "compression.visual"], "requirement_ids": ["P9.3", "P9.4", "P9.5", "T21", "T22"], "fixture_manifest": "tests/acceptance/manifests/p9-at-002.json",
+      "scenarios": [{"id": "P9-AT-002-S01", "mode": "FAULT", "requirement": "Force Tree-sitter ERROR and MISSING recovery, unsupported and mixed languages, parser drift, timeout, crash, binary, generated, configuration, import-only, and cross-file cases into exact chunk fallback."}, {"id": "P9-AT-002-S02", "mode": "SECURITY", "requirement": "Test localized critical visual changes, normalization drift, DOM disagreement, log interleaving, repetition, and hash similarity while critical canonical source is never suppressed."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "SCREENSHOT", "PERFORMANCE", "CLEANUP"], "timeout_seconds": 2400, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P9-AT-003", "phase": "P9", "title": "Canonical approval binding, honest replay, and evidence export", "test_types": ["NEGATIVE", "SECURITY", "RECOVERY", "REVIEW"], "controls": ["F07", "F11", "F12"], "capabilities": ["timeline.replay", "approval.local"], "requirement_ids": ["P9.6", "P9.7", "I10", "T26"], "fixture_manifest": "tests/acceptance/manifests/p9-at-003.json",
+      "scenarios": [{"id": "P9-AT-003-S01", "mode": "NEGATIVE", "requirement": "Deny approval from a summary, pHash, thumbnail, stale source, unavailable range, mismatched digest, recursive derivation, or incomplete provenance chain."}, {"id": "P9-AT-003-S02", "mode": "RECOVERY", "requirement": "Order replay by verified sequence, stop reconstruction at the first gap, preserve unknown outcomes, and reject incomplete, reordered, corrupt, mis-versioned, or orphaned exports."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "SCREENSHOT", "VERIFIER", "CLEANUP"], "timeout_seconds": 2400, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P10-AT-001", "phase": "P10", "title": "GitHub leased topic branch and draft PR workflow", "test_types": ["POSITIVE", "NEGATIVE", "FAULT", "RECOVERY", "SECURITY"], "controls": ["F07", "F08", "F12"], "capabilities": ["github.draft_pr", "workspace.lease_enforce"], "requirement_ids": ["P10.1", "T19"], "fixture_manifest": "tests/acceptance/manifests/p10-at-001.json",
+      "scenarios": [{"id": "P10-AT-001-S01", "mode": "POSITIVE", "requirement": "Create one leased topic branch, immutable commit manifest, reconciled push, and exact-base draft PR in the dedicated non-production test repository."}, {"id": "P10-AT-001-S02", "mode": "SECURITY", "requirement": "Prove least privilege, protected default ref, exact remote identity, and no agent merge, production repository, force, bypass, or owner impersonation authority."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"], "timeout_seconds": 2400, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P10-AT-002", "phase": "P10", "title": "Approved Claude handoff and end-to-end agent workflow", "test_types": ["POSITIVE", "NEGATIVE", "FAULT", "RECOVERY"], "controls": ["F01", "F03", "F04", "F07", "F11", "F12"], "capabilities": ["agent.claude_relay", "packet.assemble", "content.untrusted_boundary"], "requirement_ids": ["P10.2", "P10.3"], "fixture_manifest": "tests/acceptance/manifests/p10-at-002.json",
+      "scenarios": [{"id": "P10-AT-002-S01", "mode": "POSITIVE", "requirement": "Complete planning, typed execution, canonical evidence, authenticated handoff, acknowledgement, owner approval, cancellation, and recovery through the exact approved non-production adapter or manual fallback."}, {"id": "P10-AT-002-S02", "mode": "NEGATIVE", "requirement": "Reject undocumented IPC, UI automation, ambient sessions, forged provenance, unavailable recipient, changed payload, duplicate delivery, and model claims presented as observed truth."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CANARY", "CLEANUP"], "timeout_seconds": 3600, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P10-AT-003", "phase": "P10", "title": "Stripe isolation, production denial, and manual fallbacks", "test_types": ["NEGATIVE", "SECURITY", "REVIEW", "RECOVERY"], "controls": ["F01", "F02", "F04", "F07", "F10", "F12"], "capabilities": ["stripe.mock", "stripe.sandbox", "stripe.production"], "requirement_ids": ["P10.4", "SECURITY.PHASE0"], "fixture_manifest": "tests/acceptance/manifests/p10-at-003.json",
+      "scenarios": [{"id": "P10-AT-003-S01", "mode": "SECURITY", "requirement": "Prove offline mocks make no network or credential access and every production endpoint, identity, credential, environment, and mutation remains prohibited."}, {"id": "P10-AT-003-S02", "mode": "REVIEW", "requirement": "Run Stripe Sandbox only if its separate ADR and dedicated test identity are accepted; otherwise require an explicit unsupported result and safe mock fallback."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "CANARY", "JOURNAL", "CLEANUP"], "timeout_seconds": 2400, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P11-AT-001", "phase": "P11", "title": "Release abuse, fault, performance, accessibility, and clean-install matrix", "test_types": ["SECURITY", "FAULT", "RECOVERY", "LOAD", "PERFORMANCE", "ACCESSIBILITY", "PACKAGING"], "controls": ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"], "capabilities": [], "requirement_ids": ["P11.1", "P11.EXIT"], "fixture_manifest": "tests/acceptance/manifests/p11-at-001.json",
+      "scenarios": [{"id": "P11-AT-001-S01", "mode": "PACKAGING", "requirement": "Run every required suite from a clean install on minimum and current physical Apple Silicon profiles with migrations, recovery, upgrade, downgrade, and fresh data stores."}, {"id": "P11-AT-001-S02", "mode": "ACCESSIBILITY", "requirement": "Verify keyboard, VoiceOver, focus, contrast, reduced motion, zoom, approval, denial, stop, error, gap, and assurance states without content overlap or hidden authority."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PACKAGE", "PERFORMANCE", "SCREENSHOT", "CANARY", "CLEANUP"], "timeout_seconds": 7200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P11-AT-002", "phase": "P11", "title": "Signing, notarization, entitlements, supply chain, update, and rollback", "test_types": ["SECURITY", "PACKAGING", "FAULT", "RECOVERY"], "controls": ["F01", "F02", "F04", "F05", "F10", "F12"], "capabilities": [], "requirement_ids": ["P11.2", "P11.EXIT"], "fixture_manifest": "tests/acceptance/manifests/p11-at-002.json",
+      "scenarios": [{"id": "P11-AT-002-S01", "mode": "PACKAGING", "requirement": "Verify exact code signatures, hardened runtime, notarization ticket, helpers, entitlements, dependency lock, native modules, packaged resources, and prohibited entitlement absence."}, {"id": "P11-AT-002-S02", "mode": "RECOVERY", "requirement": "Reject tampered, substituted, expired, downgraded, unauthorized, or partially applied update artifacts and recover through an authenticated owner-approved rollback without schema or data loss."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PACKAGE", "MANIFEST", "JOURNAL", "VERIFIER", "CLEANUP"], "timeout_seconds": 3600, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P11-AT-003", "phase": "P11", "title": "Independent evidence verification and release decision", "test_types": ["REVIEW", "SECURITY", "RECOVERY"], "controls": ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"], "capabilities": [], "requirement_ids": ["P11.3", "P11.4", "P11.5", "P11.EXIT"], "fixture_manifest": "tests/acceptance/manifests/p11-at-003.json",
+      "scenarios": [{"id": "P11-AT-003-S01", "mode": "REVIEW", "requirement": "Verify the binary-safe review package, control matrix, reports, limitations, checkpoints, anchor receipts, exact assurance ranges, and clean-environment verifier without DOSAI write authority."}, {"id": "P11-AT-003-S02", "mode": "SECURITY", "requirement": "Require independent review, zero unresolved Critical or High findings, owner go or conditional-go, and evidence-backed final capability states and release limitations before publication."}],
+      "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "PACKAGE", "MANIFEST", "JOURNAL", "VERIFIER", "CLEANUP"], "timeout_seconds": 7200, "required_for_gate": true, "implementation_state": "NOT_IMPLEMENTED"
+    }
+  ]
+}
