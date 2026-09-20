@@ -1,14 +1,16 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, realpath, rm, rename, writeFile } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rm, rename, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { unlinkSync } from 'node:fs';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { admitRequest, FIXTURE, ROUTES } from '../../tools/supervised-execution/contracts.ts';
 import { digest } from '../../tools/supervised-execution/engine.ts';
 import { createLocalFixtureSession } from '../../tools/supervised-execution/runtime.mjs';
+import { createEvidenceDirectory } from '../../tools/supervised-execution/evidence-directory.ts';
 import { verifyAuditJournal } from '../../native-helpers/audit/journal.ts';
 import { collectFiles, importedModules } from '../architecture/source-graph.mjs';
 
@@ -253,6 +255,77 @@ test('operator command rejects piped approval and unknown actions before opening
     });
     assert.equal(result.status, 2);
     assert.equal(result.stdout, '');
+  }
+});
+
+test('both evidence prefixes reject existing and dangling symlinks before any external write', async t => {
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'dosai-evidence-gate-')));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const repository = join(directory, 'repo');
+  const outside = join(directory, 'outside');
+  await mkdir(repository); await mkdir(outside);
+  await writeFile(join(outside, 'sentinel'), 'unchanged');
+  const evidence = join(repository, 'evidence');
+  for (const target of [outside, join(directory, 'missing')]) {
+    await symlink(target, evidence);
+    for (const prefix of ['supervised-fixture-', 'execution-benchmark-']) {
+      await assert.rejects(createEvidenceDirectory(repository, prefix), /^Error: EVIDENCE_ROOT_REJECTED$/);
+      assert.deepEqual(await readdir(outside), ['sentinel']);
+      assert.equal(await readFile(join(outside, 'sentinel'), 'utf8'), 'unchanged');
+      assert.ok((await lstat(evidence)).isSymbolicLink());
+      await assert.rejects(lstat(join(directory, 'missing')), { code: 'ENOENT' });
+    }
+    await rm(evidence);
+  }
+});
+
+test('evidence creation resolves the repository, accepts a real root and rejects non-directory roots', async t => {
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'dosai-evidence-root-')));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const repository = join(directory, 'repo');
+  await mkdir(repository);
+  for (const prefix of ['supervised-fixture-', 'execution-benchmark-']) {
+    const result = await createEvidenceDirectory(repository, prefix);
+    assert.equal(await realpath(result), result);
+    assert.equal(resolve(result, '..'), join(repository, 'evidence'));
+    assert.equal((await lstat(result)).isDirectory(), true);
+    assert.deepEqual(await readdir(result), []);
+  }
+  const other = join(directory, 'other'); await mkdir(other);
+  await writeFile(join(other, 'evidence'), 'keep');
+  await assert.rejects(createEvidenceDirectory(other, 'supervised-fixture-'), /EVIDENCE_ROOT_REJECTED/);
+  assert.equal(await readFile(join(other, 'evidence'), 'utf8'), 'keep');
+});
+
+test('operator and benchmark entry points reject redirected evidence before creating audit or receipt files', async t => {
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'dosai-evidence-cli-')));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const repository = join(directory, 'repo');
+  const tool = join(repository, 'tools/supervised-execution');
+  const outside = join(directory, 'outside');
+  await mkdir(tool, { recursive: true }); await mkdir(outside);
+  await writeFile(join(outside, 'sentinel'), 'unchanged');
+  await symlink(outside, join(repository, 'evidence'));
+  await symlink(join(root, 'native-helpers'), join(repository, 'native-helpers'));
+  for (const name of ['runtime.mjs', 'evidence-directory.ts']) {
+    await symlink(join(root, 'tools/supervised-execution', name), join(tool, name));
+  }
+  for (const name of ['run.mjs', 'benchmark.mjs']) {
+    const entry = join(tool, name);
+    await copyFile(join(root, 'tools/supervised-execution', name), entry);
+    // Test-only TTY flags reach startup validation; no approval is supplied.
+    const source = `Object.defineProperty(process.stdin, 'isTTY', {value: true});
+      Object.defineProperty(process.stdout, 'isTTY', {value: true});
+      await import(${JSON.stringify(pathToFileURL(entry).href)});`;
+    const result = spawnSync(process.execPath, ['--input-type=module', '--eval', source], {
+      cwd: repository, encoding: 'utf8', timeout: 5000,
+    });
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, /EVIDENCE_ROOT_REJECTED/);
+    assert.equal(result.stdout, '');
+    assert.deepEqual(await readdir(outside), ['sentinel']);
+    assert.equal(await readFile(join(outside, 'sentinel'), 'utf8'), 'unchanged');
+    assert.ok((await lstat(join(repository, 'evidence'))).isSymbolicLink());
   }
 });
 
