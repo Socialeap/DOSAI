@@ -1,14 +1,13 @@
-import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { createLocalFixtureSession } from './runtime.mjs';
+import { createEvidenceDirectory } from './evidence-directory.ts';
 
 if (process.version !== 'v24.18.0') throw new Error('PINNED_RUNTIME_REQUIRED');
 
 // Automated fixtures use synthetic confirmations, never physical-owner or provider authority.
-const evidence = resolve(import.meta.dirname, '../../evidence');
-await mkdir(evidence, { recursive: true, mode: 0o700 });
-const directory = await realpath(await mkdtemp(join(evidence, 'execution-benchmark-')));
+const directory = await createEvidenceDirectory(resolve(import.meta.dirname, '../..'), 'execution-benchmark-');
 const samples = [];
 for (let index = 0; index < 10; index++) {
   const start = performance.now();

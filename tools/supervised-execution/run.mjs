@@ -1,8 +1,9 @@
-import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { verifyAuditJournal } from '../../native-helpers/audit/journal.ts';
 import { createLocalFixtureSession } from './runtime.mjs';
+import { createEvidenceDirectory } from './evidence-directory.ts';
 
 // Fixed synthetic data only. No request file, arbitrary JSON, path or endpoint input.
 const [action = 'SUMMARIZE_FIXTURE', ...extra] = process.argv.slice(2);
@@ -16,9 +17,7 @@ if (process.version !== 'v24.18.0') {
   console.error('INTERACTIVE_OPERATOR_REQUIRED: piped approval is unavailable. Use the automated test suite for fixtures.');
   process.exitCode = 2;
 } else {
-  const evidence = resolve(import.meta.dirname, '../../evidence');
-  await mkdir(evidence, { recursive: true, mode: 0o700 });
-  const directory = await realpath(await mkdtemp(join(evidence, 'supervised-fixture-')));
+  const directory = await createEvidenceDirectory(resolve(import.meta.dirname, '../..'), 'supervised-fixture-');
   const databasePath = join(directory, 'audit.sqlite3');
   const engine = await createLocalFixtureSession(databasePath);
   const prepared = engine.prepare({ version: 1, action, fixture: 'beta-core-v1', generation: '1' });

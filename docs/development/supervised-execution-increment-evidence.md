@@ -33,8 +33,8 @@ unchanged.
 | Supplied dirty-worktree baseline, full tests | 497/504 pass; seven pre-existing historical guard failures |
 | Existing eight TypeScript projects | Pass on the pinned Node runtime |
 | Normal Main, preload and renderer builds | Pass; no package/signing/service/VM proof invoked |
-| New focused security tests | 20/20 pass |
-| Isolated committed P2 baseline plus this increment | 181/181 full tests pass |
+| New focused security tests, including review correction | 23/23 pass |
+| Isolated committed P2 baseline plus this increment | 184/184 full tests pass |
 | New tool's separate TypeScript project | Pass |
 | Interactive terminal denial | `OWNER_DENIED`, durable receipt, exit 1; no fixture execution |
 
@@ -65,6 +65,24 @@ intersection, exact approval, forgery/replay, one pending request, preflight
 revocation before and after authorization, wall/monotonic expiry, audit
 unavailability/corruption/deletion, unknown outcome, stop, restart, sanitized
 exceptions, bounded receipt retention and application import exclusion.
+
+### Independent-review correction: evidence-root redirection
+
+The review of initial commit `6566163a042b40d5d0e01a710857ba84c9c1db6b`
+identified that recursive directory creation could follow a pre-existing
+`evidence` symlink before containment was checked. Both the operator and benchmark
+entry points now share a typed evidence-directory gate. It rejects symlinked,
+dangling and non-directory roots, canonicalizes the repository, verifies
+containment before session creation and rechecks root identity and the created
+directory before returning a path. No uncertain path is followed for cleanup.
+
+Three additional regressions prove rejection without changing an external
+sentinel, valid in-repository creation, non-directory rejection, and both actual
+command entry points failing before audit/receipt writes. The original 181 tests
+plus these three pass (184 total); the focused suite passes 23/23. The exact
+Node 24.18.0 tool typecheck also passes. These path checks do not claim isolation
+from an actively racing same-user filesystem adversary. Fixture-only authority,
+real-execution NO-GO and release classification are unchanged.
 
 ## Local timing observation
 

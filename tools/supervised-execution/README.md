@@ -62,6 +62,13 @@ node tools/supervised-execution/run.mjs SUMMARIZE_FIXTURE
    `OWNER_DENIED`. Owner QA and acceptance remain outstanding until the owner
    runs and reviews these cases.
 
+Both command entry points reject a symlinked, dangling or non-directory
+`evidence` root before creating session files. They canonicalize the repository,
+verify containment and recheck directory identity before returning a session
+path. `EVIDENCE_ROOT_REJECTED` requires owner diagnosis; the tool does not follow
+or remove the rejected path. These path checks are not OS isolation against a
+same-user process racing directory replacement.
+
 The accepted P2 grant-proof API can only create a fresh journal; it has no
 reopen-identity input. Each immutable plan therefore gets its own proof journal,
 and the outcome receipt references its grant ID, P2 plan digest, audit sequence
