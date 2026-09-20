@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v35Path = resolve(root, 'docs/architecture/process-ownership-v35.json');
 const v35Bytes = await readFile(v35Path);
 const v35 = JSON.parse(v35Bytes);
@@ -106,7 +109,7 @@ test('v36 hash-binds exact implementation and successor-aware guard postimages',
   );
   assert.ok(v37PackageScript);
   const v37GovernanceFiles = new Map(
-    v37.governance_maintenance_files.map((file) => [file.path, file.sha256]),
+    v37.governance_maintenance_files.map((file) => [file.path, successors.expected(file.path, file.sha256)]),
   );
   assert.deepEqual(
     addon.static_package_implemented_files.map(({ path }) => path),

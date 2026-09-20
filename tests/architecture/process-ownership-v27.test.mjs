@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v26Path = resolve(root, 'docs/architecture/process-ownership-v26.json');
 const v27Path = resolve(root, 'docs/architecture/process-ownership-v27.json');
 const v26Bytes = await readFile(v26Path);
@@ -156,7 +159,7 @@ test('v27 hash-locks accepted inputs and proposal guard updates', async () => {
     ...v37.native_helpers.find(({ id }) => id === 'service-management-status-addon')
       .physical_proof_implemented_files,
     ...v37.governance_maintenance_files,
-  ].map((file) => [file.path, file.sha256]));
+  ].map((file) => [file.path, successors.expected(file.path, file.sha256)]));
   assert.equal(service.launch_agent_static_package_immutable_inputs.length, 10);
   assert.equal(service.launch_agent_static_package_proposal_guard_remediations.length, 2);
   for (const file of [

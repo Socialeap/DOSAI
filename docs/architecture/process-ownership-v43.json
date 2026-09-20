@@ -1,0 +1,137 @@
+{
+  "schema_version": 43,
+  "status": "IMPLEMENTED_PENDING_OWNER_REVIEW",
+  "scope": "P3_HISTORICAL_GUARD_POSTIMAGE_RECONCILIATION_ONLY",
+  "full_manifest_replacement": false,
+  "implementation_authorization": "OWNER_DIRECTED_TEST_ONLY_REPAIR_2026_09_20",
+  "accepted_lineage_head": {
+    "path": "docs/architecture/process-ownership-v41.json",
+    "sha256": "eab6cd2acd9b729a42760237a82a8536d897d3471a3629d70b5ed27c7abe2d42"
+  },
+  "preserved_proposal": {
+    "path": "docs/architecture/process-ownership-v42.json",
+    "sha256": "c39b65583c9bb7786bcdc342054d2ad8a7a211d90180b22fe3c41e0b09be5e4b"
+  },
+  "allowed_modified_files": [
+    "tests/architecture/process-ownership-v22.test.mjs",
+    "tests/architecture/process-ownership-v24.test.mjs",
+    "tests/architecture/process-ownership-v26.test.mjs",
+    "tests/architecture/process-ownership-v27.test.mjs",
+    "tests/architecture/process-ownership-v28.test.mjs",
+    "tests/architecture/process-ownership-v29.test.mjs",
+    "tests/architecture/process-ownership-v30.test.mjs",
+    "tests/architecture/process-ownership-v36.test.mjs",
+    "tests/architecture/process-ownership-v37.test.mjs",
+    "tests/architecture/process-ownership-v42.test.mjs"
+  ],
+  "preimplementation_files": [
+    {
+      "path": "tests/architecture/process-ownership-v22.test.mjs",
+      "sha256": "3c5fd094ea579a3a362f2a0ef7846e24f07fcf5c797613bbc585df393c4f74ef"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v24.test.mjs",
+      "sha256": "d7f59cf59b33af40f2df57fff71a8743939cd9b2b48d3aa7c3b918f2dfda1128"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v26.test.mjs",
+      "sha256": "e27492737584e2168fa42eb8c3506b1ccf791c346a6f64872a6f5a55f7b68852"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v27.test.mjs",
+      "sha256": "8ea801933f7a6b08e24c8dfc422d389bd1d37caa0ec12d7c9af57f61825c9ecf"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v28.test.mjs",
+      "sha256": "de5c755eea943f65d1bd3c2b34b0d0a96e0feadbecb8b2bcde1729a0242ddeb6"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v29.test.mjs",
+      "sha256": "17d55fd345492108d7b2bc6a0444567db7ea2233004a79076c04351b74f41529"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v30.test.mjs",
+      "sha256": "82feafcac69eb54ade5b1db9d823aaac49e1502154d7b3e8c543b269c81f07a9"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v36.test.mjs",
+      "sha256": "91765e467f96f145989fc2e7be51ae855d6f092f8e2e0db948fb43fc1c2ec499"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v37.test.mjs",
+      "sha256": "d4a7b5def9429d5d101d8a4c5adb56fbfefb870912306217a1a277ef8bf8dbb1"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v42.test.mjs",
+      "sha256": "3eafa6facb426b6cb275cb67bf373dfb266c9dddbb19aa146a8f1e2a9f25000a"
+    }
+  ],
+  "implemented_files": [
+    {
+      "path": "tests/architecture/process-ownership-v22.test.mjs",
+      "sha256": "527699d45fb3edf92a3f898fe12e5d3d72c35d35210be2349359fc92376d35ea"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v24.test.mjs",
+      "sha256": "e1f63d733368c17f70fb3976f2c5494aee0f71e477fa99677e79e6c3675233ef"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v26.test.mjs",
+      "sha256": "5b88216db24193672e948df364e777b398fde77a3bf467c7926e6105c7d83b17"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v27.test.mjs",
+      "sha256": "01eaffaf1c8ae9df19e2cf1275cd51623e85c888d9d3f3b8b72586b4e2be6089"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v28.test.mjs",
+      "sha256": "293a4bcd1183310728631a8e8ddbb91b266a6c1660bf0a6ca7a3946580123269"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v29.test.mjs",
+      "sha256": "ae8230d482bbc651dc2026734c0c7c9d6de717dcff7d5af845f163a3dfbd43d2"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v30.test.mjs",
+      "sha256": "b8974d35613ee96be5d2b77cc85688000a9388137f016a80636f2ecad54ffa1f"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v36.test.mjs",
+      "sha256": "23780cd1ba5f0ae805b8e3d46f2c9b4c4ed4d7948e3574479404d5004e1c87bb"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v37.test.mjs",
+      "sha256": "837408fe8f97be9f90cb6ff6f9321ef300d4e796a49abc0e18dd7a804b1e8dee"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v42.test.mjs",
+      "sha256": "918bf42ba91e9f39126e8042ce78e46cfef939acd786737c954480cfeb40a26f"
+    }
+  ],
+  "support_files": [
+    {
+      "path": "tests/architecture/p3-guard-successor.mjs",
+      "sha256": "32b57febbfd143779037d6b4dde46cfcd83fc35ae769482f8971fe44c6c82f40"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v43.test.mjs",
+      "sha256": "529b9331fb5301452dd0b062fb7f3e8f845c5a8ec073d015ee429eba3bf693ee"
+    }
+  ],
+  "authority": {
+    "runtime_authority": false,
+    "xpc_connection": false,
+    "native_module_load": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "package_or_signing": false,
+    "production_use": false
+  },
+  "runtime_status": "NO_GO"
+}

@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v27Path = resolve(root, 'docs/architecture/process-ownership-v27.json');
 const v27Bytes = await readFile(v27Path);
 const v27 = JSON.parse(v27Bytes);
@@ -157,7 +160,7 @@ test('v28 binds implementation, guard, and retained artifact postimages', async 
         .physical_proof_implemented_files,
       ...v37.governance_maintenance_files,
     ]
-      .map((file) => [file.path, file.sha256]),
+      .map((file) => [file.path, successors.expected(file.path, file.sha256)]),
   );
   assert.deepEqual(
     service.launch_agent_static_package_implemented_files.map(({ path }) => path),

@@ -4,7 +4,10 @@ import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v23Path = resolve(root, 'docs/architecture/process-ownership-v23.json');
 const v24Path = resolve(root, 'docs/architecture/process-ownership-v24.json');
 const v23Bytes = await readFile(v23Path);
@@ -157,7 +160,7 @@ test('v24 preserves implementation while v26 and v28 bind successors', async () 
         .physical_proof_implemented_files,
       ...v37.governance_maintenance_files,
     ]
-      .map((file) => [file.path, file.sha256]),
+      .map((file) => [file.path, successors.expected(file.path, file.sha256)]),
   );
   assert.equal(service.named_service_static_package_implemented_files.length, 3);
   assert.equal(service.named_service_static_package_guard_remediations.length, 7);

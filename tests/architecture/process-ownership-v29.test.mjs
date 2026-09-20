@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v28Path = resolve(root, 'docs/architecture/process-ownership-v28.json');
 const v28Bytes = await readFile(v28Path);
 const v28 = JSON.parse(v28Bytes);
@@ -127,7 +130,7 @@ test('v29 hash-locks accepted inputs and its narrow predecessor guard update', a
         .physical_proof_implemented_files,
       ...v37.governance_maintenance_files,
     ]
-      .map((file) => [file.path, file.sha256]),
+      .map((file) => [file.path, successors.expected(file.path, file.sha256)]),
   );
   assert.equal(service.launch_agent_status_immutable_inputs.length, 3);
   assert.equal(service.launch_agent_status_proposal_guard_remediations.length, 1);

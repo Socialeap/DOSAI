@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v29Path = resolve(root, 'docs/architecture/process-ownership-v29.json');
 const v29Bytes = await readFile(v29Path);
 const v29 = JSON.parse(v29Bytes);
@@ -126,7 +129,7 @@ test('v30 binds implementation and successor-aware guard postimages', async () =
         .static_package_guard_remediations,
       ...v37.governance_maintenance_files,
     ]
-      .map((file) => [file.path, file.sha256]),
+      .map((file) => [file.path, successors.expected(file.path, file.sha256)]),
   );
   for (const file of [
     ...service.launch_agent_status_implemented_files,

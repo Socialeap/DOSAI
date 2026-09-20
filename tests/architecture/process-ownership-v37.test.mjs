@@ -4,7 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v36Path = resolve(root, 'docs/architecture/process-ownership-v36.json');
 const v36Bytes = await readFile(v36Path);
 const v36 = JSON.parse(v36Bytes);
@@ -59,7 +62,7 @@ test('v37 binds only the explicitly authorized governance-maintenance files', as
     ],
   );
   for (const file of v37.governance_maintenance_files) {
-    assert.equal(await hashFile(file.path), file.sha256, file.path);
+    assert.equal(await hashFile(file.path), successors.expected(file.path, file.sha256), file.path);
   }
 });
 

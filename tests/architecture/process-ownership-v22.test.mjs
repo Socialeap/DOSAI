@@ -4,7 +4,10 @@ import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
+import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+
 const root = resolve(import.meta.dirname, '../..');
+const successors = await loadGuardSuccessors(root);
 const v21Path = resolve(root, 'docs/architecture/process-ownership-v21.json');
 const v22Path = resolve(root, 'docs/architecture/process-ownership-v22.json');
 const v21Bytes = await readFile(v21Path);
@@ -122,7 +125,7 @@ test('v22 preserves guard postimages while later accepted generations bind succe
       .static_package_guard_remediations,
     ...v37.governance_maintenance_files,
   ]
-      .map((file) => [file.path, file.sha256]),
+      .map((file) => [file.path, successors.expected(file.path, file.sha256)]),
   );
   assert.equal(service.named_service_executable_candidate_guard_remediations.length, 7);
   for (const file of service.named_service_executable_candidate_guard_remediations) {
