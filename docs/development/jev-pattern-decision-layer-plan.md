@@ -3,6 +3,7 @@
 **Status:** `PROPOSED_PLANNING_INPUT`  
 **Recorded:** `2026-09-20T14:15:47-04:00`  
 **Planning revision:** `2026-09-20T15:47:23-04:00` — incorporated the owner's requested architecture-review findings.  
+**Candidate review:** `2026-09-20T18:12:00-04:00` — classified Laya as a future quarantined evaluator candidate, not an execution or safety dependency.
 **Owner intent:** Preserve and phase a fast, typed, confidence-bearing decision
 layer for DOSAI without changing the current P3 delivery authority.  
 **Primary delivery phases:** P7, P9, P10, and P11  
@@ -202,6 +203,78 @@ composite-scoring, and uncertainty-routing patterns with these corrections:
 The research references verified during the September 20 review are listed
 below. Custom model training, reproducing Jev's architecture, and gaining access
 to its service are not beta prerequisites.
+
+## Laya Candidate Strategy
+
+The owner supplied the Apache-2.0 Laya repository as a possible open-source
+analogue to Jev. The review baseline is upstream `main` commit
+`42626c348753fbb17572a813127df2278a1ec527`. Laya is a local encoder-based typed
+classifier for closed `choice`, binary (`noul`), and ordinal `score` questions.
+It is not an execution broker, sandbox, policy engine, approval service, grant
+authority, watchdog, audit journal, plugin runtime, or evidence-admission layer.
+
+Adopt its useful methodology without adding it to the private-beta runtime:
+
+| Decision | DOSAI treatment | Earliest stage |
+| --- | --- | --- |
+| Closed typed question/result shapes | Reproduce provider-neutrally in DOSAI contracts with explicit `ABSTAIN`; do not expose arbitrary prompts or labels. | TDP-1 |
+| Explicit model/task/language routing metadata | Record the selected route, reason, model digest, language result, and fallback; undecided language abstains or uses the reviewed multilingual route. | TDP-1A/TDP-2 |
+| Calibration and robustness methodology | Add held-out ECE, Brier, log loss, selective risk, option-order permutation, language routing, class balance, and out-of-distribution tests. | TDP-1A/TDP-3 |
+| Laya Python runtime and weights | Consider only as one bakeoff candidate in an isolated local sidecar after the deterministic baseline passes. | TDP-2 |
+| Laya confidence, moderation, guardrail, or routing presets | Never use as authorization, safety enforcement, evidence validity, completion proof, or a reason to lower deterministic policy. | Prohibited |
+| Direct Electron/Main embedding or automatic model download | Reject. The renderer and Main process do not load Python, Torch, model weights, or runtime-downloaded artifacts. | Prohibited |
+
+The candidate currently has material limitations that must become explicit test
+cases rather than inherited assumptions:
+
+- its published Jev comparisons are not a controlled head-to-head run;
+- the base checkpoints provide weak zero-shot typed-decision performance, so
+  fine-tuning and dataset fit are part of the claimed value;
+- high-cardinality choices degrade because option descriptions share a bounded
+  token budget; the initial DOSAI candidate profile therefore permits only 2–10
+  semantic choices and requires hierarchical routing above that bound;
+- confidence is not accepted until fitted and validated on a frozen DOSAI
+  calibration split; entropy concentration is never relabeled as correctness
+  probability; and
+- the September 20 upstream review found an open correction for Latin-language
+  misrouting and a pathological low-temperature bucket that could sharply
+  overstate confidence. An upstream version, commit, or checkpoint with either
+  behavior is ineligible for activation.
+
+### Quarantined Laya Bakeoff
+
+If TDP-1A exits successfully and the owner separately accepts TDP-2, evaluate
+Laya through a replaceable `LOCAL_CLASSIFIER` adapter with all of these controls:
+
+1. Pin the source commit, Python runtime, every dependency, tokenizer, config,
+   checkpoint revision, license/provenance record, and SHA-256 digest before the
+   candidate enters the build. The repository license does not establish the
+   license or redistribution rights of model weights or training datasets.
+2. Provision artifacts through the reviewed supply chain. Disable network after
+   provisioning; prohibit Hugging Face downloads, update checks, telemetry,
+   secrets, arbitrary paths, caller-selected models, and caller-supplied code.
+3. Run outside Electron Main and the renderer in a bounded worker/capsule with
+   fixed CPU, memory, queue, concurrency, input, output, and deadline limits.
+   The worker receives sanitized projected fields and can return only a strict
+   non-authoritative decision result or reason-coded `ABSTAIN`.
+4. Give the worker no policy, approval, grant, filesystem-write, process, Git,
+   browser, network, journal, deployment, or effect authority. A crash, timeout,
+   invalid distribution, routing uncertainty, calibration mismatch, or resource
+   breach falls back to the deterministic/full-agent/owner path.
+5. Compare identical frozen DOSAI tasks against deterministic rules and the
+   approved full-agent baseline. Measure warm and cold end-to-end latency,
+   throughput, peak resident memory, application responsiveness, battery and
+   thermal impact, model-load churn, quality, calibration, abstention coverage,
+   agent calls, tokens, and cost.
+6. Keep the candidate in `SHADOW` until the exact evaluator/template/calibration
+   triple meets the accepted gates. Promotion never grants effect authority and
+   any model, dependency, template, label, routing, or calibration change
+   automatically returns it to shadow.
+
+This is a candidate evaluation plan, not a dependency selection. If Laya fails
+the gates, DOSAI retains the same contracts and substitutes deterministic rules,
+another reviewed local classifier, or the full-agent fallback without changing
+the policy or execution architecture.
 
 ## Strategic Component Specifications
 
@@ -658,6 +731,9 @@ dependencies, performance evidence, or permission to cross a trust boundary.
 - TypeSafe AI, atomic questions and composition: <https://docs.typesafe.ai/introduction>
 - TypeSafe AI, confidence versus probability: <https://docs.typesafe.ai/confidence>
 - TypeSafe AI, qualified fan-out latency guidance: <https://docs.typesafe.ai/patterns/fan-out>
+- Laya source and Apache-2.0 repository: <https://github.com/NandhaKishorM/laya>
+- Laya benchmark disclosures and limitations: <https://github.com/NandhaKishorM/laya/blob/main/BENCHMARKS.md>
+- Laya open language-routing and confidence correction: <https://github.com/NandhaKishorM/laya/pull/42>
 - Knowledgator, GLiClass runtime-label classification:
   <https://github.com/Knowledgator/GLiClass>
 - Warner et al., ModernBERT encoder context and inference research:

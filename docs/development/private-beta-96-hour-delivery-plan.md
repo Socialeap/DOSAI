@@ -122,6 +122,14 @@ custom model training, and model-performance parity are not beta dependencies.
 If model-assisted functionality remains disabled, disclose that limitation.
 Protect the final validation window and the execution-safety critical path.
 
+The September 20 Laya review does not change this priority. Adopt its closed
+typed-decision, explicit-routing, abstention, calibration, and robustness-test
+patterns in the future contracts and evaluation harness. Do not add Python,
+Torch, checkpoint downloads, model residency, a new sidecar, or Laya presets to
+the 72–96-hour critical path. A pinned, network-disabled, authority-free Laya
+sidecar is a post-baseline TDP-2 bakeoff candidate only; it remains shadow-only
+until the exact DOSAI-held-out and resource gates pass.
+
 ### Delivery Practices
 
 - **One integration owner:** Codex maintains the working contract map, assembles

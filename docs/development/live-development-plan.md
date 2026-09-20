@@ -75,7 +75,11 @@ P9.8 preparation prioritizes strict contracts, minimal admitted evidence,
 deterministic routing and caching, and an evaluation harness before model
 selection. The seven component specifications, explicit abstention and
 calibration semantics, and beta order remain subject to existing prerequisites;
-no implementation or phase completion is claimed.
+no implementation or phase completion is claimed. The September 20 Laya review
+adds only a future TDP-2 candidate: DOSAI may reproduce its typed-decision and
+evaluation patterns, while any Laya runtime must remain a pinned, isolated,
+network-disabled, authority-free shadow worker. Laya is not a beta dependency
+and cannot supply policy, approval, guardrail, evidence, or execution authority.
 
 | Phase | Status | Status updated | Objective | Depends on |
 | --- | --- | --- | --- | --- |
