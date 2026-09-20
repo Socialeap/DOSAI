@@ -159,6 +159,25 @@ launch, connection and execution were not performed. Real execution and
 private-beta release remain **NO-GO**, and the single-use authorization is
 exhausted.
 
+## Owner-authorized v45 observability repair
+
+The owner authorized a source-only repair to make a future physical result
+attributable without adding another load, status call, argument or effect. V45
+preserves all four native statuses and adds distinct bounded outputs for addon-
+load failure, native-call failure and Electron-readiness failure. The regression
+builds and inertly evaluates the actual dedicated CommonJS entry across each
+case. Process ownership v45 binds the five modified and two support postimages,
+the accepted v44 record, and the exhausted one-attempt physical receipt.
+
+The focused successor/proof suite passes 25 of 25, all eight TypeScript projects
+pass, normal Main/preload/renderer builds pass, and the full repository suite
+passes 516 of 516 with no failures, skips or cancellations. See the
+[v45 source evidence](p3-v45-proof-observability-repair-evidence.md). No package,
+signing, app launch, native load, status call, registration, service launch,
+connection, production action or physical retry occurred. V45 improves future
+proof attribution but does not itself resolve native-load or status-call
+success. Real execution and private-beta release remain **NO-GO**.
+
 Independent native amd64 Linux builders, accepted guest artifacts and the
 remaining isolation/approval proofs are still required for useful execution.
 The 3–4-day target has not been demonstrated by fixture or packaging success.
@@ -169,7 +188,7 @@ The 3–4-day target has not been demonstrated by fixture or packaging success.
 build/test tooling and governance records; there is no backend migration,
 secret/configuration change or deployment. No frontend Publish is required.
 Nothing was merged, distributed, registered or deployed, and no production
-execution or paid/external builder provisioning occurred. The source repair
-and bounded startup proof are complete; a separately governed source proposal
-is required to make native-load and native-call success observable before any
-further physical attempt. Owner QA and beta acceptance remain separate gates.
+execution or paid/external builder provisioning occurred. The CommonJS and v45
+observability repairs are complete and validated; any further physical attempt
+requires separate explicit authorization. Owner QA and beta acceptance remain
+separate gates.

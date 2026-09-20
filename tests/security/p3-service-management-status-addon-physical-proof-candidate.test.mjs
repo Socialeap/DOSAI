@@ -33,7 +33,10 @@ test('proof entry is a fixed no-window Electron Main bundle with one bounded obs
   assert.match(entrySource, /createRequire\(__filename\)/);
   assert.doesNotMatch(entrySource, /import\.meta/);
   assert.match(entrySource, /join\(process\.resourcesPath, statusAddonName\)/);
-  assert.match(entrySource, /createServiceManagementStatusAdapter\(loadFixedStatusAddon\(\)\)\.observe\(\)/);
+  assert.match(entrySource, /createServiceManagementStatusAdapter\(monitoredBinding\)\.observe\(\)/);
+  assert.match(entrySource, /const nativeAddonLoadFailure = 'NATIVE_ADDON_LOAD_FAILED'/);
+  assert.match(entrySource, /const nativeStatusCallFailure = 'NATIVE_STATUS_CALL_FAILED'/);
+  assert.match(entrySource, /const electronReadinessFailure = 'ELECTRON_READINESS_FAILED'/);
   assert.equal((entrySource.match(/process\.stdout\.write/g) ?? []).length, 1);
   assert.equal((entrySource.match(/app\.exit\(0\)/g) ?? []).length, 1);
   assert.equal((entrySource.match(/app\.exit\(1\)/g) ?? []).length, 1);
@@ -58,119 +61,127 @@ test('dedicated CommonJS proof bundle starts and performs one fixed inert observ
     assert.match(bundleSource, /createRequire\)\(__filename\)/);
     assert.doesNotMatch(bundleSource, /\{\}\.url|import\.meta/);
 
-    const writes = [];
-    const exits = [];
-    const loads = [];
-    const observations = [];
     const resourcesPath = '/inert/dosai/resources';
-    const app = Object.freeze({
-      exit(code) {
-        exits.push(code);
-      },
-      whenReady() {
-        return Promise.resolve();
-      },
-    });
-    const requireStub = identifier => {
-      if (identifier === 'electron') return { app };
-      if (identifier === 'node:path') return nodePath;
-      if (identifier === 'node:module') {
-        return {
-          createRequire(filename) {
-            assert.equal(filename, bundlePath);
-            return path => {
-              loads.push(path);
-              return {
-                observe(...arguments_) {
-                  observations.push(arguments_);
-                  return 'NOT_REGISTERED';
-                },
+    const evaluate = async ({ load, ready = true }) => {
+      const writes = [];
+      const exits = [];
+      const loads = [];
+      const app = Object.freeze({
+        exit(code) {
+          exits.push(code);
+        },
+        whenReady() {
+          return ready ? Promise.resolve() : Promise.reject(new Error('inert readiness failure'));
+        },
+      });
+      const requireStub = identifier => {
+        if (identifier === 'electron') return { app };
+        if (identifier === 'node:path') return nodePath;
+        if (identifier === 'node:module') {
+          return {
+            createRequire(filename) {
+              assert.equal(filename, bundlePath);
+              return path => {
+                loads.push(path);
+                return load();
               };
-            };
+            },
+          };
+        }
+        throw new Error(`Unexpected bundled require: ${identifier}`);
+      };
+      const processStub = Object.freeze({
+        resourcesPath,
+        stdout: Object.freeze({
+          write(value) {
+            writes.push(value);
+            return true;
           },
-        };
-      }
-      throw new Error(`Unexpected bundled require: ${identifier}`);
+        }),
+      });
+      const wrapper = vm.runInNewContext(
+        `(function (require, module, exports, __filename, __dirname, process) {${bundleSource}\n})`,
+        Object.create(null),
+      );
+      const moduleStub = { exports: {} };
+      wrapper(
+        requireStub,
+        moduleStub,
+        moduleStub.exports,
+        bundlePath,
+        nodePath.dirname(bundlePath),
+        processStub,
+      );
+      await new Promise(resolve => setImmediate(resolve));
+      return { exits, loads, writes };
     };
-    const processStub = Object.freeze({
-      resourcesPath,
-      stdout: Object.freeze({
-        write(value) {
-          writes.push(value);
-          return true;
+
+    const legitimateCalls = [];
+    const legitimate = await evaluate({
+      load: () => ({
+        observe(...arguments_) {
+          legitimateCalls.push(arguments_);
+          return 'NOT_FOUND';
         },
       }),
     });
-    const wrapper = vm.runInNewContext(
-      `(function (require, module, exports, __filename, __dirname, process) {${bundleSource}\n})`,
-      Object.create(null),
+    assert.deepEqual(
+      legitimate.loads,
+      [nodePath.join(resourcesPath, 'dosai-service-management-status.node')],
     );
-    const moduleStub = { exports: {} };
-    wrapper(
-      requireStub,
-      moduleStub,
-      moduleStub.exports,
-      bundlePath,
-      nodePath.dirname(bundlePath),
-      processStub,
-    );
-    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(legitimateCalls, [[]]);
+    assert.deepEqual(legitimate.writes, ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_FOUND\n']);
+    assert.deepEqual(legitimate.exits, [0]);
 
-    assert.deepEqual(loads, [nodePath.join(resourcesPath, 'dosai-service-management-status.node')]);
-    assert.deepEqual(observations, [[]]);
-    assert.deepEqual(writes, ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_REGISTERED\n']);
-    assert.deepEqual(exits, [0]);
-
-    const failureWrites = [];
-    const failureExits = [];
-    const failureApp = Object.freeze({
-      exit(code) {
-        failureExits.push(code);
-      },
-      whenReady() {
-        return Promise.resolve();
+    const loadFailure = await evaluate({
+      load() {
+        throw new Error('inert native load failure');
       },
     });
-    const failureRequire = identifier => {
-      if (identifier === 'electron') return { app: failureApp };
-      if (identifier === 'node:path') return nodePath;
-      if (identifier === 'node:module') {
-        return {
-          createRequire(filename) {
-            assert.equal(filename, bundlePath);
-            return () => {
-              throw new Error('inert native load failure');
-            };
-          },
-        };
-      }
-      throw new Error(`Unexpected bundled require: ${identifier}`);
-    };
-    const failureProcess = Object.freeze({
-      resourcesPath,
-      stdout: Object.freeze({
-        write(value) {
-          failureWrites.push(value);
-          return true;
+    assert.deepEqual(loadFailure.loads.length, 1);
+    assert.deepEqual(
+      loadFailure.writes,
+      ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NATIVE_ADDON_LOAD_FAILED\n'],
+    );
+    assert.deepEqual(loadFailure.exits, [0]);
+
+    const callFailureCalls = [];
+    const callFailure = await evaluate({
+      load: () => ({
+        observe(...arguments_) {
+          callFailureCalls.push(arguments_);
+          throw new Error('inert native status failure');
         },
       }),
     });
-    const failureWrapper = vm.runInNewContext(
-      `(function (require, module, exports, __filename, __dirname, process) {${bundleSource}\n})`,
-      Object.create(null),
+    assert.deepEqual(callFailureCalls, [[]]);
+    assert.deepEqual(
+      callFailure.writes,
+      ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NATIVE_STATUS_CALL_FAILED\n'],
     );
-    const failureModule = { exports: {} };
-    failureWrapper(
-      failureRequire,
-      failureModule,
-      failureModule.exports,
-      bundlePath,
-      nodePath.dirname(bundlePath),
-      failureProcess,
+    assert.deepEqual(callFailure.exits, [0]);
+
+    const invalidResult = await evaluate({
+      load: () => ({ observe: () => 'UNADMITTED_RESULT' }),
+    });
+    assert.deepEqual(
+      invalidResult.writes,
+      ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NATIVE_STATUS_CALL_FAILED\n'],
     );
-    await new Promise(resolve => setImmediate(resolve));
-    assert.deepEqual(failureWrites, ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_FOUND\n']);
-    assert.deepEqual(failureExits, [0]);
+    assert.deepEqual(invalidResult.exits, [0]);
+
+    const readinessFailure = await evaluate({
+      load() {
+        throw new Error('load must remain unreachable');
+      },
+      ready: false,
+    });
+    assert.deepEqual(readinessFailure.loads, []);
+    assert.deepEqual(
+      readinessFailure.writes,
+      ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:ELECTRON_READINESS_FAILED\n'],
+    );
+    assert.deepEqual(readinessFailure.exits, [0]);
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });
   }
@@ -207,6 +218,11 @@ test('audit runner has one exact child target, no arguments, bounded output, and
   assert.match(runnerSource, /DOSAI_STATUS_PROOF_ARGUMENTS_0001/);
   assert.match(runnerSource, /DOSAI_STATUS_PROOF_STDERR_0001/);
   assert.match(runnerSource, /DOSAI_STATUS_PROOF_OUTPUT_0001/);
+  for (const observation of [
+    'NATIVE_ADDON_LOAD_FAILED',
+    'NATIVE_STATUS_CALL_FAILED',
+    'ELECTRON_READINESS_FAILED',
+  ]) assert.match(runnerSource, new RegExp(`'${observation}'`));
   assert.match(runnerSource, /LANG: 'C'/);
   assert.match(runnerSource, /LC_ALL: 'C'/);
   assert.match(runnerSource, /PATH: '\/usr\/bin:\/bin'/);

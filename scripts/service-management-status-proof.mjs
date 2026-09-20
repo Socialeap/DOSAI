@@ -10,6 +10,9 @@ const allowedObservations = new Set([
   'ENABLED',
   'REQUIRES_APPROVAL',
   'NOT_FOUND',
+  'NATIVE_ADDON_LOAD_FAILED',
+  'NATIVE_STATUS_CALL_FAILED',
+  'ELECTRON_READINESS_FAILED',
 ]);
 const execFileAsync = promisify(execFile);
 

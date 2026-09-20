@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadProofObservabilitySuccessor } from './p3-proof-observability-successor.mjs';
 import { loadStatusProofSuccessor } from './p3-status-proof-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -16,8 +17,12 @@ const altered = change => {
 
 test('v44 binds only the authorized CommonJS proof startup repair and grants no runtime authority', async () => {
   const successor = await loadStatusProofSuccessor(root);
+  const observabilitySuccessor = await loadProofObservabilitySuccessor(root);
   for (const file of pristine.modified_files) {
-    assert.equal(successor.expected(file.path, file.pre_sha256), file.post_sha256);
+    assert.equal(
+      successor.expected(file.path, file.pre_sha256),
+      observabilitySuccessor.expected(file.path, file.post_sha256),
+    );
   }
   assert.equal(successor.expected('src/main/index.ts', 'unchanged'), 'unchanged');
   assert.equal(pristine.authority.package_or_signing, false);

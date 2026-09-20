@@ -83,12 +83,14 @@ intentionally collapsed by the accepted adapter. Native-addon load and the real
 status call therefore remain unresolved. No registration, service launch, XPC
 connection, VM, process-control, network, journal or production action occurred.
 
-The single-use authorization is exhausted. A source-only proposal must first
-make load and native-call success distinguishable without widening effects;
-that proposal and any later physical attempt require separate owner approval.
-Independent Linux builders, accepted guest artifacts, and the remaining
-isolation and approval proofs also remain required. Real execution and
-private-beta release remain **NO-GO**.
+The single-use authorization is exhausted. Owner-authorized v45 now makes load
+failure, native-call failure, Electron-readiness failure and legitimate native
+statuses distinguishable without widening effects; see
+`p3-v45-proof-observability-repair-evidence.md`. No v45 physical attempt was
+made, and any later package/sign/launch attempt requires separate owner
+approval. Independent Linux builders, accepted guest artifacts, and the
+remaining isolation and approval proofs also remain required. Real execution
+and private-beta release remain **NO-GO**.
 
 ## Release classification
 
