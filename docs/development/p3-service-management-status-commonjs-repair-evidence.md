@@ -69,19 +69,26 @@ passes 513 of 513.
 
 ## Physical and release boundary
 
-No proof package was built or signed during this repair. No app was launched,
-no native module was loaded, no status call was made, and no registration,
-service launch, XPC connection, VM, process, filesystem, network, journal, or
-production action occurred. The earlier one-shot physical failure remains the
-only physical attempt and is preserved in
-`p3-baseline-publication-and-status-proof.md`.
+No proof package was built or signed during the source-repair validation itself.
+The owner later granted a new single-use authorization for commit `86ff428`.
+The exact package built and signed once; one app launch returned the admitted
+bounded output `DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_FOUND` in 3.60
+seconds with exit 0. No retry occurred. The complete receipt is recorded in
+`p3-v44-signed-app-status-proof-evidence.md`.
 
-A second package/build/sign/launch attempt requires a new, explicit, bounded
-owner authorization. Until that independent physical proof succeeds, native
-loading and the real status observation remain unverified. Independent Linux
-builders, accepted guest artifacts, and the remaining isolation and approval
-proofs also remain required. Real execution and private-beta release remain
-**NO-GO**.
+The result proves that the repaired CommonJS bundle starts and completes its
+bounded proof path. It does not distinguish a successful native `NOT_FOUND`
+status from addon-load, binding or native-call failure, because those cases are
+intentionally collapsed by the accepted adapter. Native-addon load and the real
+status call therefore remain unresolved. No registration, service launch, XPC
+connection, VM, process-control, network, journal or production action occurred.
+
+The single-use authorization is exhausted. A source-only proposal must first
+make load and native-call success distinguishable without widening effects;
+that proposal and any later physical attempt require separate owner approval.
+Independent Linux builders, accepted guest artifacts, and the remaining
+isolation and approval proofs also remain required. Real execution and
+private-beta release remain **NO-GO**.
 
 ## Release classification
 

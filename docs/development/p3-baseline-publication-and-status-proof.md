@@ -144,10 +144,20 @@ See the
 [v44 repair evidence](p3-service-management-status-commonjs-repair-evidence.md).
 
 This validation does not rewrite or supersede the failed physical result above.
-No second proof package was built or signed, no app was launched, no native
-module was loaded, and no status observation was attempted. The prior physical
-authorization was single-use; a retry requires a new explicit bounded owner
-authorization. Real execution and private-beta release remain **NO-GO**.
+The owner later authorized one isolated follow-on attempt at commit `86ff428`.
+That exact test package built and signed once, and its one app launch returned
+the admitted result `DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_FOUND` in 3.60
+seconds with runner exit 0. No retry occurred. See the
+[v44 physical evidence](p3-v44-signed-app-status-proof-evidence.md).
+
+The follow-on result proves corrected CommonJS startup, Electron readiness,
+one fixed load attempt, one zero-argument adapter observation, bounded output
+and bounded exit. It does not independently prove successful native-addon load
+or execution of `SMAppService.status`, because all load, call and legitimate
+native `NOT_FOUND` outcomes collapse to the same result. Registration, service
+launch, connection and execution were not performed. Real execution and
+private-beta release remain **NO-GO**, and the single-use authorization is
+exhausted.
 
 Independent native amd64 Linux builders, accepted guest artifacts and the
 remaining isolation/approval proofs are still required for useful execution.
@@ -159,6 +169,7 @@ The 3–4-day target has not been demonstrated by fixture or packaging success.
 build/test tooling and governance records; there is no backend migration,
 secret/configuration change or deployment. No frontend Publish is required.
 Nothing was merged, distributed, registered or deployed, and no production
-execution or paid/external builder provisioning occurred. The source repair is
-complete and validated; the next physical attempt remains separately
-owner-gated. Owner QA and beta acceptance remain separate gates.
+execution or paid/external builder provisioning occurred. The source repair
+and bounded startup proof are complete; a separately governed source proposal
+is required to make native-load and native-call success observable before any
+further physical attempt. Owner QA and beta acceptance remain separate gates.
