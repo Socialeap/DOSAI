@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadStatusProofSuccessor } from './p3-status-proof-successor.mjs';
 
 export const guardedPaths = Object.freeze([22, 24, 26, 27, 28, 29, 30, 36, 37, 42]
   .map(version => `tests/architecture/process-ownership-v${version}.test.mjs`));
@@ -30,6 +31,7 @@ const recordKeys = [
 
 // Architecture-test support only. Passing a candidate test does not accept a phase or grant effects.
 export async function loadGuardSuccessors(root, readBytes = path => readFile(resolve(root, path))) {
+  let proofSuccessor;
   const load = async path => {
     const bytes = await readBytes(path);
     assert.ok(bytes.byteLength <= 262144, 'oversized governance record');
@@ -38,7 +40,11 @@ export async function loadGuardSuccessors(root, readBytes = path => readFile(res
   const exactFile = async file => {
     assert.deepEqual(Object.keys(file).sort(), ['path', 'sha256']);
     assert.match(file.sha256, /^[0-9a-f]{64}$/);
-    assert.equal(hash(await readBytes(file.path)), file.sha256, file.path);
+    assert.equal(
+      hash(await readBytes(file.path)),
+      proofSuccessor.expected(file.path, file.sha256),
+      file.path,
+    );
   };
   const record = await load('docs/architecture/process-ownership-v43.json');
   assert.deepEqual(Object.keys(record).sort(), recordKeys);
@@ -50,6 +56,7 @@ export async function loadGuardSuccessors(root, readBytes = path => readFile(res
   assert.equal(record.runtime_status, 'NO_GO');
   assert.deepEqual(record.accepted_lineage_head, acceptedHead);
   assert.deepEqual(record.preserved_proposal, preservedProposal);
+  proofSuccessor = await loadStatusProofSuccessor(root, readBytes);
   await exactFile(acceptedHead);
   await exactFile(preservedProposal);
   const v41 = await load(acceptedHead.path);

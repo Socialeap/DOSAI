@@ -5,9 +5,11 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 
 import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+import { loadStatusProofSuccessor } from './p3-status-proof-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const successors = await loadGuardSuccessors(root);
+const proofSuccessor = await loadStatusProofSuccessor(root);
 const v36Path = resolve(root, 'docs/architecture/process-ownership-v36.json');
 const v36Bytes = await readFile(v36Path);
 const v36 = JSON.parse(v36Bytes);
@@ -62,7 +64,11 @@ test('v37 binds only the explicitly authorized governance-maintenance files', as
     ],
   );
   for (const file of v37.governance_maintenance_files) {
-    assert.equal(await hashFile(file.path), successors.expected(file.path, file.sha256), file.path);
+    assert.equal(
+      await hashFile(file.path),
+      proofSuccessor.expected(file.path, successors.expected(file.path, file.sha256)),
+      file.path,
+    );
   }
 });
 
@@ -201,7 +207,7 @@ test('v37 binds the accepted source-only implementation to exact postimages', as
     expectedPaths,
   );
   for (const file of addon.physical_proof_implemented_files) {
-    assert.equal(await hashFile(file.path), file.sha256, file.path);
+    assert.equal(await hashFile(file.path), proofSuccessor.expected(file.path, file.sha256), file.path);
   }
   for (const path of ['scripts/build.mjs', 'scripts/package.mjs', 'vite.main.config.ts']) {
     const immutable = addon.physical_proof_immutable_inputs.find((file) => file.path === path);

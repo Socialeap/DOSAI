@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import * as nodePath from 'node:path';
+import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 import test from 'node:test';
+import { build } from 'vite';
 
 const entryUrl = new URL(
   '../../src/main/execution/service-management-status-proof-entry.ts',
@@ -25,7 +30,8 @@ test('proof entry is a fixed no-window Electron Main bundle with one bounded obs
   assert.match(entrySource, /^import \{ join \} from 'node:path';$/m);
   assert.match(entrySource, /const resultPrefix = 'DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:';/);
   assert.match(entrySource, /const statusAddonName = 'dosai-service-management-status\.node';/);
-  assert.match(entrySource, /createRequire\(import\.meta\.url\)/);
+  assert.match(entrySource, /createRequire\(__filename\)/);
+  assert.doesNotMatch(entrySource, /import\.meta/);
   assert.match(entrySource, /join\(process\.resourcesPath, statusAddonName\)/);
   assert.match(entrySource, /createServiceManagementStatusAdapter\(loadFixedStatusAddon\(\)\)\.observe\(\)/);
   assert.equal((entrySource.match(/process\.stdout\.write/g) ?? []).length, 1);
@@ -35,6 +41,139 @@ test('proof entry is a fixed no-window Electron Main bundle with one bounded obs
     entrySource,
     /BrowserWindow|webContents|ipcMain|ipcRenderer|contextBridge|preload|renderer|process\.argv|process\.env|child_process|node:fs|node:net|node:http|node:https|launchctl|SMAppService|\.register\s*\(|\.unregister\s*\(/,
   );
+});
+
+test('dedicated CommonJS proof bundle starts and performs one fixed inert observation', async () => {
+  const temporaryRoot = await mkdtemp(nodePath.join(tmpdir(), 'dosai-status-proof-bundle-'));
+  const bundlePath = nodePath.join(temporaryRoot, 'index.cjs');
+  try {
+    await build({
+      build: { emptyOutDir: true, outDir: temporaryRoot },
+      configLoader: 'runner',
+      configFile: fileURLToPath(viteUrl),
+      logLevel: 'silent',
+      mode: 'service-management-status-proof',
+    });
+    const bundleSource = await readFile(bundlePath, 'utf8');
+    assert.match(bundleSource, /createRequire\)\(__filename\)/);
+    assert.doesNotMatch(bundleSource, /\{\}\.url|import\.meta/);
+
+    const writes = [];
+    const exits = [];
+    const loads = [];
+    const observations = [];
+    const resourcesPath = '/inert/dosai/resources';
+    const app = Object.freeze({
+      exit(code) {
+        exits.push(code);
+      },
+      whenReady() {
+        return Promise.resolve();
+      },
+    });
+    const requireStub = identifier => {
+      if (identifier === 'electron') return { app };
+      if (identifier === 'node:path') return nodePath;
+      if (identifier === 'node:module') {
+        return {
+          createRequire(filename) {
+            assert.equal(filename, bundlePath);
+            return path => {
+              loads.push(path);
+              return {
+                observe(...arguments_) {
+                  observations.push(arguments_);
+                  return 'NOT_REGISTERED';
+                },
+              };
+            };
+          },
+        };
+      }
+      throw new Error(`Unexpected bundled require: ${identifier}`);
+    };
+    const processStub = Object.freeze({
+      resourcesPath,
+      stdout: Object.freeze({
+        write(value) {
+          writes.push(value);
+          return true;
+        },
+      }),
+    });
+    const wrapper = vm.runInNewContext(
+      `(function (require, module, exports, __filename, __dirname, process) {${bundleSource}\n})`,
+      Object.create(null),
+    );
+    const moduleStub = { exports: {} };
+    wrapper(
+      requireStub,
+      moduleStub,
+      moduleStub.exports,
+      bundlePath,
+      nodePath.dirname(bundlePath),
+      processStub,
+    );
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.deepEqual(loads, [nodePath.join(resourcesPath, 'dosai-service-management-status.node')]);
+    assert.deepEqual(observations, [[]]);
+    assert.deepEqual(writes, ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_REGISTERED\n']);
+    assert.deepEqual(exits, [0]);
+
+    const failureWrites = [];
+    const failureExits = [];
+    const failureApp = Object.freeze({
+      exit(code) {
+        failureExits.push(code);
+      },
+      whenReady() {
+        return Promise.resolve();
+      },
+    });
+    const failureRequire = identifier => {
+      if (identifier === 'electron') return { app: failureApp };
+      if (identifier === 'node:path') return nodePath;
+      if (identifier === 'node:module') {
+        return {
+          createRequire(filename) {
+            assert.equal(filename, bundlePath);
+            return () => {
+              throw new Error('inert native load failure');
+            };
+          },
+        };
+      }
+      throw new Error(`Unexpected bundled require: ${identifier}`);
+    };
+    const failureProcess = Object.freeze({
+      resourcesPath,
+      stdout: Object.freeze({
+        write(value) {
+          failureWrites.push(value);
+          return true;
+        },
+      }),
+    });
+    const failureWrapper = vm.runInNewContext(
+      `(function (require, module, exports, __filename, __dirname, process) {${bundleSource}\n})`,
+      Object.create(null),
+    );
+    const failureModule = { exports: {} };
+    failureWrapper(
+      failureRequire,
+      failureModule,
+      failureModule.exports,
+      bundlePath,
+      nodePath.dirname(bundlePath),
+      failureProcess,
+    );
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(failureWrites, ['DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_FOUND\n']);
+    assert.deepEqual(failureExits, [0]);
+  } finally {
+    await rm(temporaryRoot, { force: true, recursive: true });
+  }
 });
 
 test('proof build and package selection are fixed and cannot alter the normal Main entry', () => {

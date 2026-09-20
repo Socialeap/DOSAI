@@ -9,7 +9,7 @@ import {
 
 const resultPrefix = 'DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:';
 const statusAddonName = 'dosai-service-management-status.node';
-const requireFromProofEntry = createRequire(import.meta.url);
+const requireFromProofEntry = createRequire(__filename);
 let emitted = false;
 
 function loadFixedStatusAddon(): unknown {

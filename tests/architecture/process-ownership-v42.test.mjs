@@ -5,9 +5,11 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 
 import { loadGuardSuccessors } from './p3-guard-successor.mjs';
+import { loadStatusProofSuccessor } from './p3-status-proof-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const successors = await loadGuardSuccessors(root);
+const proofSuccessor = await loadStatusProofSuccessor(root);
 const v42Path = resolve(root, 'docs/architecture/process-ownership-v42.json');
 const v42 = JSON.parse(await readFile(v42Path, 'utf8'));
 
@@ -36,7 +38,11 @@ test('proposed process ownership v42 binds accepted v41 and all seven exact hist
 test('v42 preserves its seven-file proposal while v43 binds the directed guard repair', async () => {
   assert.deepEqual(v42.proposed_implementation_files, v42.required_contract.historical_guard_targets);
   for (const file of v42.preimplementation_files) {
-    assert.equal(await digest(file.path), successors.expected(file.path, file.sha256), file.path);
+    assert.equal(
+      await digest(file.path),
+      proofSuccessor.expected(file.path, successors.expected(file.path, file.sha256)),
+      file.path,
+    );
   }
 });
 

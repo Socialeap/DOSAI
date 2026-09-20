@@ -126,6 +126,29 @@ The isolated proof package remains in `/private/tmp/dosai-p3-status-proof/out/`;
 it is evidence only and must not be distributed. Review the receipt before
 making any claim about this physical gate.
 
+## Owner-authorized CommonJS source repair
+
+The owner subsequently authorized process ownership v44 and the additional v42
+guard path exposed by full regression. The bounded source repair now uses
+`createRequire(__filename)` in the CommonJS proof entry and replaces the former
+source-spelling assertion with a build-and-inert-evaluation regression. V44
+hash-binds the exact implementation, test, and successor-guard postimages while
+leaving every runtime, package, signing, launch, load, status-call, registration,
+service, connection, VM, filesystem, network, journal, and production authority
+false.
+
+The focused repair suite passes 22 of 22, the full repository suite passes 513
+of 513 with no skips or cancellations, all eight TypeScript projects pass, and
+both the dedicated proof build and normal Main/preload/renderer builds pass.
+See the
+[v44 repair evidence](p3-service-management-status-commonjs-repair-evidence.md).
+
+This validation does not rewrite or supersede the failed physical result above.
+No second proof package was built or signed, no app was launched, no native
+module was loaded, and no status observation was attempted. The prior physical
+authorization was single-use; a retry requires a new explicit bounded owner
+authorization. Real execution and private-beta release remain **NO-GO**.
+
 Independent native amd64 Linux builders, accepted guest artifacts and the
 remaining isolation/approval proofs are still required for useful execution.
 The 3–4-day target has not been demonstrated by fixture or packaging success.
@@ -136,7 +159,6 @@ The 3–4-day target has not been demonstrated by fixture or packaging success.
 build/test tooling and governance records; there is no backend migration,
 secret/configuration change or deployment. No frontend Publish is required.
 Nothing was merged, distributed, registered or deployed, and no production
-execution or paid/external builder provisioning occurred. Next actions are
-review of the exact commits, owner review of the failed proof receipt, and an
-explicitly bounded source-remediation decision. Owner QA and beta acceptance
-remain separate gates.
+execution or paid/external builder provisioning occurred. The source repair is
+complete and validated; the next physical attempt remains separately
+owner-gated. Owner QA and beta acceptance remain separate gates.
