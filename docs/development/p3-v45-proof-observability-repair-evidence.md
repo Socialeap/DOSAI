@@ -88,12 +88,16 @@ the DOSAI app.
 
 ## Release boundary
 
-V45 makes a future physical result attributable but does not itself establish
-native loading or a native status observation. Any package/sign/launch attempt
-requires new explicit owner authorization. Independent native amd64 Linux
-builders, accepted guest artifacts, and the remaining isolation and approval
-proofs also remain required. Real execution and private-beta release remain
-**NO-GO**.
+V45 source validation did not itself establish native loading or a native
+observation. The owner later authorized one isolated physical attempt from
+commit `dc6f6fe`; it returned admitted `NOT_FOUND` in 3.38 seconds with exit 0.
+V45's distinct outcomes establish that the fixed addon loaded and its native
+observer completed once with zero arguments. See
+`p3-v45-signed-app-status-proof-evidence.md`. No retry, registration, service
+launch, connection or execution occurred. Independent native amd64 Linux
+builders, accepted guest artifacts, and the remaining service-lifecycle,
+isolation and approval proofs remain required. Real execution and private-beta
+release remain **NO-GO**.
 
 ## Release classification
 

@@ -86,11 +86,14 @@ connection, VM, process-control, network, journal or production action occurred.
 The single-use authorization is exhausted. Owner-authorized v45 now makes load
 failure, native-call failure, Electron-readiness failure and legitimate native
 statuses distinguishable without widening effects; see
-`p3-v45-proof-observability-repair-evidence.md`. No v45 physical attempt was
-made, and any later package/sign/launch attempt requires separate owner
-approval. Independent Linux builders, accepted guest artifacts, and the
-remaining isolation and approval proofs also remain required. Real execution
-and private-beta release remain **NO-GO**.
+`p3-v45-proof-observability-repair-evidence.md`. The separately authorized one-
+shot v45 package then returned admitted `NOT_FOUND`, proving successful addon
+load and one completed zero-argument native observer invocation; see
+`p3-v45-signed-app-status-proof-evidence.md`. No retry, registration, service
+launch, connection or execution occurred. Independent Linux builders, accepted
+guest artifacts, and the remaining service-lifecycle, isolation and approval
+proofs also remain required. Real execution and private-beta release remain
+**NO-GO**.
 
 ## Release classification
 

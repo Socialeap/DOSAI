@@ -178,6 +178,23 @@ connection, production action or physical retry occurred. V45 improves future
 proof attribution but does not itself resolve native-load or status-call
 success. Real execution and private-beta release remain **NO-GO**.
 
+## Owner-authorized v45 physical proof
+
+The owner later authorized one isolated package/build/sign/launch attempt from
+commit `dc6f6fe`. The exact package built and signed once, passed host signature
+and designated-requirement checks, and retained its pre-attempt hashes. The one
+app launch returned
+`DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:NOT_FOUND` in 3.38 seconds with runner
+exit 0. No retry occurred. See the
+[v45 physical evidence](p3-v45-signed-app-status-proof-evidence.md).
+
+Because v45 emits distinct results for load, native-call and readiness failure,
+the admitted `NOT_FOUND` proves the fixed addon loaded and its native observer
+completed once with zero arguments. It does not claim registration, service
+availability, service launch, connection, execution, or a more specific native
+reason for the fail-closed `NOT_FOUND` observation. The single-use authorization
+is exhausted. Real execution and private-beta release remain **NO-GO**.
+
 Independent native amd64 Linux builders, accepted guest artifacts and the
 remaining isolation/approval proofs are still required for useful execution.
 The 3–4-day target has not been demonstrated by fixture or packaging success.
@@ -189,6 +206,6 @@ build/test tooling and governance records; there is no backend migration,
 secret/configuration change or deployment. No frontend Publish is required.
 Nothing was merged, distributed, registered or deployed, and no production
 execution or paid/external builder provisioning occurred. The CommonJS and v45
-observability repairs are complete and validated; any further physical attempt
-requires separate explicit authorization. Owner QA and beta acceptance remain
-separate gates.
+observability repairs and their bounded native-observation proof are complete.
+Further service-lifecycle or physical work requires separate explicit
+authorization. Owner QA and beta acceptance remain separate gates.
