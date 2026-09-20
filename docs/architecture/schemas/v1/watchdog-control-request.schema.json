@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:watchdog-control-request:1",
+  "title": "DOSAI Test-Only Watchdog Control Request v1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "schema_version", "request_id", "session_id", "service_boot_id", "service_generation", "sequence", "operation", "supervisor_generation", "authorization"],
+      "properties": {
+        "schema_id": { "const": "urn:dosai:schema:watchdog-control-request:1" },
+        "schema_version": { "const": 1 },
+        "request_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "service_boot_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "service_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "sequence": { "type": "string", "pattern": "^[1-9][0-9]*$", "maxLength": 32 },
+        "operation": { "const": "INSPECT" },
+        "supervisor_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "authorization": { "const": "NO_EFFECT_TEST_ONLY" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "schema_version", "request_id", "session_id", "service_boot_id", "service_generation", "sequence", "operation", "supervisor_generation", "capsule_id", "reason", "authorization"],
+      "properties": {
+        "schema_id": { "const": "urn:dosai:schema:watchdog-control-request:1" },
+        "schema_version": { "const": 1 },
+        "request_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "service_boot_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "service_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "sequence": { "type": "string", "pattern": "^[1-9][0-9]*$", "maxLength": 32 },
+        "operation": { "const": "STOP_ONE" },
+        "supervisor_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "capsule_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "reason": { "enum": ["OWNER_REQUEST", "WATCHDOG_TIMEOUT", "EMERGENCY_STOP"] },
+        "authorization": { "const": "NO_EFFECT_TEST_ONLY" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "schema_version", "request_id", "session_id", "service_boot_id", "service_generation", "sequence", "operation", "supervisor_generation", "reason", "authorization"],
+      "properties": {
+        "schema_id": { "const": "urn:dosai:schema:watchdog-control-request:1" },
+        "schema_version": { "const": 1 },
+        "request_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "service_boot_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "service_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "sequence": { "type": "string", "pattern": "^[1-9][0-9]*$", "maxLength": 32 },
+        "operation": { "const": "STOP_ALL" },
+        "supervisor_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "reason": { "enum": ["OWNER_REQUEST", "COORDINATOR_DISCONNECT", "EMERGENCY_STOP"] },
+        "authorization": { "const": "NO_EFFECT_TEST_ONLY" }
+      }
+    }
+  ]
+}

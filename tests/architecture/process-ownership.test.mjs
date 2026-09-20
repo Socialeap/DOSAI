@@ -13,7 +13,14 @@ import {
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 const manifest = JSON.parse(
-  await readFile(join(root, 'docs/architecture/process-ownership-v6.json'), 'utf8'),
+  await readFile(join(root, 'docs/architecture/process-ownership-v10.json'), 'utf8'),
+);
+const v37 = JSON.parse(
+  await readFile(join(root, 'docs/architecture/process-ownership-v37.json'), 'utf8'),
+);
+const v37StatusProofEntry = resolve(
+  root,
+  'src/main/execution/service-management-status-proof-entry.ts',
 );
 
 function containsPath(parent, child) {
@@ -28,13 +35,17 @@ function boundaryForPath(path) {
 }
 
 test('every source root has one explicit ownership boundary', async () => {
-  assert.equal(manifest.schema_version, 6);
+  assert.equal(manifest.schema_version, 10);
   assert.equal(manifest.status, 'ACCEPTED');
   assert.deepEqual(manifest.accepted_adrs, [
     'docs/decisions/0001-runtime-and-privilege-boundaries.md',
     'docs/decisions/0002-typed-operations-policy-and-grants.md',
+    'docs/decisions/0003-execution-isolation-cancellation-and-watchdog.md',
     'docs/decisions/0004-audit-journal-keys-and-anchoring.md',
     'docs/decisions/0012-secure-enclave-checkpoints-and-rekor-v2-anchoring.md',
+    'docs/decisions/0014-linux-microvm-isolation-backend.md',
+    'docs/decisions/0019-capsule-registry-audit-journal-binding.md',
+    'docs/decisions/0020-per-user-execution-service-watchdog-control-lane.md',
   ]);
   assert.equal('proposed_adrs' in manifest, false);
 
@@ -111,12 +122,56 @@ test('accepted process ownership v4 remains byte-identical', async () => {
 
 test('accepted process ownership v5 remains byte-identical', async () => {
   const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v5.json'));
+  const v6 = JSON.parse(
+    await readFile(join(root, 'docs/architecture/process-ownership-v6.json'), 'utf8'),
+  );
   const { createHash } = await import('node:crypto');
   assert.equal(
     createHash('sha256').update(bytes).digest('hex'),
     '6417976e00bd8ea6db597f5020b8558ccb32244cb19e08469652d51469d53d87',
   );
-  assert.equal(manifest.supersedes.sha256, '6417976e00bd8ea6db597f5020b8558ccb32244cb19e08469652d51469d53d87');
+  assert.equal(v6.supersedes.sha256, '6417976e00bd8ea6db597f5020b8558ccb32244cb19e08469652d51469d53d87');
+});
+
+test('accepted process ownership v6 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v6.json'));
+  const v7 = JSON.parse(
+    await readFile(join(root, 'docs/architecture/process-ownership-v7.json'), 'utf8'),
+  );
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    'a02bf6e7b4af2244e878f7f066aa246928ec881dc2a8c3f0279fe6ea08b7ad62',
+  );
+  assert.equal(v7.supersedes.sha256, 'a02bf6e7b4af2244e878f7f066aa246928ec881dc2a8c3f0279fe6ea08b7ad62');
+});
+
+test('accepted process ownership v7 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v7.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    'abf7137a4dd3fc1a3174a18a2962460ae37abe7b2d4a0a82ab91d1bf1da323d1',
+  );
+});
+
+test('accepted process ownership v8 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v8.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    '00b8b078ad0186497063660f90c320b807e2d7b3991eb7be8f4d05cb8a7f730d',
+  );
+});
+
+test('accepted process ownership v9 remains byte-identical', async () => {
+  const bytes = await readFile(join(root, 'docs/architecture/process-ownership-v9.json'));
+  const { createHash } = await import('node:crypto');
+  assert.equal(
+    createHash('sha256').update(bytes).digest('hex'),
+    '323f154334e976e1fcbc37e1a585b7562de3acd60b81fc2d16a4393411071725',
+  );
+  assert.equal(manifest.supersedes.sha256, '323f154334e976e1fcbc37e1a585b7562de3acd60b81fc2d16a4393411071725');
 });
 
 test('policy boundary is pure, non-authoritative, and isolated from the application', () => {
@@ -150,8 +205,20 @@ test('source imports follow declared first-party and external allowlists', async
           `${owner.id} cannot import ${targetOwner.id}: ${relative(root, path)} -> ${specifier}`,
         );
       } else {
+        const allowedExternalImports = path === v37StatusProofEntry
+          ? (() => {
+            assert.equal(v37.status, 'ACCEPTED');
+            const v37Main = v37.source_boundaries.find(({ id }) => id === 'main');
+            assert.ok(v37Main);
+            assert.deepEqual(
+              v37Main.service_management_status_physical_proof_allowed_external_imports,
+              ['electron', 'node:module', 'node:path'],
+            );
+            return v37Main.service_management_status_physical_proof_allowed_external_imports;
+          })()
+          : owner.allowed_external_imports;
         assert.ok(
-          owner.allowed_external_imports.includes(specifier),
+          allowedExternalImports.includes(specifier),
           `${owner.id} cannot import external module ${specifier}: ${relative(root, path)}`,
         );
       }
@@ -159,7 +226,7 @@ test('source imports follow declared first-party and external allowlists', async
   }
 });
 
-test('worker and native-helper reservations expose no runtime capability', async () => {
+test('worker reservations and successor-governed native sources expose no runtime capability', async () => {
   const workers = manifest.source_boundaries.find(({ id }) => id === 'workers');
   assert.equal(workers.implementation_state, 'NOT_IMPLEMENTED');
   assert.equal(workers.trust_zone, 'Z7');
@@ -168,13 +235,19 @@ test('worker and native-helper reservations expose no runtime capability', async
   const nativeHelperRoot = join(root, manifest.native_helper_root);
   const nativeFiles = await collectFiles(nativeHelperRoot);
   const activeHelperRoots = manifest.native_helpers
-    .filter(({ implementation_state }) => implementation_state === 'ACTIVE')
+    .filter(({ implementation_state, id }) =>
+      implementation_state === 'ACTIVE'
+        || (id === 'execution-service'
+          && ['ACTIVE_TEST_FIXTURE', 'PROPOSED'].includes(implementation_state)))
     .map(({ path }) => `${relative(nativeHelperRoot, join(root, path))}/`);
   assert.deepEqual(
     nativeFiles
       .map((path) => relative(nativeHelperRoot, path))
       .filter((path) => !activeHelperRoots.some((rootPath) => path.startsWith(rootPath))),
-    ['README.md'],
+    [
+      'README.md',
+      'service-management-status-addon/service-management-status-addon.mm',
+    ],
   );
 
   assert.deepEqual(
@@ -182,7 +255,7 @@ test('worker and native-helper reservations expose no runtime capability', async
     [
       'policy-helper',
       'grant-proof-helper',
-      'effect-brokers',
+      'execution-service',
       'audit-helper',
       'secure-enclave-proof-helper',
     ],
@@ -248,13 +321,22 @@ test('grant proof helper is test-only, no-effect, and unreachable from the appli
   );
 });
 
-test('audit helper has journal and test-only checkpoint authority without network access', async () => {
+test('audit helper exposes only the capsule binding port and has no effect authority', async () => {
   const helper = manifest.native_helpers.find(({ id }) => id === 'audit-helper');
   assert.equal(helper.trust_zone, 'Z6');
   assert.equal(helper.runtime, 'ISOLATED_NODE_SQLITE_AND_CRYPTO_PROOF');
   assert.equal(helper.implementation_state, 'ACTIVE');
-  assert.equal(helper.authority, 'AUDIT_JOURNAL_WRITE_AND_TEST_ONLY_CHECKPOINT_PROOF');
-  assert.deepEqual(helper.allowed_first_party_imports, ['audit-helper']);
+  assert.equal(
+    helper.authority,
+    'AUDIT_JOURNAL_WRITE_CAPSULE_REGISTRY_BINDING_AND_TEST_ONLY_CHECKPOINT_PROOF',
+  );
+  assert.equal(helper.application_reachable, true);
+  assert.equal(helper.application_interface, 'INJECTED_CAPSULE_REGISTRY_AUDIT_BINDING_PORT_ONLY');
+  assert.equal(helper.general_append_authority_exposed, false);
+  assert.equal(helper.source_authentication_exposed, false);
+  assert.equal(helper.network_authority, false);
+  assert.equal(helper.process_launch_authority, false);
+  assert.deepEqual(helper.allowed_first_party_imports, ['contracts', 'audit-helper']);
   assert.deepEqual(
     helper.allowed_external_imports,
     ['node:crypto', 'node:fs', 'node:path', 'node:sqlite'],
@@ -264,7 +346,14 @@ test('audit helper has journal and test-only checkpoint authority without networ
   for (const path of helperFiles) {
     for (const specifier of await readImportedModules(path)) {
       if (specifier.startsWith('.')) {
-        assert.ok(containsPath(join(root, helper.path), resolve(dirname(path), specifier)));
+        const target = resolve(dirname(path), specifier);
+        const owner = containsPath(join(root, helper.path), target)
+          ? 'audit-helper'
+          : containsPath(join(root, 'src/contracts'), target)
+            ? 'contracts'
+            : null;
+        assert.ok(owner, `${relative(root, path)} imports unowned ${specifier}`);
+        assert.ok(helper.allowed_first_party_imports.includes(owner));
       } else {
         assert.ok(helper.allowed_external_imports.includes(specifier), specifier);
       }

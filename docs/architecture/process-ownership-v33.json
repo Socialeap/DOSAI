@@ -1,0 +1,1556 @@
+{
+  "schema_version": 33,
+  "status": "ACCEPTED",
+  "updated_at": "2026-08-06T12:53:54-04:00",
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v32.json",
+    "sha256": "04ec42d538427cce3bd1ed0b2209dc5e8a94a5d5b35f02a564041936c2f9e23b"
+  },
+  "accepted_adrs": [
+    "docs/decisions/0001-runtime-and-privilege-boundaries.md",
+    "docs/decisions/0002-typed-operations-policy-and-grants.md",
+    "docs/decisions/0003-execution-isolation-cancellation-and-watchdog.md",
+    "docs/decisions/0004-audit-journal-keys-and-anchoring.md",
+    "docs/decisions/0012-secure-enclave-checkpoints-and-rekor-v2-anchoring.md",
+    "docs/decisions/0014-linux-microvm-isolation-backend.md",
+    "docs/decisions/0019-capsule-registry-audit-journal-binding.md",
+    "docs/decisions/0020-per-user-execution-service-watchdog-control-lane.md",
+    "docs/decisions/0021-electron-main-service-management-status-adapter.md"
+  ],
+  "source_boundaries": [
+    {
+      "id": "contracts",
+      "path": "src/contracts",
+      "trust_zone": "CROSS_BOUNDARY_CONTRACTS",
+      "runtime": "NONE",
+      "component_owner": "architecture-contracts",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "proposed_watchdog_implementation_files": [
+        {
+          "path": "src/contracts/p3/watchdog-control.ts",
+          "sha256": "5a191b8f95fc6a41e4725644e1b2fe689a6318e39ced1b050a26733cc29b261c"
+        }
+      ],
+      "allowed_first_party_imports": [
+        "contracts"
+      ],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "policy",
+      "path": "src/policy",
+      "trust_zone": "Z4",
+      "runtime": "PURE_TESTED_LIBRARY",
+      "component_owner": "policy-kernel",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": [
+        "contracts",
+        "policy"
+      ],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "renderer",
+      "path": "src/renderer",
+      "trust_zone": "Z1",
+      "runtime": "CHROMIUM_SANDBOX",
+      "component_owner": "presentation",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": [
+        "contracts",
+        "renderer"
+      ],
+      "allowed_external_imports": [
+        "react",
+        "react-dom/client"
+      ]
+    },
+    {
+      "id": "preload",
+      "path": "src/preload",
+      "trust_zone": "Z2",
+      "runtime": "ELECTRON_SANDBOXED_PRELOAD",
+      "component_owner": "bridge-adapters",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": [
+        "contracts",
+        "preload"
+      ],
+      "allowed_external_imports": [
+        "electron"
+      ]
+    },
+    {
+      "id": "main",
+      "path": "src/main",
+      "trust_zone": "Z3",
+      "runtime": "ELECTRON_MAIN",
+      "component_owner": "application-coordinator",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "watchdog_client_contract": "TYPED_UNCOMPOSED_INJECTED_XPC_TEST_FIXTURE_ONLY",
+      "watchdog_service_configuration_authority": false,
+      "watchdog_peer_requirement_authority": false,
+      "watchdog_control_operations": [
+        "INSPECT",
+        "STOP_ONE",
+        "STOP_ALL"
+      ],
+      "service_management_status_adapter_authority": "IMPLEMENTED_SOURCE_ONLY_INJECTED_ZERO_INPUT_OBSERVATION_ADAPTER",
+      "service_management_status_adapter_application_reachable": false,
+      "service_management_status_adapter_native_module_load_authority": false,
+      "service_management_status_adapter_renderer_exposure_authority": false,
+      "service_management_status_adapter_source_observed": true,
+      "service_management_status_adapter_injected_binding_only_observed": true,
+      "service_management_status_adapter_zero_argument_call_observed": true,
+      "service_management_status_adapter_exact_output_admission_observed": true,
+      "service_management_status_adapter_unknown_and_error_fail_closed_observed": true,
+      "service_management_status_adapter_accessor_safe_observed": true,
+      "service_management_status_adapter_native_module_load_observed": false,
+      "service_management_status_adapter_runtime_status_observed": false,
+      "service_management_status_adapter_inputs": [],
+      "service_management_status_adapter_outputs": [
+        "NOT_REGISTERED",
+        "ENABLED",
+        "REQUIRES_APPROVAL",
+        "NOT_FOUND"
+      ],
+      "service_management_status_adapter_failure_observation": "NOT_FOUND",
+      "service_management_status_adapter_fixed_plist_name": "com.socialeap.dosai.execution-service-fixture.plist",
+      "service_management_status_adapter_target": "arm64-apple-macos15.0",
+      "service_management_status_adapter_proposed_files": [
+        "src/main/execution/service-management-status-adapter.ts"
+      ],
+      "service_management_status_adapter_implemented_files": [
+        {
+          "path": "src/main/execution/service-management-status-adapter.ts",
+          "sha256": "f23b4eb7264314921bad4229c0974a5ed404440acdaeb5c6f19b0cc3aef7733b"
+        }
+      ],
+      "proposed_watchdog_implementation_files": [
+        {
+          "path": "src/main/execution/watchdog-control-client.ts",
+          "sha256": "bcbc9f508398a8df67812401d82d3686d6fe4cbaf8fca70427755535f2943007"
+        }
+      ],
+      "allowed_first_party_imports": [
+        "contracts",
+        "main"
+      ],
+      "allowed_external_imports": [
+        "electron",
+        "node:fs/promises",
+        "node:path"
+      ]
+    },
+    {
+      "id": "workers",
+      "path": "src/workers",
+      "trust_zone": "Z7",
+      "runtime": "NODE_WORKER_THREADS",
+      "component_owner": "bounded-processing",
+      "implementation_state": "NOT_IMPLEMENTED",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": [
+        "contracts",
+        "workers"
+      ],
+      "allowed_external_imports": []
+    }
+  ],
+  "native_helper_root": "native-helpers",
+  "native_helpers": [
+    {
+      "id": "policy-helper",
+      "path": "native-helpers/policy",
+      "trust_zone": "Z4",
+      "runtime": "NOT_IMPLEMENTED",
+      "component_owner": "policy-kernel",
+      "owner_phase": "P2",
+      "implementation_state": "RESERVED",
+      "authority": "POLICY_DECISION_ONLY",
+      "allowed_first_party_imports": [],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "grant-proof-helper",
+      "path": "native-helpers/grants",
+      "trust_zone": "Z4",
+      "runtime": "ISOLATED_NODE_SYNTHETIC_AUTHORIZATION_PROOF",
+      "component_owner": "grant-proof-service",
+      "owner_phase": "P2",
+      "implementation_state": "ACTIVE",
+      "authority": "TEST_ONLY_OWNER_APPROVAL_AND_SINGLE_USE_NO_EFFECT_GRANT_PROOF",
+      "application_reachable": false,
+      "effect_authority": false,
+      "production_grant_authority": false,
+      "network_authority": false,
+      "allowed_first_party_imports": [
+        "contracts",
+        "policy",
+        "audit-helper",
+        "grant-proof-helper"
+      ],
+      "allowed_external_imports": [
+        "node:crypto"
+      ]
+    },
+    {
+      "id": "execution-service",
+      "path": "native-helpers/execution-service",
+      "trust_zone": "Z5",
+      "runtime": "SWIFT_INERT_ANONYMOUS_XPC_TRANSPORT_FIXTURE_AUTHENTICATED",
+      "component_owner": "isolated-execution-service",
+      "owner_phase": "P3",
+      "implementation_state": "ACTIVE_TEST_FIXTURE_AUTHENTICATED",
+      "authority": "TEST_ONLY_INERT_CAPSULE_REDUCE_ONLY_CONTROL",
+      "application_reachable": false,
+      "registration_authority": false,
+      "production_registration_authority": false,
+      "service_management_authority": false,
+      "launch_agent_plist_authority": false,
+      "launch_daemon_plist_authority": false,
+      "static_packaged_composition_authority": "IMPLEMENTED_SIGNED_NESTED_ANONYMOUS_FIXTURE_ONLY",
+      "packaged_fixture_application_reachable": false,
+      "packaged_test_app_identifier": "com.socialeap.dosai",
+      "packaged_test_fixture_identifier": "com.socialeap.dosai.watchdog-xpc-fixture",
+      "packaged_test_fixture_relative_path": "Contents/Library/LaunchServices/com.socialeap.dosai.watchdog-xpc-fixture",
+      "packaged_test_signing_identity_selector": "UMXN25Z493",
+      "packaged_test_signing_team_identifier": "3RD3TADLRY",
+      "owner_authorized_packaged_test_app_signing": true,
+      "owner_authorized_packaged_test_fixture_signing": true,
+      "packaged_test_static_layout_observed": true,
+      "packaged_test_app_signature_observed": true,
+      "packaged_test_fixture_signature_observed": true,
+      "packaged_test_app_designated_requirement_observed": true,
+      "packaged_test_fixture_designated_requirement_observed": true,
+      "packaged_test_signing_team_identifier_observed": "3RD3TADLRY",
+      "packaged_test_launch_agent_artifact_observed": false,
+      "packaged_test_launch_daemon_artifact_observed": false,
+      "packaged_test_registration_operation_observed": false,
+      "packaged_test_named_listener_observed": false,
+      "admissible_static_package_run_app_launch_observed": false,
+      "admissible_static_package_run_fixture_launch_observed": false,
+      "admissible_static_package_run_packaged_helper_launch_observed": false,
+      "pre_admissible_read_only_fixture_description_invocation_observed": true,
+      "pre_admissible_read_only_fixture_description_invocation_remediated": true,
+      "pre_admissible_read_only_fixture_description_mutation_observed": false,
+      "pre_admissible_read_only_fixture_description_registration_observed": false,
+      "pre_admissible_packaged_secure_enclave_description_invocation_observed": true,
+      "pre_admissible_packaged_secure_enclave_description_invocation_remediated": true,
+      "pre_admissible_packaged_secure_enclave_description_mutation_observed": false,
+      "named_listener_source_authority": "IMPLEMENTED_COMPILE_ONLY_FIXED_TEST_CANDIDATE",
+      "named_listener_source_application_reachable": false,
+      "named_listener_source_typechecked": true,
+      "named_listener_typecheck_target": "arm64-apple-macos15.0",
+      "named_listener_source_imports": [
+        "XPC"
+      ],
+      "named_listener_generic_configuration_observed": false,
+      "named_listener_activation_api_observed": false,
+      "named_listener_event_handler_api_observed": false,
+      "named_listener_message_api_observed": false,
+      "named_listener_privileged_flag_observed": false,
+      "named_listener_executable_output_observed": false,
+      "named_listener_source_compiled_to_executable": false,
+      "named_listener_source_packaged": false,
+      "named_listener_source_signed": false,
+      "named_listener_source_executed": false,
+      "named_listener_connection_activated": false,
+      "named_listener_registration_observed": false,
+      "named_listener_future_executable_identifier": "com.socialeap.dosai.execution-service-fixture",
+      "named_listener_mach_service_identifier": "com.socialeap.dosai.execution-service-fixture.watchdog",
+      "named_listener_expected_client_identifier": "com.socialeap.dosai",
+      "named_listener_expected_team_identifier": "3RD3TADLRY",
+      "named_listener_allowed_creation_api": "xpc_connection_create_mach_service",
+      "named_listener_allowed_flag": "XPC_CONNECTION_MACH_SERVICE_LISTENER",
+      "named_listener_privileged_flag_authority": false,
+      "named_listener_activation_authority": false,
+      "named_listener_proposed_files": [
+        "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+        "tests/security/p3-watchdog-named-listener-candidate.test.mjs"
+      ],
+      "named_listener_implemented_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-listener-candidate.test.mjs",
+          "sha256": "beb7f1983c3c4ecd340091a394354e5a0bb7474e1f10c1fb1a19b1379b5544e3"
+        }
+      ],
+      "named_listener_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "0350b401ff50519cc97bae9cd0911f77cd6f163e65e243499fbfc6fe7617b7dd"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCFixtureMain.swift",
+          "sha256": "5ee2812a17dd73811515b41658dd19c4b1b7d655147ab1aa8004d37ca62931a5"
+        },
+        {
+          "path": "scripts/watchdog-xpc-fixture.mjs",
+          "sha256": "354b17eca55646826dfdf24aa47a8fc8af32d40fc7dcdf7aa18210286ca14bdf"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        }
+      ],
+      "named_listener_transport_adapter_authority": "IMPLEMENTED_COMPILE_ONLY_FIXED_TEST_ADAPTER",
+      "named_listener_transport_adapter_application_reachable": false,
+      "named_listener_transport_adapter_source_observed": true,
+      "named_listener_transport_adapter_typechecked": true,
+      "named_listener_transport_adapter_typecheck_target": "arm64-apple-macos15.0",
+      "named_listener_transport_adapter_shared_handler_refactor_authorized": true,
+      "named_listener_transport_adapter_shared_handler_refactor_observed": true,
+      "named_listener_transport_adapter_activation_api_authorized": true,
+      "named_listener_transport_adapter_event_handler_api_authorized": true,
+      "named_listener_transport_adapter_strict_reply_api_authorized": true,
+      "named_listener_transport_adapter_anonymous_regression_observed": true,
+      "named_listener_transport_adapter_imports": [
+        "XPC"
+      ],
+      "named_listener_transport_adapter_generic_configuration_authority": false,
+      "named_listener_transport_adapter_client_connection_authority": false,
+      "named_listener_transport_adapter_executable_entry_point_authority": false,
+      "named_listener_transport_adapter_executable_output_authority": false,
+      "named_listener_transport_adapter_signing_authority": false,
+      "named_listener_transport_adapter_packaging_authority": false,
+      "named_listener_transport_adapter_plist_authority": false,
+      "named_listener_transport_adapter_registration_authority": false,
+      "named_listener_transport_adapter_launch_authority": false,
+      "named_listener_transport_adapter_runtime_effect_observed": false,
+      "named_listener_transport_adapter_compiled_to_executable": false,
+      "named_listener_transport_adapter_signed": false,
+      "named_listener_transport_adapter_packaged": false,
+      "named_listener_transport_adapter_executed": false,
+      "named_listener_transport_adapter_listener_activated_observed": false,
+      "named_listener_transport_adapter_peer_accepted_observed": false,
+      "named_listener_transport_adapter_message_exchange_observed": false,
+      "named_listener_transport_refactor_baseline": {
+        "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+        "sha256": "0350b401ff50519cc97bae9cd0911f77cd6f163e65e243499fbfc6fe7617b7dd"
+      },
+      "named_listener_transport_adapter_proposed_files": [
+        "native-helpers/execution-service/WatchdogXPCTransport.swift",
+        "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+        "tests/security/p3-watchdog-named-listener-transport-candidate.test.mjs"
+      ],
+      "named_listener_transport_adapter_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCFixtureMain.swift",
+          "sha256": "5ee2812a17dd73811515b41658dd19c4b1b7d655147ab1aa8004d37ca62931a5"
+        },
+        {
+          "path": "scripts/watchdog-xpc-fixture.mjs",
+          "sha256": "354b17eca55646826dfdf24aa47a8fc8af32d40fc7dcdf7aa18210286ca14bdf"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        }
+      ],
+      "named_listener_transport_adapter_implemented_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "29834171f3fc1a9cc8850f1bec32e42216747c0ed676ca62067cb88c27c3b66a"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+          "sha256": "a7180d292d066f75bf6f0a450c74b4f610cde50a1d55662661c3c5aeaece5195"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-listener-transport-candidate.test.mjs",
+          "sha256": "842454ac9b7881208b097155e3a29ae0e96a715e99b793066ab53a3b0475e8f3"
+        }
+      ],
+      "named_listener_transport_adapter_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v7.test.mjs",
+          "sha256": "f59a9565f422d50fa3d2f5fef9a2bd36391e9b98412789d7be8d55d3bc1d24d9"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v12.test.mjs",
+          "sha256": "75425ed2de0c96a7d1881833dd8b5affc68e4f825097def356d6a76d68aa8a09"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v13.test.mjs",
+          "sha256": "0e581853738bf3984fb10117fd54a0c8e6e858626b69dc082b08f6e4f828a1e8"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v14.test.mjs",
+          "sha256": "95daf31ccba51cc39c948985b91e25320264374b1e85b600e7b477fd9f5777a5"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v17.test.mjs",
+          "sha256": "aa156544a4b736a4e104cbe256b54aaf42c5516f92c279a81508e5b986f120ba"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v19.test.mjs",
+          "sha256": "8e0496a70c9bf64ee2f1738b2f0614bc8aeeb663f1afa7349a596f244cf351b4"
+        },
+        {
+          "path": "tests/governance/p3-guest-agent-toolchain-decision.test.mjs",
+          "sha256": "dc199bc77f230b3f0324b008a1eb8b505076c503de6939a4f3983ddc306f22c9"
+        },
+        {
+          "path": "tests/governance/p3-guest-supply-chain-decision.test.mjs",
+          "sha256": "dd4e86e7a66870bc2d381ed8491741ccf90a21cd856d7fa1337d93f16c5fd968"
+        },
+        {
+          "path": "tests/governance/p3-guest-toolchain-correction.test.mjs",
+          "sha256": "f763c734ef4e7426985a89635d87c893b5ae167adb93fc1815a1faf2fa0cbe75"
+        },
+        {
+          "path": "tests/governance/p3-watchdog-control-contracts.test.mjs",
+          "sha256": "83e3c075bc96ec963da1574bd5982a0cd1cbeb1fe15afa0c18bdfd116b51b580"
+        }
+      ],
+      "named_service_executable_candidate_authority": "IMPLEMENTED_TEMPORARY_UNSIGNED_BUILD_ONLY",
+      "named_service_executable_candidate_source_observed": true,
+      "named_service_executable_candidate_build_observed": true,
+      "named_service_executable_entry_point_source_authorized": true,
+      "named_service_executable_dispatch_main_source_authorized": true,
+      "named_service_temporary_executable_output_authorized": true,
+      "named_service_apple_silicon_adhoc_signing_default_observed": true,
+      "named_service_adhoc_signature_suppression_required": true,
+      "named_service_adhoc_signature_suppression_linker_flag": "-no_adhoc_codesign",
+      "named_service_explicit_signing_authority": false,
+      "named_service_signing_identity_use_authority": false,
+      "named_service_signature_output_authority": false,
+      "named_service_executable_invocation_authority": false,
+      "named_service_executable_packaging_authority": false,
+      "named_service_executable_plist_authority": false,
+      "named_service_executable_registration_authority": false,
+      "named_service_executable_launch_authority": false,
+      "named_service_application_connection_authority": false,
+      "named_service_runtime_effect_observed": false,
+      "named_service_executable_target_architecture_observed": "arm64",
+      "named_service_executable_minimum_macos_observed": "15.0",
+      "named_service_adhoc_signature_suppression_observed": true,
+      "named_service_code_signature_load_command_observed": false,
+      "named_service_forbidden_framework_link_observed": false,
+      "named_service_executable_invocation_observed": false,
+      "named_service_executable_persisted_observed": false,
+      "named_service_temporary_cleanup_observed": true,
+      "named_service_executable_inspection_tools": [
+        "lipo",
+        "otool",
+        "vtool"
+      ],
+      "named_service_executable_candidate_proposed_files": [
+        "native-helpers/execution-service/WatchdogNamedServiceFixtureMain.swift",
+        "tests/security/p3-watchdog-named-service-executable-candidate.test.mjs"
+      ],
+      "named_service_executable_candidate_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "29834171f3fc1a9cc8850f1bec32e42216747c0ed676ca62067cb88c27c3b66a"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+          "sha256": "a7180d292d066f75bf6f0a450c74b4f610cde50a1d55662661c3c5aeaece5195"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        }
+      ],
+      "named_service_executable_candidate_implemented_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedServiceFixtureMain.swift",
+          "sha256": "bacf02ee54d4228ba25cb4359786c94ff0f8c0dbaf069f1fc6df212ac40741f2"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-service-executable-candidate.test.mjs",
+          "sha256": "fc4fe927551ff254375dd178a1bccce7ff4805d00e6b93834d18fa764de8510d"
+        }
+      ],
+      "named_service_executable_candidate_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v7.test.mjs",
+          "sha256": "07a5f0b6326aa8b61648a8928203d4b73534e78216230a303bc9c6667414b683"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v20.test.mjs",
+          "sha256": "d4947527c1ac5bf3c1bc35ccc7fba53d79c98fb3b33b3b021fb6bf39b4a377f7"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v21.test.mjs",
+          "sha256": "5b18a82ecab4a426389cfeec9adb4f236fadf835a426cbb8806c115afc76bfb0"
+        },
+        {
+          "path": "tests/governance/p3-guest-agent-toolchain-decision.test.mjs",
+          "sha256": "84d189eb13abe6f24af0ac7da0ac57a9aaab46fc05a7ddc53cc55f0a6a1f373d"
+        },
+        {
+          "path": "tests/governance/p3-guest-supply-chain-decision.test.mjs",
+          "sha256": "b6698837453ae469cdc6cf0759f1dc89f675224387d29fd797afd5defb63acdd"
+        },
+        {
+          "path": "tests/governance/p3-guest-toolchain-correction.test.mjs",
+          "sha256": "8ce4b6876ff5ad2d9f42e80babd4bd43b43d11d25fbcd36f4dd46cd06099914e"
+        },
+        {
+          "path": "tests/governance/p3-watchdog-control-contracts.test.mjs",
+          "sha256": "3b66b9669ea56edcf6e41f8a83cb95d767368a08d32a5267d323abfdbdcde3f8"
+        }
+      ],
+      "named_service_static_package_candidate_authority": "IMPLEMENTED_OWNER_GATED_SIGNED_TEST_PACKAGE_ONLY",
+      "named_service_static_package_build_authority": true,
+      "named_service_static_package_script_change_authority": true,
+      "named_service_static_package_test_authority": true,
+      "named_service_static_package_signing_authority": "OWNER_AUTHORIZED_TEST_ONLY",
+      "named_service_static_package_identity_selector": "UMXN25Z493",
+      "named_service_static_package_team_identifier": "3RD3TADLRY",
+      "owner_authorized_named_service_fixture_signing": true,
+      "owner_authorized_named_service_outer_app_signing": true,
+      "named_service_static_package_mode_argument": "--static-named-service-fixture",
+      "named_service_static_package_outer_app_identifier": "com.socialeap.dosai",
+      "named_service_static_package_executable_identifier": "com.socialeap.dosai.execution-service-fixture",
+      "named_service_static_package_relative_path": "Contents/Library/LaunchServices/com.socialeap.dosai.execution-service-fixture",
+      "named_service_static_package_output_scope": "LOCAL_GENERATED_OUT_DIRECTORY_ONLY",
+      "named_service_static_package_source_observed": true,
+      "named_service_static_package_build_observed": true,
+      "named_service_static_package_nested_signature_observed": true,
+      "named_service_static_package_outer_signature_observed": true,
+      "named_service_static_package_designated_requirements_observed": true,
+      "named_service_static_package_team_identifier_observed": "3RD3TADLRY",
+      "named_service_static_package_executable_invocation_observed": false,
+      "named_service_static_package_app_invocation_observed": false,
+      "named_service_static_package_plist_observed": false,
+      "named_service_static_package_registration_observed": false,
+      "named_service_static_package_launch_observed": false,
+      "named_service_static_package_application_connection_observed": false,
+      "named_service_static_package_proposed_files": [
+        "scripts/watchdog-named-service-fixture.mjs",
+        "scripts/package.mjs",
+        "tests/security/p3-watchdog-named-service-packaging-candidate.test.mjs"
+      ],
+      "named_service_static_package_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "29834171f3fc1a9cc8850f1bec32e42216747c0ed676ca62067cb88c27c3b66a"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+          "sha256": "a7180d292d066f75bf6f0a450c74b4f610cde50a1d55662661c3c5aeaece5195"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedServiceFixtureMain.swift",
+          "sha256": "bacf02ee54d4228ba25cb4359786c94ff0f8c0dbaf069f1fc6df212ac40741f2"
+        },
+        {
+          "path": "scripts/watchdog-xpc-fixture.mjs",
+          "sha256": "354b17eca55646826dfdf24aa47a8fc8af32d40fc7dcdf7aa18210286ca14bdf"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        },
+        {
+          "path": "tests/security/p3-packaged-service-composition.test.mjs",
+          "sha256": "d57cd4b4c699e7efd3647ec348396c618846a7602359d5b70d2edb5d1485f620"
+        }
+      ],
+      "xpc_listener_authority": "ANONYMOUS_IN_PROCESS_TEST_FIXTURE_ONLY",
+      "mach_service_listener_authority": false,
+      "peer_code_requirement_authority": "EXACT_OWNER_AUTHORIZED_TEST_IDENTITY_ONLY",
+      "peer_requirement_api": "xpc_connection_set_peer_code_signing_requirement",
+      "minimum_peer_requirement_os": "12.0",
+      "valid_signing_identity_required": true,
+      "valid_signing_identity_installed": true,
+      "valid_signing_identity_observation": "LOCAL_UNSANDBOXED_KEYCHAIN_VERIFIED",
+      "authorized_signing_identity_selector": "UMXN25Z493",
+      "signing_certificate_common_name_suffix": "UMXN25Z493",
+      "observed_code_signing_team_identifier": "3RD3TADLRY",
+      "owner_authorized_signing_identity_selector": true,
+      "owner_authorized_peer_requirement_team_identifier": true,
+      "authenticated_peer_observed": true,
+      "authenticated_peer_team_identifier": "3RD3TADLRY",
+      "authenticated_peer_fixture_identifier": "com.socialeap.dosai.watchdog-xpc-fixture",
+      "requirement_configured_on_both_connections_observed": true,
+      "disconnect_reduction_observed": true,
+      "synthetic_trust_installed": false,
+      "signed_peer_rejection_observed": true,
+      "signed_peer_rejection_reason": "AUTHORIZED_SELECTOR_TEAM_MISMATCH",
+      "ad_hoc_signature_eligible": false,
+      "ad_hoc_peer_rejection_observed": true,
+      "keychain_mutation_authority": false,
+      "signing_identity_export_authority": false,
+      "transport_frame_authority": "STRICT_ACCEPTED_WATCHDOG_V1_DICTIONARIES_ONLY",
+      "capsule_control_authority": "INERT_FIXTURE_RECORDS_ONLY",
+      "control_operations": [
+        "INSPECT",
+        "STOP_ONE",
+        "STOP_ALL"
+      ],
+      "generic_payload_authority": false,
+      "pid_targeting_authority": false,
+      "ownership_release_authority": false,
+      "reconciliation_authority": false,
+      "journal_authority": false,
+      "vm_creation_authority": false,
+      "vm_start_authority": false,
+      "process_launch_authority": false,
+      "filesystem_authority": false,
+      "network_authority": false,
+      "accepted_implementation_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/main.swift",
+          "sha256": "8bc5e445b7bf2f4b23b81a7ada47146202abfcde797818e15ea95ab4293994cf"
+        }
+      ],
+      "proposed_implementation_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "0350b401ff50519cc97bae9cd0911f77cd6f163e65e243499fbfc6fe7617b7dd"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCFixtureMain.swift",
+          "sha256": "5ee2812a17dd73811515b41658dd19c4b1b7d655147ab1aa8004d37ca62931a5"
+        }
+      ],
+      "packaging_baseline_files": [
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "9aebb658b82b60fd8203cb833f2e639152b40c77a843d9c845d9725350e82440"
+        },
+        {
+          "path": "package.json",
+          "sha256": "90908d571d3e54c9c03be4fa75d97cd401e6ef1dab5dbe0d48943f9ed30fd700"
+        }
+      ],
+      "proposed_packaging_changes": [
+        "scripts/package.mjs",
+        "tests/security/p3-packaged-service-composition.test.mjs"
+      ],
+      "implemented_packaging_files": [
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        },
+        {
+          "path": "tests/security/p3-packaged-service-composition.test.mjs",
+          "sha256": "d57cd4b4c699e7efd3647ec348396c618846a7602359d5b70d2edb5d1485f620"
+        }
+      ],
+      "allowed_first_party_imports": [
+        "contracts",
+        "execution-service"
+      ],
+      "allowed_external_imports": [
+        "Foundation",
+        "XPC"
+      ],
+      "named_service_static_package_layout_observed": true,
+      "named_service_static_package_architecture_observed": "arm64",
+      "named_service_static_package_minimum_macos_observed": "15.0",
+      "named_service_static_package_forbidden_framework_observed": false,
+      "named_service_static_package_anonymous_fixture_absent_observed": true,
+      "named_service_static_package_generated_artifact_retained": true,
+      "named_service_static_package_output_path": "out/DOSAI-darwin-arm64/DOSAI.app",
+      "named_service_static_package_nested_sha256": "9e5c9770efaca692f06696fc2e082a13733c3706eeb8799974bf5b9b03b26eec",
+      "named_service_static_package_outer_executable_sha256": "3f0ee1b7e035369efc70a234f454164ac2d1da5e7bc36efbb3f6f280c9b95c02",
+      "named_service_static_package_info_plist_sha256": "6661b003e633cff83c1e6311a387ce205c93538801043c4fe5065ab52dc219e7",
+      "named_service_static_package_nested_cdhash": "fa71d6d109ae21ac3edafbe73b541c824817db8a",
+      "named_service_static_package_outer_cdhash": "0b9ab2a02b4cf5ce02239ee056cbf2db25b50ece",
+      "named_service_static_package_rejected_extra_separator_observed": true,
+      "named_service_static_package_rejected_extra_separator_effect_observed": false,
+      "named_service_static_package_discarded_requirement_flag_run_observed": true,
+      "named_service_static_package_discarded_requirement_flag_run_signed": true,
+      "named_service_static_package_discarded_requirement_flag_run_launched": false,
+      "named_service_static_package_requirement_flag_remediated": true,
+      "named_service_static_package_implemented_files": [
+        {
+          "path": "scripts/watchdog-named-service-fixture.mjs",
+          "sha256": "a93063f3a1e283316dead3be703b73b21505d4fd9c39241cd6b5bbf349a135b2"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "f02a4fcc91af64d7a44d52354b24c033673bcf5143f6ef62fb9becf348a3a4fb"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-service-packaging-candidate.test.mjs",
+          "sha256": "8e1bdbca10a2f20c73d4b9f009700d7868d42fa312d362feb858dfb7d15557b3"
+        }
+      ],
+      "named_service_static_package_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v16.test.mjs",
+          "sha256": "b0c01202a6f8b3a0d7bdd6555659f80117fa8842f57ce86a7484b3f1f07ad61f"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v17.test.mjs",
+          "sha256": "2e16cd89ccd71e90b8bd507b82715c7e779b8dde070ecb7b9acaef8c8db69655"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v19.test.mjs",
+          "sha256": "7b421c7f3bd190d0661a65e259ac754badbbaf82c6eca047a3b570547265efab"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v20.test.mjs",
+          "sha256": "af6a8c8495056c67c0c21fae52474debcc3e0b9b50a8d4dca7520f84f502bf19"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v21.test.mjs",
+          "sha256": "35577943ac7cf56d9d1eba9057203b2830341d7f4057b9bce1b6159a5fe32881"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v22.test.mjs",
+          "sha256": "b4e82141ba94b9acd6d6a5b6dd0946d851eec78ac63c1ab11e1c5b7e603474e1"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v23.test.mjs",
+          "sha256": "a63b4bf36f02f1f3605a313965841334dcd68d350bf347af3581d36c87a3f13b"
+        }
+      ],
+      "launch_agent_plist_candidate_authority": "IMPLEMENTED_SOURCE_ONLY_UNCOMPOSED_TEST_DECLARATION",
+      "launch_agent_plist_source_authority": true,
+      "launch_agent_plist_test_authority": true,
+      "launch_agent_plist_active_declaration_authority": false,
+      "launch_agent_plist_package_change_authority": false,
+      "launch_agent_plist_service_management_authority": false,
+      "launch_agent_plist_launchctl_authority": false,
+      "launch_agent_plist_label": "com.socialeap.dosai.execution-service-fixture",
+      "launch_agent_plist_bundle_program": "Contents/Library/LaunchServices/com.socialeap.dosai.execution-service-fixture",
+      "launch_agent_plist_mach_service": "com.socialeap.dosai.execution-service-fixture.watchdog",
+      "launch_agent_plist_expected_keys": [
+        "BundleProgram",
+        "Label",
+        "MachServices"
+      ],
+      "launch_agent_plist_source_observed": true,
+      "launch_agent_plist_parsed_observed": true,
+      "launch_agent_plist_packaged_observed": false,
+      "launch_agent_plist_signed_observed": false,
+      "launch_agent_plist_registration_observed": false,
+      "launch_agent_plist_launch_observed": false,
+      "launch_agent_plist_application_connection_observed": false,
+      "launch_agent_plist_proposed_files": [
+        "native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist",
+        "tests/security/p3-watchdog-launch-agent-plist-candidate.test.mjs"
+      ],
+      "launch_agent_plist_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "29834171f3fc1a9cc8850f1bec32e42216747c0ed676ca62067cb88c27c3b66a"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+          "sha256": "a7180d292d066f75bf6f0a450c74b4f610cde50a1d55662661c3c5aeaece5195"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedServiceFixtureMain.swift",
+          "sha256": "bacf02ee54d4228ba25cb4359786c94ff0f8c0dbaf069f1fc6df212ac40741f2"
+        },
+        {
+          "path": "scripts/watchdog-named-service-fixture.mjs",
+          "sha256": "a93063f3a1e283316dead3be703b73b21505d4fd9c39241cd6b5bbf349a135b2"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "f02a4fcc91af64d7a44d52354b24c033673bcf5143f6ef62fb9becf348a3a4fb"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-service-packaging-candidate.test.mjs",
+          "sha256": "8e1bdbca10a2f20c73d4b9f009700d7868d42fa312d362feb858dfb7d15557b3"
+        }
+      ],
+      "launch_agent_plist_regular_file_observed": true,
+      "launch_agent_plist_symbolic_link_observed": false,
+      "launch_agent_plist_top_level_key_count_observed": 3,
+      "launch_agent_plist_mach_service_count_observed": 1,
+      "launch_agent_plist_package_script_unchanged_observed": true,
+      "launch_agent_plist_retained_package_unchanged_observed": true,
+      "launch_agent_plist_retained_package_plist_observed": false,
+      "launch_agent_plist_implemented_files": [
+        {
+          "path": "native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist",
+          "sha256": "b7c1a4e1434bea935cb6ca64f8a33e78cb8f94f0b7644bbc103c1f55c6a1c3b5"
+        },
+        {
+          "path": "tests/security/p3-watchdog-launch-agent-plist-candidate.test.mjs",
+          "sha256": "d10f8200313562c500c82b9fb4eecb5aa900f726be3d383bc43eaea7d817c883"
+        }
+      ],
+      "launch_agent_plist_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v17.test.mjs",
+          "sha256": "a0da8f98cb9b6e915348df9f70974d5b0cdf23661701cf9ed8352d8dab621ec6"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v18.test.mjs",
+          "sha256": "e2f3c2d82c72929e8168b1facfd9c6b2327866b042c464116288ec05be4dedd6"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v19.test.mjs",
+          "sha256": "63129a64ae0a220f827d53f94adc156c93149e50960f260ed0674bbee5d131a8"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v20.test.mjs",
+          "sha256": "772bca811f1431ac776493006cd218f0d414149f17ae8465ec2b5c5dfe7f49e6"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v21.test.mjs",
+          "sha256": "9408a83602473e792a3ffabed8f85be86094b7c014018e44058bf804093796ba"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v22.test.mjs",
+          "sha256": "3e80e157bcbedd5e17c78f13245df69a142430532002c2f3c94932482d22eae8"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v23.test.mjs",
+          "sha256": "b975ee03acd4f0f1543c47ba512a71925105d8db2e494c8b9b1f07cea9b7be8e"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v24.test.mjs",
+          "sha256": "d8d8e38da9a6ce7127e246ca2b51a95b1966b1ac25c0b5d0ac990c3e5ed0b375"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v25.test.mjs",
+          "sha256": "15581251ee2978182183351dc16eefdea29792a085019a9b5ea3ef9d42949d91"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v7.test.mjs",
+          "sha256": "7b730884f4259eaec9d4033524d8455114b5790b8928b96b03581e7dd7f47bf0"
+        },
+        {
+          "path": "tests/governance/p3-guest-agent-toolchain-decision.test.mjs",
+          "sha256": "38add9ed5bee755da4c5ba82ed972cfc01a3e94124007a36f335ed149f22c763"
+        },
+        {
+          "path": "tests/governance/p3-guest-supply-chain-decision.test.mjs",
+          "sha256": "86971b925288e85d26758ca65681863c24d422cc70dcefcf6305b9d1306c3748"
+        },
+        {
+          "path": "tests/governance/p3-guest-toolchain-correction.test.mjs",
+          "sha256": "22c63966b026beb200e3fa8f421ef1f07d001da6fc0e025b4f01d1a69f8dc8a0"
+        },
+        {
+          "path": "tests/governance/p3-watchdog-control-contracts.test.mjs",
+          "sha256": "fadba83375d4f09678bd4acd6eb5d96188d0fb2528a2d80529e192e517a739a8"
+        }
+      ],
+      "launch_agent_static_package_candidate_authority": "IMPLEMENTED_OWNER_GATED_SIGNED_TEST_PACKAGE_ONLY",
+      "launch_agent_static_package_script_change_authority": true,
+      "launch_agent_static_package_test_authority": true,
+      "launch_agent_static_package_signing_authority": "OWNER_AUTHORIZED_TEST_ONLY",
+      "launch_agent_static_package_identity_selector": "UMXN25Z493",
+      "launch_agent_static_package_team_identifier": "3RD3TADLRY",
+      "owner_authorized_launch_agent_static_package_nested_signing": true,
+      "owner_authorized_launch_agent_static_package_outer_signing": true,
+      "launch_agent_static_package_mode_argument": "--static-named-service-launch-agent-fixture",
+      "launch_agent_static_package_outer_app_identifier": "com.socialeap.dosai",
+      "launch_agent_static_package_executable_identifier": "com.socialeap.dosai.execution-service-fixture",
+      "launch_agent_static_package_executable_relative_path": "Contents/Library/LaunchServices/com.socialeap.dosai.execution-service-fixture",
+      "launch_agent_static_package_plist_source_path": "native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist",
+      "launch_agent_static_package_plist_relative_path": "Contents/Library/LaunchAgents/com.socialeap.dosai.execution-service-fixture.plist",
+      "launch_agent_static_package_mach_service": "com.socialeap.dosai.execution-service-fixture.watchdog",
+      "launch_agent_static_package_source_plist_sha256": "b7c1a4e1434bea935cb6ca64f8a33e78cb8f94f0b7644bbc103c1f55c6a1c3b5",
+      "launch_agent_static_package_output_scope": "LOCAL_GENERATED_OUT_DIRECTORY_ONLY",
+      "launch_agent_static_package_baseline_output_path": "out/DOSAI-darwin-arm64/DOSAI.app",
+      "launch_agent_static_package_baseline_nested_sha256": "9e5c9770efaca692f06696fc2e082a13733c3706eeb8799974bf5b9b03b26eec",
+      "launch_agent_static_package_baseline_outer_executable_sha256": "3f0ee1b7e035369efc70a234f454164ac2d1da5e7bc36efbb3f6f280c9b95c02",
+      "launch_agent_static_package_baseline_info_plist_sha256": "6661b003e633cff83c1e6311a387ce205c93538801043c4fe5065ab52dc219e7",
+      "launch_agent_static_package_source_observed": true,
+      "launch_agent_static_package_build_observed": true,
+      "launch_agent_static_package_plist_copy_observed": true,
+      "launch_agent_static_package_plist_hash_match_observed": true,
+      "launch_agent_static_package_nested_signature_observed": true,
+      "launch_agent_static_package_outer_signature_observed": true,
+      "launch_agent_static_package_designated_requirements_observed": true,
+      "launch_agent_static_package_layout_observed": true,
+      "launch_agent_static_package_executable_invocation_observed": false,
+      "launch_agent_static_package_app_invocation_observed": false,
+      "launch_agent_static_package_service_management_observed": false,
+      "launch_agent_static_package_launchctl_observed": false,
+      "launch_agent_static_package_registration_observed": false,
+      "launch_agent_static_package_launch_observed": false,
+      "launch_agent_static_package_application_connection_observed": false,
+      "launch_agent_static_package_proposed_files": [
+        "scripts/package.mjs",
+        "tests/security/p3-watchdog-launch-agent-packaging-candidate.test.mjs"
+      ],
+      "launch_agent_static_package_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "29834171f3fc1a9cc8850f1bec32e42216747c0ed676ca62067cb88c27c3b66a"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+          "sha256": "a7180d292d066f75bf6f0a450c74b4f610cde50a1d55662661c3c5aeaece5195"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedServiceFixtureMain.swift",
+          "sha256": "bacf02ee54d4228ba25cb4359786c94ff0f8c0dbaf069f1fc6df212ac40741f2"
+        },
+        {
+          "path": "native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist",
+          "sha256": "b7c1a4e1434bea935cb6ca64f8a33e78cb8f94f0b7644bbc103c1f55c6a1c3b5"
+        },
+        {
+          "path": "tests/security/p3-watchdog-launch-agent-plist-candidate.test.mjs",
+          "sha256": "d10f8200313562c500c82b9fb4eecb5aa900f726be3d383bc43eaea7d817c883"
+        },
+        {
+          "path": "scripts/watchdog-named-service-fixture.mjs",
+          "sha256": "a93063f3a1e283316dead3be703b73b21505d4fd9c39241cd6b5bbf349a135b2"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "f02a4fcc91af64d7a44d52354b24c033673bcf5143f6ef62fb9becf348a3a4fb"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-service-packaging-candidate.test.mjs",
+          "sha256": "8e1bdbca10a2f20c73d4b9f009700d7868d42fa312d362feb858dfb7d15557b3"
+        }
+      ],
+      "launch_agent_static_package_proposal_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v25.test.mjs",
+          "sha256": "bacabb18e187b34ac1d6accf4610c02e96f8f38300fa5abbb139fa20cc01a0cf"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v26.test.mjs",
+          "sha256": "333d6248ae32c1e86b92afc234847a1311bd5d419de88a84f4a5692d7e63e843"
+        }
+      ],
+      "launch_agent_static_package_package_script_invocation_observed": true,
+      "launch_agent_static_package_signing_identity_lookup_observed": false,
+      "launch_agent_static_package_team_identifier_observed": "3RD3TADLRY",
+      "launch_agent_static_package_nested_identifier_observed": "com.socialeap.dosai.execution-service-fixture",
+      "launch_agent_static_package_outer_identifier_observed": "com.socialeap.dosai",
+      "launch_agent_static_package_architecture_observed": "arm64",
+      "launch_agent_static_package_minimum_macos_observed": "15.0",
+      "launch_agent_static_package_forbidden_framework_observed": false,
+      "launch_agent_static_package_anonymous_fixture_absent_observed": true,
+      "launch_agent_static_package_launch_daemon_absent_observed": true,
+      "launch_agent_static_package_packaged_plist_regular_file_observed": true,
+      "launch_agent_static_package_packaged_plist_symbolic_link_observed": false,
+      "launch_agent_static_package_generated_artifact_retained": true,
+      "launch_agent_static_package_output_path": "out/DOSAI-darwin-arm64/DOSAI.app",
+      "launch_agent_static_package_nested_sha256": "3ccacfdcc6b26f09ad35f830e536c3ab326ee2a6a4dee538d66a7190580529d9",
+      "launch_agent_static_package_plist_sha256": "b7c1a4e1434bea935cb6ca64f8a33e78cb8f94f0b7644bbc103c1f55c6a1c3b5",
+      "launch_agent_static_package_outer_executable_sha256": "933d34625252b585e507b448787d3bbed6a9bc2d6ba22039934bbf40cb82adf4",
+      "launch_agent_static_package_info_plist_sha256": "6661b003e633cff83c1e6311a387ce205c93538801043c4fe5065ab52dc219e7",
+      "launch_agent_static_package_nested_cdhash": "fa71d6d109ae21ac3edafbe73b541c824817db8a",
+      "launch_agent_static_package_outer_cdhash": "576df4913a3a202aca20bec2a57e2fa7702e6f79",
+      "launch_agent_static_package_adversarial_argument_rejection_observed": true,
+      "launch_agent_static_package_adversarial_argument_effect_observed": false,
+      "launch_agent_static_package_restricted_shell_trust_failure_observed": true,
+      "launch_agent_static_package_restricted_shell_trust_failure_code": "CSSMERR_TP_NOT_TRUSTED",
+      "launch_agent_static_package_normal_keychain_strict_verification_observed": true,
+      "launch_agent_static_package_trust_visibility_limitation_recorded": true,
+      "launch_agent_static_package_implemented_files": [
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "f5691b71a94d99f2800cb7cba58cfc7fc58545d79fb57d1bda21d385119d840c"
+        },
+        {
+          "path": "tests/security/p3-watchdog-launch-agent-packaging-candidate.test.mjs",
+          "sha256": "817daa4c5653c3d583e5b663a2d81cbfd54854e81d14226e3b4b639855682813"
+        }
+      ],
+      "launch_agent_static_package_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v23.test.mjs",
+          "sha256": "cfdb787bbfd88c6592140b1f7953ba83ae00cd12d5fce14282df68d93643b1cc"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v24.test.mjs",
+          "sha256": "b29ddeb5726d841d7f23bce18aba9483eb7353d1be23713d7ff4c86b11744f94"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v25.test.mjs",
+          "sha256": "78b3433bfa470dd3df6060e8df7f51401a7b199b93d48d1311b5efef7534cb79"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v26.test.mjs",
+          "sha256": "c2f1dd45c94e6cbd04a8acf3846469c8504571a4a9e363ec8e6256bf36d2682c"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v27.test.mjs",
+          "sha256": "da3b88b91268629fc1cbe6872863e9def2f8271a256ca4d9d22baab5702a2f7a"
+        },
+        {
+          "path": "tests/security/p3-packaged-service-composition.test.mjs",
+          "sha256": "29ec4deb38112f52fff0dc589a7676ab8401d40edfcc91a258fe6aeaf0aa1758"
+        },
+        {
+          "path": "tests/security/p3-watchdog-launch-agent-plist-candidate.test.mjs",
+          "sha256": "9dd3dc930c59b69da08e382946c6afa39b9d439cac0eb494c734d9a4bd06222c"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-service-packaging-candidate.test.mjs",
+          "sha256": "9e678a9dc64f476c06197533fda2c8e8c5415ce9e3c7f1d6f2160cf04cbecf06"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v15.test.mjs",
+          "sha256": "6c63ce94a884624e601ad45b8f33e3be965e067863abc72a6109080e50e4ee4e"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v16.test.mjs",
+          "sha256": "f780608c80c307f701cda4f796badbe94392c23da66ba4d88ff3505800b69d26"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v17.test.mjs",
+          "sha256": "de675779f64a46959cee0f2f4722b48e5bf9c897e7c5ed5a3e259a14646f194d"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v19.test.mjs",
+          "sha256": "2df2397bf933e30783aafe5a26dd9beae7bcf64474872e5741d371d2669dd637"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v21.test.mjs",
+          "sha256": "cf4f6d0ef644f66cd3a35fe25a17ca407290920620f0c3821c0c525bb75ccb83"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v20.test.mjs",
+          "sha256": "bd897d45e0c1f7cb6f7b55ab9e9414da9c39903672b265fd9509adbbad70dd6a"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v22.test.mjs",
+          "sha256": "ca9cf2f23241daa5d3f8c117bed81c41a0ce881dc34d0306aabc70216ef00b69"
+        }
+      ],
+      "launch_agent_status_candidate_authority": "IMPLEMENTED_COMPILE_ONLY_FIXED_STATUS_ADAPTER",
+      "launch_agent_status_source_authority": true,
+      "launch_agent_status_test_authority": true,
+      "launch_agent_status_service_management_import_authority": true,
+      "launch_agent_status_agent_lookup_source_authority": true,
+      "launch_agent_status_read_source_authority": true,
+      "launch_agent_status_application_reachable": false,
+      "launch_agent_status_executable_output_authority": false,
+      "launch_agent_status_packaging_authority": false,
+      "launch_agent_status_invocation_authority": false,
+      "launch_agent_status_registration_authority": false,
+      "launch_agent_status_unregistration_authority": false,
+      "launch_agent_status_open_system_settings_authority": false,
+      "launch_agent_status_service_launch_authority": false,
+      "launch_agent_status_application_connection_authority": false,
+      "launch_agent_status_fixed_plist_name": "com.socialeap.dosai.execution-service-fixture.plist",
+      "launch_agent_status_typecheck_target": "arm64-apple-macos15.0",
+      "launch_agent_status_allowed_observations": [
+        "NOT_REGISTERED",
+        "ENABLED",
+        "REQUIRES_APPROVAL",
+        "NOT_FOUND"
+      ],
+      "launch_agent_status_semantics": "OBSERVATION_ONLY_NOT_AUTHORIZATION_OR_LIVENESS",
+      "launch_agent_status_proposed_files": [
+        "native-helpers/execution-service/WatchdogLaunchAgentStatusCandidate.swift",
+        "tests/security/p3-watchdog-launch-agent-status-candidate.test.mjs"
+      ],
+      "launch_agent_status_immutable_inputs": [
+        {
+          "path": "docs/decisions/0020-per-user-execution-service-watchdog-control-lane.md",
+          "sha256": "2d34f0af578052a2512dcabed803825b9833a7483d521ab69e3dca6f8d413559"
+        },
+        {
+          "path": "native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist",
+          "sha256": "b7c1a4e1434bea935cb6ca64f8a33e78cb8f94f0b7644bbc103c1f55c6a1c3b5"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "f5691b71a94d99f2800cb7cba58cfc7fc58545d79fb57d1bda21d385119d840c"
+        }
+      ],
+      "launch_agent_status_proposal_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v28.test.mjs",
+          "sha256": "984712735e8059f621e9729acb21b954cc007bfdca3243bdecda124f497f4688"
+        }
+      ],
+      "launch_agent_status_source_observed": true,
+      "launch_agent_status_imports_observed": [
+        "ServiceManagement"
+      ],
+      "launch_agent_status_mapping_observed": true,
+      "launch_agent_status_unknown_fail_closed_observed": true,
+      "launch_agent_status_typecheck_observed": true,
+      "launch_agent_status_executable_output_observed": false,
+      "launch_agent_status_api_invocation_observed": false,
+      "launch_agent_status_runtime_value_observed": false,
+      "launch_agent_status_registration_observed": false,
+      "launch_agent_status_unregistration_observed": false,
+      "launch_agent_status_open_system_settings_observed": false,
+      "launch_agent_status_package_mutation_observed": false,
+      "launch_agent_status_app_invocation_observed": false,
+      "launch_agent_status_helper_invocation_observed": false,
+      "launch_agent_status_service_launch_observed": false,
+      "launch_agent_status_application_connection_observed": false,
+      "launch_agent_status_implemented_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogLaunchAgentStatusCandidate.swift",
+          "sha256": "14a83456e08596bc777159196306f9e95b41e4d008d88230853b7ee20256d859"
+        },
+        {
+          "path": "tests/security/p3-watchdog-launch-agent-status-candidate.test.mjs",
+          "sha256": "717b09ab087f89f536bca961f223cfa7800058a908ba6ee3a7e15de840be5ff3"
+        }
+      ],
+      "launch_agent_status_guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v29.test.mjs",
+          "sha256": "a4716f1d1f3f67592c438ed2bcd4cc6c0f5e257e55d0537c7e0328bff2b8e8b4"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v7.test.mjs",
+          "sha256": "58437eaabc3d5129086daffd3387498923a5fbddb34d069a323ab7b31e8348ee"
+        },
+        {
+          "path": "tests/governance/p3-guest-agent-toolchain-decision.test.mjs",
+          "sha256": "f3d5320a93b45eaa56cfdbc7ac6bfb3a948ea028b70da02513c19b2baa6ec7e4"
+        },
+        {
+          "path": "tests/governance/p3-guest-supply-chain-decision.test.mjs",
+          "sha256": "7050a1fd29f230bd66d9dc41a7adb1a5039b91e2c55e6ce4aac996232560a9b7"
+        },
+        {
+          "path": "tests/governance/p3-guest-toolchain-correction.test.mjs",
+          "sha256": "ce636ed00a2a221c774cf7f747280c2d5b9646e80ea7fd67a0c6ec83ac5191f6"
+        },
+        {
+          "path": "tests/governance/p3-watchdog-control-contracts.test.mjs",
+          "sha256": "66f5b86861b5003a9659333276b9b8276a4e6f2e2bb5610a5563ab5f19ab84ff"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v20.test.mjs",
+          "sha256": "ab95a06051d5125f7732d1287ce83146839cc8cf8b038c47276cba0031987860"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v22.test.mjs",
+          "sha256": "0b02fbdf38dd4cc2fe931580d3d86a999ee29a4060c7988e4dc22012f4286b04"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v26.test.mjs",
+          "sha256": "39350a10af7971a9b5e4e24fc3d3518b81f66b65c5e14f4155e47ad1e7d578df"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v24.test.mjs",
+          "sha256": "21ee5cb7f16569c0c23847ab3dff72334cb2fe1eaa773dc457370584908d1a4f"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v27.test.mjs",
+          "sha256": "d9d1e03fb78b7bf5e42587b5b77e72bc267416ef93ee143605b688cf5ec927b6"
+        },
+        {
+          "path": "tests/architecture/process-ownership-v28.test.mjs",
+          "sha256": "06896b42a3254f122fde1b99294aa1aa04abd764b30f7948259d028f8d1f5338"
+        }
+      ]
+    },
+    {
+      "id": "service-management-status-addon",
+      "path": "native-helpers/service-management-status-addon",
+      "trust_zone": "Z3",
+      "runtime": "NOT_COMPILED_SOURCE_ONLY",
+      "component_owner": "electron-main-service-management-status-observation",
+      "owner_phase": "P3",
+      "implementation_state": "ACTIVE_SOURCE_ONLY",
+      "authority": "PROPOSED_PINNED_NODE_API_V8_TEMPORARY_UNSIGNED_COMPILE_PROOF",
+      "application_reachable": false,
+      "native_module_load_authority": false,
+      "native_compile_authority": true,
+      "native_link_authority": true,
+      "signing_authority": false,
+      "packaging_authority": false,
+      "invocation_authority": false,
+      "service_management_source_import_authority": true,
+      "service_management_status_property_source_authority": true,
+      "service_management_runtime_call_authority": false,
+      "registration_authority": false,
+      "unregistration_authority": false,
+      "open_system_settings_authority": false,
+      "launchctl_authority": false,
+      "service_launch_authority": false,
+      "application_connection_authority": false,
+      "renderer_exposure_authority": false,
+      "generic_native_dispatch_authority": false,
+      "process_launch_authority": false,
+      "filesystem_authority": false,
+      "network_authority": false,
+      "xpc_authority": false,
+      "journal_authority": false,
+      "reconciliation_authority": false,
+      "vm_authority": false,
+      "execution_authority": false,
+      "production_authority": false,
+      "fixed_plist_name": "com.socialeap.dosai.execution-service-fixture.plist",
+      "inputs": [],
+      "outputs": [
+        "NOT_REGISTERED",
+        "ENABLED",
+        "REQUIRES_APPROVAL",
+        "NOT_FOUND"
+      ],
+      "unknown_and_error_observation": "NOT_FOUND",
+      "target": "arm64-apple-macos15.0",
+      "workspace_electron_node_api_headers_observed": false,
+      "node_api_header_source_selected": true,
+      "node_api_header_acquisition_authority": false,
+      "dependency_change_authority": false,
+      "electron_header_download_authority": false,
+      "electron_rebuild_dependency_authority": false,
+      "node_gyp_dependency_authority": false,
+      "node_api_header_source_kind": "GOVERNED_NODE_RELEASE_MATCHING_ELECTRON_EMBEDDED_NODE",
+      "node_api_header_source_version": "24.18.0",
+      "node_api_header_source_archive_sha256": "e1a97e14c99c803e96c7339403282ea05a499c32f8d83defe9ef5ec66f979ed1",
+      "node_api_header_root_resolution": "dirname(dirname(process.execPath))/include/node",
+      "node_api_header_files": [
+        {
+          "name": "node_api.h",
+          "sha256": "2d4560831e525b47b060ec8a0864ab73993df9e20215ce9f0fe7b24cd31af32a"
+        },
+        {
+          "name": "node_api_types.h",
+          "sha256": "a25356630d3058f0a0c8937d9f297e9471e037fda58c2696d8a505c2bd99cb00"
+        },
+        {
+          "name": "js_native_api.h",
+          "sha256": "8808ef8899a1691411928ef5dd7dae0537aedc93d3a34e223b2d89692e79c788"
+        },
+        {
+          "name": "js_native_api_types.h",
+          "sha256": "4f19cb90d240765cc0961d92a1ee20f65fdc50db7de1ab0a5cb6bc227224e1a0"
+        }
+      ],
+      "electron_version": "43.2.0",
+      "electron_embedded_node_version": "24.18.0",
+      "electron_native_abi": 148,
+      "node_api_version": 8,
+      "node_api_version_source_define_required": true,
+      "node_api_c_abi_only_authority": true,
+      "node_cpp_v8_libuv_header_authority": false,
+      "compile_proof_target": "arm64-apple-macos15.0",
+      "compile_proof_language_standard": "c++20",
+      "compile_proof_service_management_framework_link_authority": true,
+      "compile_proof_fixed_source_authority": true,
+      "compile_proof_temporary_filesystem_authority": true,
+      "compile_proof_network_authority": false,
+      "compile_proof_module_load_authority": false,
+      "compile_proof_invocation_authority": false,
+      "temporary_unsigned_bundle_output_authority": true,
+      "temporary_unsigned_bundle_persistence_authority": false,
+      "adhoc_signature_suppression_required": true,
+      "adhoc_signature_suppression_linker_flag": "-no_adhoc_codesign",
+      "compile_proof_tools": [
+        "/usr/bin/xcrun",
+        "/usr/bin/lipo",
+        "/usr/bin/otool",
+        "/usr/bin/nm"
+      ],
+      "compile_proof_proposed_files": [
+        "native-helpers/service-management-status-addon/service-management-status-addon.mm",
+        "tests/security/p3-service-management-status-addon-compile-candidate.test.mjs"
+      ],
+      "compile_proof_immutable_inputs": [
+        {
+          "path": "docs/architecture/process-ownership-v32.json",
+          "sha256": "04ec42d538427cce3bd1ed0b2209dc5e8a94a5d5b35f02a564041936c2f9e23b"
+        },
+        {
+          "path": ".node-version",
+          "sha256": "55075b5ec4e8b31936cbbc282b8829116d1fd48f2f2f1856dee592a6650700ce"
+        },
+        {
+          "path": "package.json",
+          "sha256": "90908d571d3e54c9c03be4fa75d97cd401e6ef1dab5dbe0d48943f9ed30fd700"
+        },
+        {
+          "path": "pnpm-lock.yaml",
+          "sha256": "ee8925edb3bbca6e53654432f8a12467cdff39290739fba8e47f3794fc19ea21"
+        },
+        {
+          "path": "docs/development/p1-runtime-baseline.md",
+          "sha256": "a01cc4dfa8db77105d90e351ae46bbd9b5c290e0031f0a5f05919e7c0972471a"
+        },
+        {
+          "path": "native-helpers/service-management-status-addon/service-management-status-addon.mm",
+          "sha256": "fd2b38cdd9fbdd4057b668f0abd936b315c7047b792f6e8e5a88960fffc71987"
+        },
+        {
+          "path": "src/main/execution/service-management-status-adapter.ts",
+          "sha256": "f23b4eb7264314921bad4229c0974a5ed404440acdaeb5c6f19b0cc3aef7733b"
+        },
+        {
+          "path": "tests/security/p3-service-management-status-adapter-candidate.test.mjs",
+          "sha256": "6b135b9e667f1f547f33b5c148a9ea360c9ccd7e6775adec00490205a3da990a"
+        }
+      ],
+      "source_observed": true,
+      "node_api_single_export_observed": true,
+      "fixed_plist_mapping_observed": true,
+      "unknown_and_exception_fail_closed_observed": true,
+      "zero_argument_rejection_observed": true,
+      "lifecycle_api_absence_observed": true,
+      "native_compile_observed": false,
+      "native_link_observed": false,
+      "executable_output_observed": false,
+      "native_module_load_observed": false,
+      "service_management_runtime_call_observed": false,
+      "runtime_status_observed": false,
+      "registration_observed": false,
+      "unregistration_observed": false,
+      "open_system_settings_observed": false,
+      "service_launch_observed": false,
+      "application_connection_observed": false,
+      "proposed_files": [
+        "native-helpers/service-management-status-addon/service-management-status-addon.mm",
+        "src/main/execution/service-management-status-adapter.ts",
+        "tests/security/p3-service-management-status-adapter-candidate.test.mjs"
+      ],
+      "implemented_files": [
+        {
+          "path": "native-helpers/service-management-status-addon/service-management-status-addon.mm",
+          "sha256": "fd2b38cdd9fbdd4057b668f0abd936b315c7047b792f6e8e5a88960fffc71987"
+        },
+        {
+          "path": "src/main/execution/service-management-status-adapter.ts",
+          "sha256": "f23b4eb7264314921bad4229c0974a5ed404440acdaeb5c6f19b0cc3aef7733b"
+        },
+        {
+          "path": "tests/security/p3-service-management-status-adapter-candidate.test.mjs",
+          "sha256": "6b135b9e667f1f547f33b5c148a9ea360c9ccd7e6775adec00490205a3da990a"
+        }
+      ],
+      "guard_remediations": [
+        {
+          "path": "tests/architecture/process-ownership-v31.test.mjs",
+          "sha256": "872afb9f08a3aff6a13dd5b39a1dc418e78081fcf600b67ad03a70fbc7157a9b"
+        },
+        {
+          "path": "tests/architecture/process-ownership.test.mjs",
+          "sha256": "0aa884e469e936ed7410b323c7db7c9a230b93c1fa2f2c15b5b1a83bd823f292"
+        }
+      ],
+      "immutable_inputs": [
+        {
+          "path": "docs/architecture/process-ownership-v30.json",
+          "sha256": "b9abc5bf0791dff5254bfbe73cbe1e09c5792c8290de5eb0866f125f7482e10a"
+        },
+        {
+          "path": "docs/decisions/0021-electron-main-service-management-status-adapter.md",
+          "sha256": "ac3cbccf89bd4fc6f2e45c5c628deef625989ddc9408151a31c2ff27ffca7fb8"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogLaunchAgentStatusCandidate.swift",
+          "sha256": "14a83456e08596bc777159196306f9e95b41e4d008d88230853b7ee20256d859"
+        },
+        {
+          "path": "tests/security/p3-watchdog-launch-agent-status-candidate.test.mjs",
+          "sha256": "717b09ab087f89f536bca961f223cfa7800058a908ba6ee3a7e15de840be5ff3"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "f5691b71a94d99f2800cb7cba58cfc7fc58545d79fb57d1bda21d385119d840c"
+        },
+        {
+          "path": "native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist",
+          "sha256": "b7c1a4e1434bea935cb6ca64f8a33e78cb8f94f0b7644bbc103c1f55c6a1c3b5"
+        }
+      ],
+      "allowed_first_party_imports": [],
+      "allowed_external_imports": [
+        "Node-API C ABI",
+        "ServiceManagement"
+      ]
+    },
+    {
+      "id": "audit-helper",
+      "path": "native-helpers/audit",
+      "trust_zone": "Z6",
+      "runtime": "ISOLATED_NODE_SQLITE_AND_CRYPTO_PROOF",
+      "component_owner": "audit-journal-and-checkpoint-proof",
+      "owner_phase": "P2-P3",
+      "implementation_state": "ACTIVE",
+      "authority": "AUDIT_JOURNAL_WRITE_CAPSULE_REGISTRY_BINDING_AND_TEST_ONLY_CHECKPOINT_PROOF",
+      "application_reachable": true,
+      "application_interface": "INJECTED_CAPSULE_REGISTRY_AUDIT_BINDING_PORT_ONLY",
+      "general_append_authority_exposed": false,
+      "source_authentication_exposed": false,
+      "network_authority": false,
+      "process_launch_authority": false,
+      "allowed_first_party_imports": [
+        "contracts",
+        "audit-helper"
+      ],
+      "allowed_external_imports": [
+        "node:crypto",
+        "node:fs",
+        "node:path",
+        "node:sqlite"
+      ]
+    },
+    {
+      "id": "secure-enclave-proof-helper",
+      "path": "native-helpers/secure-enclave-proof",
+      "trust_zone": "Z6",
+      "runtime": "PACKAGED_SWIFT_SECURITY_FRAMEWORK_PROOF",
+      "component_owner": "audit-key-lifecycle-proof",
+      "owner_phase": "P2",
+      "implementation_state": "ACTIVE",
+      "authority": "OWNER_GATED_TRANSIENT_SECURE_ENCLAVE_TEST_KEY_LIFECYCLE_ONLY",
+      "application_reachable": false,
+      "network_authority": false,
+      "production_checkpoint_authority": false,
+      "allowed_first_party_imports": [],
+      "allowed_external_imports": [
+        "CryptoKit",
+        "Darwin",
+        "Foundation",
+        "LocalAuthentication",
+        "Security"
+      ]
+    }
+  ],
+  "invariants": [
+    "Every application source file belongs to exactly one declared source boundary.",
+    "First-party imports follow the declared directional allowlist.",
+    "Renderer code imports neither Electron nor Node modules.",
+    "Preload code exposes typed contract methods and never generic IPC authority.",
+    "Main coordinates application lifecycle and holds no execution, signing, credential, database, policy, journal, approval, grant, VM, process-launch, service-configuration, or peer-requirement authority.",
+    "Main may define only an uncomposed typed test client over an injected transport for INSPECT, STOP_ONE, and STOP_ALL; it cannot create XPC connections, set peer requirements, register, configure, discover, or launch the service.",
+    "The injected watchdog client closes on malformed, oversized, timed-out, duplicate, rebound, or over-capacity sessions and cannot confer transport or effect authority.",
+    "Policy code imports only governed contracts, emits no authoritative wire decision, and holds no effect authority.",
+    "The isolated grant proof helper can create only service-local test approvals and one-use no-effect grants after exact policy, binding, durable acknowledgement, key, and assurance checks.",
+    "Execution-grant v1 remains a D5 envelope; only module-private proof-service state can consume it, and no proof result can invoke or represent an effect.",
+    "Emergency stop in the proof helper is audit-independent, idempotent, and reduce-only; it returns no execution authority.",
+    "The isolated audit helper writes only its canonical journal, exposes only an injected capsule-registry binding port to Main, and can sign only a freshly verified bounded checkpoint through a module-private software test fixture.",
+    "The capsule-registry binding port exposes no journal instance, database handle, source credential, generic append operation, signing operation, or reconciliation authority.",
+    "The packaged Secure Enclave proof helper has no Electron transport, production checkpoint API, arbitrary-message signing API, database access, or network authority.",
+    "Secure Enclave lifecycle and recovery cleanup operations require explicit owner authorization, are restricted to one UUID-derived proof-only application-tag namespace, and verify exact-tag deletion before success; signing is limited to one internally constructed challenge.",
+    "The inert execution-service fixture mutates only embedded fixture records through INSPECT, STOP_ONE, and STOP_ALL and accepts no PID, path, executable, arguments, environment, mount, socket, network, VM-start, or arbitrary payload field.",
+    "The XPC fixture may create only an anonymous in-process endpoint, admits only accepted watchdog v1 dictionaries within the fixed frame bound, and applies exact code-signing requirements on both endpoint connections.",
+    "The owner authorized test-only use of identity selector UMXN25Z493 and code-signing TeamIdentifier 3RD3TADLRY for the exact anonymous XPC peer requirement; no broader identity, team, registration, or production authorization may be inferred.",
+    "A directly Apple Development-signed fixture with identifier com.socialeap.dosai.watchdog-xpc-fixture authenticated under the exact 3RD3TADLRY requirement on both connections, then observed disconnect reduction and terminal inert records.",
+    "The owner authorized static test-package composition to place only the exact anonymous fixture at Contents/Library/LaunchServices/com.socialeap.dosai.watchdog-xpc-fixture and sign both nested code and the outer test app with selector UMXN25Z493 and TeamIdentifier 3RD3TADLRY.",
+    "The admissible static package run built and signed the nested fixture before the outer app, verified both exact identifiers and designated requirements under TeamIdentifier 3RD3TADLRY, and did not invoke the app, nested fixture, or packaged helper.",
+    "Pre-admissible package runs invoked read-only description operations on the nested fixture and inherited Secure Enclave helper; they observed no registration or mutation, were discarded as evidence, and were remediated by removing every packaged-executable invocation from static packaging with cross-file regression checks.",
+    "The proposed named-listener slice may add only one compile-only Swift source candidate with fixed test service, Mach service, client, and TeamIdentifier constants; it cannot modify accepted anonymous transport or package bytes.",
+    "The named-listener candidate may construct only an inactive listener with xpc_connection_create_mach_service and XPC_CONNECTION_MACH_SERVICE_LISTENER; it cannot activate a connection, accept a peer, send a message, compile an executable, sign, package, register, launch, or import ServiceManagement.",
+    "The named-listener candidate cannot accept caller-supplied service names, signing requirements, identifiers, flags, queues, handlers, PIDs, paths, payloads, or entitlements and cannot use XPC_CONNECTION_MACH_SERVICE_PRIVILEGED.",
+    "The compile-only named-listener candidate typechecked for arm64 macOS 15 without executable output and contains no activation, event-handler, messaging, client-connection, privileged-bootstrap, ServiceManagement, Virtualization, process, filesystem, or network API.",
+    "The proposed named-listener transport slice may refactor only the accepted anonymous fixture's existing strict decode, reply, and disconnect-reduction path into one internal fixed service-side handler, and the signed anonymous self-test must continue exercising that same handler without weaker admission.",
+    "The proposed named-listener transport adapter may add only one compile-only, zero-configuration test source that obtains the accepted fixed inactive listener, accepts only XPC connection events, installs the shared strict handler, and activates only that listener and its authenticated incoming peers.",
+    "The proposed adapter cannot create a client connection, accept a caller-supplied service name, requirement, identity, queue, handler, core, payload, path, PID, flag, or entitlement, and it cannot use privileged bootstrap or ServiceManagement APIs.",
+    "The proposed named-listener transport slice cannot add an executable entry point or output, sign, package, declare a plist, register, launch, connect from DOSAI, create or start a VM, access files or networks, reconcile ownership, write the journal, or perform production work.",
+    "The implemented transport refactor preserves one strict decoder, reply builder, and service event router, and the accepted anonymous signed fixture continues exercising that same route with no weaker admission or identity behavior.",
+    "The implemented named-listener transport adapter has one zero-argument factory, creates its inert core internally, accepts only XPC connection events, and routes incoming peer events through the shared strict handler.",
+    "The named-listener transport adapter typechecked for arm64 macOS 15 without executable output and was not signed, packaged, executed, activated, registered, connected from DOSAI, or observed exchanging a named-service message.",
+    "The proposed named-service executable slice may add only one fixed test entry-point source and one adversarial test that builds a temporary arm64 macOS 15 binary from the exact accepted source set in an isolated temporary directory.",
+    "The proposed entry point accepts no arguments or configuration, obtains only the fixed named listener through the accepted adapter, retains it, and enters Dispatch.main without logging, fallback, discovery, or adjacent authority.",
+    "The temporary build must pass -Xlinker -no_adhoc_codesign because Apple Silicon linker output is otherwise ad-hoc signed by default; no explicit signing command, identity use, signature, package copy, or persistent executable is authorized.",
+    "The proposed executable candidate may be linked and inspected but cannot be invoked, signed, packaged, declared in a plist, registered, launched, connected from DOSAI, or used for VM, process, filesystem, network, journal, reconciliation, or production work.",
+    "The implemented entry point imports only Dispatch, accepts no input or configuration, obtains only the accepted fixed named listener, retains it, and enters Dispatch.main without logging or fallback behavior.",
+    "The temporary candidate linked for arm64 with minimum macOS 15 and -no_adhoc_codesign, contained no LC_CODE_SIGNATURE or forbidden framework dependency, and was inspected only with lipo, otool, and vtool.",
+    "The temporary executable was never invoked, signed, packaged, copied, declared, registered, launched, or connected from DOSAI, and its isolated output directory was removed after inspection.",
+    "Static composition cannot add Contents/Library/LaunchAgents, Contents/Library/LaunchDaemons, MachServices, ServiceManagement, SMAppService, launchctl, registration, unregistration, a named listener, or application reachability.",
+    "Authenticated and packaged evidence applies only to test fixtures and does not prove named-service, separate-process, registration, user-approval, application-composition runtime, VM, or production behavior.",
+    "Ad-hoc signatures and synthetic trust roots fail closed, and the fixture has no keychain mutation or signing-identity export authority.",
+    "The execution-service fixture has no named Mach service, registration, runtime application composition, VM, process-launch, filesystem, network, reconciliation, journal, ownership-release, or production authority.",
+    "A framework inspection fixture outside the native-helper root cannot create or start a VM, launch a process, access a filesystem, consume standard input, or contact a network.",
+    "No implemented helper can contact an anchor or label evidence ANCHORED without offline verification under independently obtained trust material.",
+    "Application source cannot import native-helper implementations; Main may invoke only contracts admitted by an accepted generation after their separate composition gates are accepted.",
+    "Workers accept bounded validated data and hold no effect authority.",
+    "Reserved native-helper roots contain no executable code before their owner phase and a separate accepted ownership update.",
+    "Renderer source satisfies docs/architecture/renderer-authority-policy-v1.json with no authority finding.",
+    "The proposed static named-service package slice may add only one dedicated fixed-source build helper, one exact package-mode change, and one adversarial security test over the accepted named-service source postimages.",
+    "Named-service package signing remains unavailable until the owner separately authorizes test-only use of selector UMXN25Z493 and TeamIdentifier 3RD3TADLRY for the exact nested named-service fixture and containing static DOSAI test app.",
+    "After both gates are accepted, the package proof may place only com.socialeap.dosai.execution-service-fixture under the fixed Contents/Library/LaunchServices path, sign nested code before the outer app, inspect both signatures, and retain only the local generated out artifact without invoking either executable.",
+    "The proposed static package slice cannot add a LaunchAgent or LaunchDaemon plist, ServiceManagement or SMAppService operation, registration, unregistration, launch, application connection, VM, process, filesystem, network, journal, reconciliation, ownership release, or production authority.",
+    "The implemented static package mode builds only the five accepted named-service Swift sources, suppresses default ad-hoc signing before exact Apple Development signing, and fixes the nested and outer test identifiers, selector, TeamIdentifier, architecture, and minimum OS.",
+    "The final evidence package contains only the named-service fixture under the fixed LaunchServices path, signs nested code before the outer app, passes strict signature and designated-requirement checks, and contains no anonymous watchdog fixture, LaunchAgent plist, or LaunchDaemon plist.",
+    "One extra-separator package attempt failed strict admission before build or signing; one later run signed the authorized artifacts but was discarded when its post-sign requirement option was malformed, and the corrected final run completed every inspection without invocation, registration, or launch.",
+    "Static named-service packaging does not authorize plist creation, ServiceManagement or SMAppService operations, installation, registration, unregistration, launch, application connection, VM, process, filesystem, network, journal, reconciliation, ownership release, or production behavior.",
+    "The proposed LaunchAgent declaration slice may add only one source-only test plist and one adversarial parser test; both remain absent until this process-ownership generation is accepted.",
+    "The proposed plist must contain exactly Label, BundleProgram, and MachServices, with the fixed test identifiers and bundle-relative executable path; MachServices must map only the fixed watchdog service to true.",
+    "The proposed plist cannot declare Program, ProgramArguments, EnvironmentVariables, RunAtLoad, KeepAlive, Disabled, UserName, GroupName, sockets, path triggers, calendar triggers, network state, output paths, privileged service flags, or caller-controlled configuration.",
+    "Source-only LaunchAgent declaration authority does not authorize package changes, Contents/Library/LaunchAgents placement, signing, ServiceManagement or SMAppService calls, launchctl, installation, registration, unregistration, launch, application connection, VM, process, filesystem, network, journal, reconciliation, ownership release, or production behavior.",
+    "The implemented source plist is a regular non-symlink file that parses to exactly Label, BundleProgram, and one true MachServices entry with the accepted fixed test identifiers and bundle-relative executable path.",
+    "The adversarial parser test rejects identity and path substitution, empty or expanded services, non-true service values, adjacent launchd authority keys, duplicate keys, non-dictionary data, BOM input, and oversized input.",
+    "The accepted Swift sources, builder, package script, package security test, and retained v24 signed package remain unchanged, and the retained package still contains no LaunchAgent or LaunchDaemon plist.",
+    "The source declaration was not packaged, signed, installed, registered, loaded, launched, or connected to the application and grants no ServiceManagement, launchctl, VM, process, filesystem, network, journal, reconciliation, ownership-release, or production authority.",
+    "The proposed plist-bearing package slice may change only scripts/package.mjs and add one adversarial package test, while preserving the accepted source plist, Swift sources, builder, existing package modes, and retained v24 package during proposal review.",
+    "Signing the plist-bearing package remains unavailable until the owner separately authorizes test-only use of selector UMXN25Z493 and TeamIdentifier 3RD3TADLRY for the exact nested executable and containing com.socialeap.dosai app with the accepted plist.",
+    "After both gates are accepted, the distinct fixed package mode may copy only the accepted plist to Contents/Library/LaunchAgents/com.socialeap.dosai.execution-service-fixture.plist before outer signing, verify exact source and packaged hashes and parsed values, sign nested code before the outer app, and retain only local generated evidence without invoking code.",
+    "The proposed package slice cannot import ServiceManagement, call SMAppService, use launchctl, install, register, unregister, load, launch, connect from DOSAI, create or start a VM, target a process, access application data or networks, write the journal, reconcile ownership, release ownership, or perform production work.",
+    "The implemented plist-bearing package mode preserves every accepted package mode and input, admits only its one exact argument, verifies the accepted source plist as a regular non-symlink file, signs nested code before plist copy and outer signing, and invokes no packaged executable.",
+    "The retained local evidence app contains exactly the signed named-service executable under LaunchServices and the byte-identical accepted three-key plist under LaunchAgents; both signatures, exact designated requirements, TeamIdentifier, architecture, minimum OS, and two-file Library layout were verified.",
+    "A read-only strict verification in the restricted shell reported CSSMERR_TP_NOT_TRUSTED because normal Keychain trust was unavailable; the same immutable package passed strict and designated-requirement verification with normal Keychain access, and no signature fault is concealed.",
+    "Static plist-bearing package composition does not authorize ServiceManagement, SMAppService, launchctl, installation, registration, unregistration, loading, launch, application connection, VM, process, filesystem-data, network, journal, reconciliation, ownership release, production signing, or production behavior.",
+    "The proposed LaunchAgent status candidate may add only one compile-only Swift source and one adversarial source test over immutable accepted v28, ADR 0020, plist, and package inputs.",
+    "The candidate may import ServiceManagement only to construct SMAppService.agent with the one fixed accepted plist name and map its status to NOT_REGISTERED, ENABLED, REQUIRES_APPROVAL, or NOT_FOUND without caller input.",
+    "A status value is observational only: ENABLED does not prove process liveness, authenticated XPC reachability, accepted generation, reconciliation, or execution availability, and every other value remains fail-closed.",
+    "The proposed status slice cannot produce or invoke an executable, change the package, call register or unregister, open System Settings, install, load, launch, connect from DOSAI, create or start a VM, target a process, access application data or networks, write the journal, reconcile ownership, release ownership, or perform production work.",
+    "The implemented status candidate imports only ServiceManagement, fixes the accepted plist filename internally, accepts no input, and maps the four current platform states to the four bounded DOSAI observations.",
+    "Unknown future SMAppService status values fail closed to NOT_FOUND, and the typed observation remains informational rather than registration, liveness, connection, reconciliation, or execution evidence.",
+    "The adversarial source test rejects lifecycle mutation, System Settings, legacy status, entry-point, process, filesystem, network, XPC, Virtualization, and caller-input surfaces and typechecks without executable output.",
+    "No Service Management API was invoked, no runtime status was observed, and no package, signature, app, helper, launchd, registration, launch, application connection, VM, filesystem-data, network, journal, reconciliation, or production state changed.",
+    "The implemented source-only status-adapter slice contains exactly one Objective-C++ Node-API source, one dedicated Electron Main adapter, and one adversarial security test over immutable accepted v31 and its accepted inputs.",
+    "The native source exposes only one zero-argument status observation, fixes the accepted plist name, maps the four accepted platform states, and fails closed to NOT_FOUND for unknown values, exceptions, or arguments without exporting lifecycle or generic native dispatch.",
+    "The injection-only Main adapter loads no native module, invokes accessors only through an admitted own data property, passes no arguments, admits only NOT_REGISTERED, ENABLED, REQUIRES_APPROVAL, or NOT_FOUND, and fails closed without renderer or preload exposure.",
+    "Accepted v32 observed no Node-API headers inside the workspace Electron package and performed no header acquisition, dependency change, compilation, linking, native-module loading, packaging, signing, or invocation.",
+    "The source text contains the fixed observational SMAppService status lookup, but no native module or Service Management API was invoked and no runtime status was observed; launchctl, registration, unregistration, System Settings, service launch, connection, package change, process, filesystem-data, network, XPC, journal, reconciliation, VM, execution, and production effects remain absent and unauthorized.",
+    "The proposed compile proof selects only the four C Node-API headers from the already accepted Node 24.18.0 archive, whose version exactly matches Electron 43.2.0's embedded Node, and grants no header download, acquisition, vendoring, node-gyp, electron-rebuild, or dependency authority.",
+    "The source must explicitly select stable Node-API version 8 and remain restricted to node_api.h; Node C++, V8, libuv, OpenSSL, BoringSSL, generic native dispatch, and experimental Node-API surfaces remain forbidden.",
+    "After separate owner acceptance, one adversarial test may compile and link only the fixed Objective-C++ source as a temporary unsigned arm64 macOS 15 bundle with C++20, dynamic Node-API symbol lookup, ServiceManagement, and ad-hoc signature suppression, then inspect and delete it without loading or invocation.",
+    "The temporary compile proof may invoke only xcrun, lipo, otool, and nm with fixed arguments and a private temporary directory; it cannot use the network, package or sign an artifact, modify application output, persist the bundle, or call Service Management at runtime.",
+    "This proposal changes no implementation source, test, package, dependency, lockfile, build script, Main composition, renderer or preload surface, and it grants no native module loading, status invocation, registration, launch, connection, reconciliation, execution, or production authority before owner acceptance."
+  ]
+}

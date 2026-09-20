@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:watchdog-control-session:1",
+  "title": "DOSAI Test-Only Watchdog Control Session v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_id",
+    "schema_version",
+    "service_boot_id",
+    "service_generation",
+    "session_id",
+    "coordinator_instance_id",
+    "protocol",
+    "peer_assurance",
+    "mode",
+    "sequence_start",
+    "limits",
+    "disconnect_behavior",
+    "authorization"
+  ],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:watchdog-control-session:1" },
+    "schema_version": { "const": 1 },
+    "service_boot_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "service_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "coordinator_instance_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "protocol": { "const": "DOSAI_WATCHDOG_XPC_V1" },
+    "peer_assurance": { "const": "XPC_MUTUAL_CODE_REQUIREMENT" },
+    "mode": { "const": "INERT_TEST_FIXTURE" },
+    "sequence_start": { "const": "1" },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_frame_bytes",
+        "max_cached_responses",
+        "max_inspect_pending",
+        "max_stop_one_pending",
+        "reserved_stop_all_slots",
+        "response_timeout_ms"
+      ],
+      "properties": {
+        "max_frame_bytes": { "const": 4096 },
+        "max_cached_responses": { "const": 64 },
+        "max_inspect_pending": { "const": 8 },
+        "max_stop_one_pending": { "const": 16 },
+        "reserved_stop_all_slots": { "const": 1 },
+        "response_timeout_ms": { "const": 1000 }
+      }
+    },
+    "disconnect_behavior": { "const": "STOP_ALL" },
+    "authorization": { "const": "NO_EFFECT_TEST_ONLY" }
+  }
+}

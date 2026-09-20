@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:watchdog-control-response:1",
+  "title": "DOSAI Test-Only Watchdog Control Response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "response_id", "request_id", "session_id", "service_boot_id", "service_generation", "sequence", "operation", "result"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:watchdog-control-response:1" },
+    "schema_version": { "const": 1 },
+    "response_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "request_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "session_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "service_boot_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "service_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "sequence": { "type": "string", "pattern": "^[1-9][0-9]*$", "maxLength": 32 },
+    "operation": { "enum": ["INSPECT", "STOP_ONE", "STOP_ALL"] },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "capsules"],
+          "properties": {
+            "kind": { "const": "INSPECTION" },
+            "capsules": {
+              "type": "array",
+              "maxItems": 64,
+              "items": { "$ref": "#/$defs/capsule_state" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "scope", "disposition", "capsule_ids"],
+          "properties": {
+            "kind": { "const": "STOP_RESULT" },
+            "scope": { "enum": ["ONE", "ALL"] },
+            "disposition": { "enum": ["STOPPED", "QUARANTINED", "NOT_FOUND"] },
+            "capsule_ids": {
+              "type": "array",
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "code", "safe_message", "retry_disposition"],
+          "properties": {
+            "kind": { "const": "REJECTED" },
+            "code": {
+              "enum": [
+                "DOSAI_WATCHDOG_SCHEMA_0001",
+                "DOSAI_WATCHDOG_IDENTITY_0001",
+                "DOSAI_WATCHDOG_REPLAY_0001",
+                "DOSAI_WATCHDOG_SEQUENCE_0001",
+                "DOSAI_WATCHDOG_QUEUE_0001",
+                "DOSAI_WATCHDOG_UNAVAILABLE_0001"
+              ]
+            },
+            "safe_message": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[ -~]+$" },
+            "retry_disposition": { "enum": ["NEVER", "NEW_SESSION", "RECONCILE", "OWNER_ACTION"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "original_response_id"],
+          "properties": {
+            "kind": { "const": "REPLAYED" },
+            "original_response_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operation": { "const": "INSPECT" } }, "required": ["operation"] },
+      "then": {
+        "properties": {
+          "result": {
+            "type": "object",
+            "properties": { "kind": { "enum": ["INSPECTION", "REJECTED", "REPLAYED"] } },
+            "required": ["kind"]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "operation": { "const": "STOP_ONE" } }, "required": ["operation"] },
+      "then": {
+        "properties": {
+          "result": {
+            "type": "object",
+            "oneOf": [
+              { "type": "object", "properties": { "kind": { "const": "STOP_RESULT" }, "scope": { "const": "ONE" } }, "required": ["kind", "scope"] },
+              { "type": "object", "properties": { "kind": { "enum": ["REJECTED", "REPLAYED"] } }, "required": ["kind"] }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "operation": { "const": "STOP_ALL" } }, "required": ["operation"] },
+      "then": {
+        "properties": {
+          "result": {
+            "type": "object",
+            "oneOf": [
+              { "type": "object", "properties": { "kind": { "const": "STOP_RESULT" }, "scope": { "const": "ALL" } }, "required": ["kind", "scope"] },
+              { "type": "object", "properties": { "kind": { "enum": ["REJECTED", "REPLAYED"] } }, "required": ["kind"] }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "capsule_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capsule_id", "supervisor_generation", "state"],
+      "properties": {
+        "capsule_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+        "supervisor_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "state": { "enum": ["REGISTERED", "STARTING", "RUNNING", "STOPPING", "STOPPED", "FAILED", "QUARANTINED"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:audit-event-proposal:2",
+  "title": "DOSAI Audit Event Proposal v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "message_id", "created_at", "producer", "producer_generation", "trace_id", "data_class", "event_kind", "payload"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:audit-event-proposal:2" },
+    "schema_version": { "const": 2 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "const": "dosai.capsule-registry" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D1" },
+    "event_kind": { "type": "string", "enum": ["CAPSULE_REGISTRY_REVISION_COMMITTED", "CAPSULE_REGISTRY_RECOVERY_GAP"] },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event_kind": { "const": "CAPSULE_REGISTRY_REVISION_COMMITTED" } }, "required": ["event_kind"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/revision_committed" } } }
+    },
+    {
+      "if": { "properties": { "event_kind": { "const": "CAPSULE_REGISTRY_RECOVERY_GAP" } }, "required": ["event_kind"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/recovery_gap" } } }
+    }
+  ],
+  "$defs": {
+    "registry_identity": {
+      "type": "object",
+      "properties": {
+        "registry_schema_id": { "const": "urn:dosai:schema:capsule-registry:1" },
+        "registry_schema_version": { "const": 1 },
+        "supervisor_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "revision": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+        "registry_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" }
+      }
+    },
+    "revision_committed": {
+      "allOf": [
+        { "$ref": "#/$defs/registry_identity" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["registry_schema_id", "registry_schema_version", "supervisor_generation", "revision", "previous_registry_digest", "registry_digest", "transition"],
+          "properties": {
+            "registry_schema_id": true,
+            "registry_schema_version": true,
+            "supervisor_generation": true,
+            "revision": true,
+            "previous_registry_digest": {
+              "oneOf": [
+                { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+                { "type": "null" }
+              ]
+            },
+            "registry_digest": true,
+            "transition": { "type": "string", "enum": ["INITIALIZE", "STARTUP_RECONCILE", "REGISTER", "BEGIN", "OUTPUT", "CANCEL", "WATCHDOG", "EMERGENCY_STOP"] }
+          }
+        }
+      ]
+    },
+    "recovery_gap": {
+      "allOf": [
+        { "$ref": "#/$defs/registry_identity" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["registry_schema_id", "registry_schema_version", "supervisor_generation", "revision", "last_bound_registry_digest", "registry_digest", "reason"],
+          "properties": {
+            "registry_schema_id": true,
+            "registry_schema_version": true,
+            "supervisor_generation": true,
+            "revision": true,
+            "last_bound_registry_digest": {
+              "oneOf": [
+                { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+                { "type": "null" }
+              ]
+            },
+            "registry_digest": true,
+            "reason": { "type": "string", "enum": ["EMERGENCY_STOP_AUDIT_UNAVAILABLE", "STATE_COMMITTED_AUDIT_UNKNOWN"] }
+          }
+        }
+      ]
+    }
+  }
+}

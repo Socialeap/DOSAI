@@ -1,0 +1,92 @@
+{
+  "schema_version": 38,
+  "status": "ACCEPTED",
+  "proposed_at": "2026-08-13T14:21:04-04:00",
+  "validated_at": "2026-08-13T14:23:16-04:00",
+  "accepted_at": "2026-08-13T14:49:56-04:00",
+  "implemented_at": "2026-08-13T14:49:56-04:00",
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v37.json",
+    "sha256": "490ed96c98f54b6d5eb6620541805cf9a0c85322274ba8fd9b66c963a773d980"
+  },
+  "scope": "P3_CAPSULE_SUPERVISOR_BOUNDED_CANCELLATION_ESCALATION_ONLY",
+  "full_manifest_replacement": false,
+  "governed_baselines": [
+    {
+      "path": "docs/architecture/process-ownership-v8.json",
+      "sha256": "00b8b078ad0186497063660f90c320b807e2d7b3991eb7be8f4d05cb8a7f730d"
+    },
+    {
+      "path": "docs/decisions/0003-execution-isolation-cancellation-and-watchdog.md",
+      "sha256": "dc2e4af3cb2e007a0f9a893b419ad7ff6ab3930829994348fa8b536470e2f47a"
+    },
+    {
+      "path": "docs/development/p3-capsule-cancellation-escalation-evaluation.md",
+      "sha256": "d41f0a370d4c86ab7590c9803f29aeef039c24c523d8f774e7d3c8ed292d157c"
+    }
+  ],
+  "preimplementation_files": [
+    {
+      "path": "src/main/execution/capsule-supervisor.ts",
+      "sha256": "cb325b8ae9bd2f6c3432405e8f83b4087c98fecef6e6ec31ac2384628cd912cf"
+    },
+    {
+      "path": "tests/security/p3-capsule-supervisor.test.mjs",
+      "sha256": "2027558f38e08e9c6c1f84b0e00e8a38ace757f04a13ae28a96890ea927cba59"
+    }
+  ],
+  "proposed_implementation_files": [
+    "src/main/execution/capsule-supervisor.ts",
+    "tests/security/p3-capsule-supervisor.test.mjs"
+  ],
+  "implemented_files": [
+    {
+      "path": "src/main/execution/capsule-supervisor.ts",
+      "sha256": "29df1a1d3562d65cb650b8dace507f9c69d0d1f6f5de821e1956c590a955c7b3"
+    },
+    {
+      "path": "tests/security/p3-capsule-supervisor.test.mjs",
+      "sha256": "43b60b09219dd52fb1e08a24d33dc435db89a5611c8af935d426ef40878e2bc8"
+    }
+  ],
+  "required_contract": {
+    "grace_period_ms": 250,
+    "graceful_stop_attempt_limit": 1,
+    "force_stop_attempt_limit": 1,
+    "concurrent_callers_share_one_reduction": true,
+    "forced_cleanup_after_grace_timeout": true,
+    "stopped_requires_not_alive_observation": true,
+    "uncertain_cleanup_state": "QUARANTINED",
+    "uncertain_cleanup_label": "UNCERTAIN"
+  },
+  "required_adversarial_cases": [
+    "NEVER_SETTLING_GRACEFUL_STOP_REACHES_ONE_FORCE_ATTEMPT",
+    "FORCE_THROW_OR_REMAINING_LIVENESS_QUARANTINES",
+    "ORDINARY_WATCHDOG_AND_EMERGENCY_CALLERS_SHARE_ONE_BOUNDED_REDUCTION",
+    "TIMELY_GRACEFUL_STOP_NEVER_FORCES",
+    "RESULTS_AND_SNAPSHOTS_REMAIN_IMMUTABLE",
+    "SOURCE_RETAINS_INJECTION_ONLY_NO_AUTHORITY_BOUNDARY"
+  ],
+  "authority": {
+    "process_launch": false,
+    "process_attachment": false,
+    "pid_or_process_tree_targeting": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "service_management": false,
+    "xpc": false,
+    "package_or_signing": false,
+    "native_module_load": false,
+    "journal_change": false,
+    "registration_or_launch": false,
+    "production_use": false
+  },
+  "immutable_outside_scope": [
+    "All v37-governed source, native helper, package, signing, proof, and governance-maintenance postimages.",
+    "The durable coordinator, capsule state store, audit binding, P3 contracts, and every P3.3 builder input.",
+    "The P3.4 status-proof and watchdog-client sequence-integrity gates."
+  ],
+  "implementation_authorization": "OWNER_ACCEPTED_INERT_SUPERVISOR_TEST_ONLY",
+  "implementation_outcome": "IMPLEMENTED_NO_RUNTIME_AUTHORITY"
+}

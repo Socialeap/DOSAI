@@ -71,8 +71,10 @@ formal results above without changing the committed subject.
 
 ## Gate Decision
 
-The local formal P2 acceptance generation passes. `P2.EXIT` remains
-`EVIDENCE_PENDING`, not `COMPLETE`, because P2.4 still lacks the owner-deferred
-persistent Keychain/Secure Enclave runtime proof and TUF-authorized public Rekor
-v2 publication proof. No hardware-backed or publicly anchored claim is inferred
-from the software and offline fixtures.
+The local formal P2 acceptance generation passes. Under accepted ADR 0013,
+`P2.EXIT` is complete for the local P2 scope with explicit external limitations.
+The persistent Keychain/Secure Enclave runtime proof and TUF-authorized public
+Rekor v2 publication proof are relocated to the P11 release-hardening gate. No
+hardware-backed or publicly anchored claim is inferred from the software and
+offline fixtures, and the capabilities requiring those proofs remain
+`UNVERIFIED` until P11 evidence is accepted.

@@ -1,0 +1,46 @@
+{
+  "record_type": "P3_DEBIAN_ARCHIVE_TRUST_ROOT_OBSERVATION_GATE",
+  "record_version": 1,
+  "status": "PROPOSED_FOR_OWNER_REVIEW",
+  "proposed_at": "2026-08-11T19:23:25-04:00",
+  "validated_at": "2026-08-11T19:26:42-04:00",
+  "preconditions": [
+    {
+      "path": "docs/architecture/p3-linux-builder-v2-acceptance-record.json",
+      "sha256": "4bf6bcabafad6a038fb97a365a091a2652c5c9dddcc9153fd99e187562bb8f45"
+    }
+  ],
+  "scope": "TRUST_ROOT_OBSERVATION_PREPARATION_ONLY",
+  "trust_boundary": {
+    "candidate_keyring_source": "UNSELECTED",
+    "independent_fingerprint_reference": "UNSELECTED",
+    "host_trust_store_accepted": false,
+    "snapshot_metadata_self_trusted": false,
+    "package_manager_trusted": false,
+    "key_import_allowed": false
+  },
+  "authorities": {
+    "network_retrieval": false,
+    "keyring_download": false,
+    "keyring_import": false,
+    "signature_verification": false,
+    "snapshot_metadata_retrieval": false,
+    "package_index_retrieval": false,
+    "package_download": false,
+    "package_resolution": false,
+    "image_preparation": false,
+    "guest_compilation": false,
+    "guest_execution": false,
+    "vm_operation": false,
+    "production_use": false
+  },
+  "required_future_observation": [
+    "OWNER_SELECTS_EXACT_PUBLIC_KEYRING_SOURCE",
+    "OWNER_SELECTS_INDEPENDENT_FINGERPRINT_REFERENCE",
+    "RETRIEVE_ONLY_THE_SELECTED_PUBLIC_KEY_MATERIAL_TO_IGNORED_TEMPORARY_STORAGE",
+    "RECORD_KEYRING_DIGEST_SIZE_AND_OPENPGP_FINGERPRINTS",
+    "COMPARE_EACH_FINGERPRINT_WITH_THE_INDEPENDENT_REFERENCE",
+    "DELETE_TEMPORARY_BYTES_ON_SUCCESS_OR_FAILURE"
+  ],
+  "follow_on_gate": "SEPARATE_OWNER_AUTHORIZATION_REQUIRED_BEFORE_ANY_PUBLIC_KEY_MATERIAL_OBSERVATION"
+}

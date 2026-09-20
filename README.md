@@ -8,6 +8,13 @@ bounded, auditable, and easier for a human operator to govern.
 DOSAI is a private, pre-launch working product name. This repository does not
 claim formal trademark clearance or affiliation with another company.
 
+## AI Agent Initialization
+
+AI contributors start with [AI agent initialization](AGENTS.md), then load the
+[AI role registry](docs/development/ai-roles/README.md). Specialized roles are
+adopted only through explicit assignment and shape behavior and deliverables;
+they do not grant repository, tool, runtime, approval, or production authority.
+
 ## Development Status
 
 Phase 0 governance is complete: ADRs 0001-0010, Baseline Contracts v1, and the
@@ -47,8 +54,12 @@ access, deployment, and destructive mutations are out of scope.
 
 ## Project Documents
 
+- [AI agent initialization](AGENTS.md)
+- [AI role registry](docs/development/ai-roles/README.md)
+- [Technical Peer Reviewer v1](docs/development/ai-roles/technical-peer-reviewer-v1.md)
 - [DOSAI Specification v2](docs/product/dosai-specification-v2.md)
 - [Live development plan](docs/development/live-development-plan.md)
+- [Jev-pattern Typed Decision Plane plan](docs/development/jev-pattern-decision-layer-plan.md)
 - [P1.1 runtime and packaging baseline](docs/development/p1-runtime-baseline.md)
 - [P1.2 process ownership evidence](docs/development/p1-process-ownership-evidence.md)
 - [P1.3 renderer security evidence](docs/development/p1-renderer-security-evidence.md)

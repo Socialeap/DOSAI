@@ -4,6 +4,11 @@ export const AUDIT_SCHEMA_IDS = Object.freeze({
   proposal: 'urn:dosai:schema:audit-event-proposal:1',
 } as const);
 
+export const AUDIT_SCHEMA_IDS_V2 = Object.freeze({
+  event: 'urn:dosai:schema:audit-event:2',
+  proposal: 'urn:dosai:schema:audit-event-proposal:2',
+} as const);
+
 export const AUDIT_ALGORITHM_SUITE = 'DOSAI-JOURNAL-SHA256-JCS-V1' as const;
 export const AUDIT_DURABILITY_PROFILE = 'SQLITE_DELETE_EXTRA_FULLFSYNC' as const;
 
@@ -25,7 +30,40 @@ export type Digest = Readonly<{
   value: string;
 }>;
 
-export type AuditEventProposal = Readonly<{
+export const CAPSULE_REGISTRY_TRANSITIONS = Object.freeze([
+  'INITIALIZE',
+  'STARTUP_RECONCILE',
+  'REGISTER',
+  'BEGIN',
+  'OUTPUT',
+  'CANCEL',
+  'WATCHDOG',
+  'EMERGENCY_STOP',
+] as const);
+
+export type CapsuleRegistryTransition = (typeof CAPSULE_REGISTRY_TRANSITIONS)[number];
+
+export type CapsuleRegistryRevisionCommittedPayload = Readonly<{
+  registry_schema_id: 'urn:dosai:schema:capsule-registry:1';
+  registry_schema_version: 1;
+  supervisor_generation: string;
+  revision: string;
+  previous_registry_digest: Digest | null;
+  registry_digest: Digest;
+  transition: CapsuleRegistryTransition;
+}>;
+
+export type CapsuleRegistryRecoveryGapPayload = Readonly<{
+  registry_schema_id: 'urn:dosai:schema:capsule-registry:1';
+  registry_schema_version: 1;
+  supervisor_generation: string;
+  revision: string;
+  last_bound_registry_digest: Digest | null;
+  registry_digest: Digest;
+  reason: 'EMERGENCY_STOP_AUDIT_UNAVAILABLE' | 'STATE_COMMITTED_AUDIT_UNKNOWN';
+}>;
+
+export type SyntheticAuditEventProposal = Readonly<{
   schema_id: typeof AUDIT_SCHEMA_IDS.proposal;
   schema_version: 1;
   message_id: string;
@@ -42,9 +80,29 @@ export type AuditEventProposal = Readonly<{
   }>;
 }>;
 
-export type AuditEvent = Readonly<{
-  schema_id: typeof AUDIT_SCHEMA_IDS.event;
-  schema_version: 1;
+export type CapsuleRegistryAuditEventProposal = Readonly<{
+  schema_id: typeof AUDIT_SCHEMA_IDS_V2.proposal;
+  schema_version: 2;
+  message_id: string;
+  created_at: string;
+  producer: 'dosai.capsule-registry';
+  producer_generation: string;
+  trace_id: string;
+  data_class: 'D1';
+} & (
+  | Readonly<{
+    event_kind: 'CAPSULE_REGISTRY_REVISION_COMMITTED';
+    payload: CapsuleRegistryRevisionCommittedPayload;
+  }>
+  | Readonly<{
+    event_kind: 'CAPSULE_REGISTRY_RECOVERY_GAP';
+    payload: CapsuleRegistryRecoveryGapPayload;
+  }>
+)>;
+
+export type AuditEventProposal = SyntheticAuditEventProposal | CapsuleRegistryAuditEventProposal;
+
+type CanonicalAuditEventEnvelope = Readonly<{
   message_id: string;
   created_at: string;
   producer: 'dosai.audit-writer';
@@ -69,8 +127,29 @@ export type AuditEvent = Readonly<{
   request_message_id: string;
   request_digest: Digest;
   acknowledgement_message_id: string;
-  event_kind: 'WRITER_EPOCH_STARTED' | 'SYNTHETIC_AUDIT_PROBE';
+}>;
+
+export type AuditEvent = CanonicalAuditEventEnvelope & Readonly<{
+  schema_id: typeof AUDIT_SCHEMA_IDS.event | typeof AUDIT_SCHEMA_IDS_V2.event;
+  schema_version: 1 | 2;
+  event_kind:
+    | 'WRITER_EPOCH_STARTED'
+    | 'SYNTHETIC_AUDIT_PROBE'
+    | 'CAPSULE_REGISTRY_REVISION_COMMITTED'
+    | 'CAPSULE_REGISTRY_RECOVERY_GAP';
   payload: Readonly<Record<string, JsonValue>>;
+}>;
+
+export type AuditEventV1 = AuditEvent & Readonly<{
+  schema_id: typeof AUDIT_SCHEMA_IDS.event;
+  schema_version: 1;
+  event_kind: 'WRITER_EPOCH_STARTED' | 'SYNTHETIC_AUDIT_PROBE';
+}>;
+
+export type AuditEventV2 = AuditEvent & Readonly<{
+  schema_id: typeof AUDIT_SCHEMA_IDS_V2.event;
+  schema_version: 2;
+  event_kind: 'CAPSULE_REGISTRY_REVISION_COMMITTED' | 'CAPSULE_REGISTRY_RECOVERY_GAP';
 }>;
 
 export type AuditAcknowledgement = Readonly<{
@@ -224,9 +303,10 @@ function assertDigest(value: JsonValue): void {
 function assertCommonEnvelope(
   value: { readonly [key: string]: JsonValue },
   schemaId: string,
+  schemaVersion: 1 | 2,
   producer: string | null,
 ): void {
-  if (value.schema_id !== schemaId || value.schema_version !== 1 || value.data_class !== 'D1') {
+  if (value.schema_id !== schemaId || value.schema_version !== schemaVersion || value.data_class !== 'D1') {
     fail();
   }
   assertUuid(stringField(value, 'message_id'));
@@ -258,6 +338,65 @@ function assertWriterEpochPayload(value: JsonValue): void {
   }
 }
 
+function assertNullableDigest(value: JsonValue): void {
+  if (value !== null) {
+    assertDigest(value);
+  }
+}
+
+function assertRegistryIdentityPayload(
+  payload: { readonly [key: string]: JsonValue },
+): void {
+  if (
+    payload.registry_schema_id !== 'urn:dosai:schema:capsule-registry:1' ||
+    payload.registry_schema_version !== 1
+  ) {
+    fail();
+  }
+  assertSequence(stringField(payload, 'supervisor_generation'));
+  assertSequence(stringField(payload, 'revision'));
+  assertDigest(payload.registry_digest as JsonValue);
+}
+
+function assertCapsuleRegistryRevisionPayload(value: JsonValue): void {
+  const payload = objectValue(value);
+  exactKeys(payload, [
+    'previous_registry_digest',
+    'registry_digest',
+    'registry_schema_id',
+    'registry_schema_version',
+    'revision',
+    'supervisor_generation',
+    'transition',
+  ]);
+  assertRegistryIdentityPayload(payload);
+  assertNullableDigest(payload.previous_registry_digest as JsonValue);
+  if (!CAPSULE_REGISTRY_TRANSITIONS.includes(stringField(payload, 'transition') as CapsuleRegistryTransition)) {
+    fail();
+  }
+}
+
+function assertCapsuleRegistryGapPayload(value: JsonValue): void {
+  const payload = objectValue(value);
+  exactKeys(payload, [
+    'last_bound_registry_digest',
+    'reason',
+    'registry_digest',
+    'registry_schema_id',
+    'registry_schema_version',
+    'revision',
+    'supervisor_generation',
+  ]);
+  assertRegistryIdentityPayload(payload);
+  assertNullableDigest(payload.last_bound_registry_digest as JsonValue);
+  if (![
+    'EMERGENCY_STOP_AUDIT_UNAVAILABLE',
+    'STATE_COMMITTED_AUDIT_UNKNOWN',
+  ].includes(stringField(payload, 'reason'))) {
+    fail();
+  }
+}
+
 function admit(value: unknown, assertion: (candidate: { readonly [key: string]: JsonValue }) => void): JsonValue {
   const clone = clonePlainJson(value, 0, { remaining: maximumNodes });
   const object = objectValue(clone);
@@ -279,11 +418,27 @@ export function admitAuditEventProposal(value: unknown): AuditEventProposal {
       'schema_version',
       'trace_id',
     ]);
-    assertCommonEnvelope(proposal, AUDIT_SCHEMA_IDS.proposal, null);
-    if (proposal.event_kind !== 'SYNTHETIC_AUDIT_PROBE') {
+    if (proposal.schema_id === AUDIT_SCHEMA_IDS.proposal) {
+      assertCommonEnvelope(proposal, AUDIT_SCHEMA_IDS.proposal, 1, null);
+      if (proposal.event_kind !== 'SYNTHETIC_AUDIT_PROBE') {
+        fail();
+      }
+      assertSyntheticPayload(proposal.payload as JsonValue);
+      return;
+    }
+    assertCommonEnvelope(
+      proposal,
+      AUDIT_SCHEMA_IDS_V2.proposal,
+      2,
+      'dosai.capsule-registry',
+    );
+    if (proposal.event_kind === 'CAPSULE_REGISTRY_REVISION_COMMITTED') {
+      assertCapsuleRegistryRevisionPayload(proposal.payload as JsonValue);
+    } else if (proposal.event_kind === 'CAPSULE_REGISTRY_RECOVERY_GAP') {
+      assertCapsuleRegistryGapPayload(proposal.payload as JsonValue);
+    } else {
       fail();
     }
-    assertSyntheticPayload(proposal.payload as JsonValue);
   }) as AuditEventProposal;
 }
 
@@ -315,7 +470,13 @@ export function admitAuditEvent(value: unknown): AuditEvent {
       'wall_clock_uncertainty_ms',
       'writer_epoch_id',
     ]);
-    assertCommonEnvelope(event, AUDIT_SCHEMA_IDS.event, 'dosai.audit-writer');
+    const isV2 = event.schema_id === AUDIT_SCHEMA_IDS_V2.event;
+    assertCommonEnvelope(
+      event,
+      isV2 ? AUDIT_SCHEMA_IDS_V2.event : AUDIT_SCHEMA_IDS.event,
+      isV2 ? 2 : 1,
+      'dosai.audit-writer',
+    );
     if (event.algorithm_suite !== AUDIT_ALGORITHM_SUITE) {
       fail();
     }
@@ -346,7 +507,21 @@ export function admitAuditEvent(value: unknown): AuditEvent {
       fail();
     }
 
-    if (event.event_kind === 'WRITER_EPOCH_STARTED') {
+    if (isV2) {
+      if (
+        source.source_id !== 'dosai.capsule-registry' ||
+        source.provenance !== 'SUPERVISOR_OBSERVATION'
+      ) {
+        fail();
+      }
+      if (event.event_kind === 'CAPSULE_REGISTRY_REVISION_COMMITTED') {
+        assertCapsuleRegistryRevisionPayload(event.payload as JsonValue);
+      } else if (event.event_kind === 'CAPSULE_REGISTRY_RECOVERY_GAP') {
+        assertCapsuleRegistryGapPayload(event.payload as JsonValue);
+      } else {
+        fail();
+      }
+    } else if (event.event_kind === 'WRITER_EPOCH_STARTED') {
       if (source.source_id !== 'dosai.audit-writer' || source.provenance !== 'SUPERVISOR_OBSERVATION') {
         fail();
       }
@@ -378,7 +553,12 @@ export function admitAuditAcknowledgement(value: unknown): AuditAcknowledgement 
       'sequence',
       'trace_id',
     ]);
-    assertCommonEnvelope(acknowledgement, AUDIT_SCHEMA_IDS.acknowledgement, 'dosai.audit-writer');
+    assertCommonEnvelope(
+      acknowledgement,
+      AUDIT_SCHEMA_IDS.acknowledgement,
+      1,
+      'dosai.audit-writer',
+    );
     for (const key of ['request_message_id', 'journal_id', 'journal_epoch_id']) {
       assertUuid(stringField(acknowledgement, key));
     }

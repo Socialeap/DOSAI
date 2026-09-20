@@ -1,0 +1,6 @@
+config BR2_DOSAI_CONFIG_PROOF_ONLY
+	bool
+	default y
+	help
+	  Marks the DOSAI toolchain provider fixture as configuration-only.
+	  Build and source-fetch goals are rejected by external.mk.

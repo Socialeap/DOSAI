@@ -14,6 +14,7 @@ import {
   AUDIT_ALGORITHM_SUITE,
   AUDIT_DURABILITY_PROFILE,
   AUDIT_SCHEMA_IDS,
+  AUDIT_SCHEMA_IDS_V2,
   type AuditAcknowledgement,
   type AuditEvent,
   type AuditEventProposal,
@@ -472,9 +473,10 @@ function expectedRequestDigest(event: AuditEvent): string {
       request_message_id: event.request_message_id,
     }));
   }
+  const proposalIsV2 = event.schema_id === AUDIT_SCHEMA_IDS_V2.event;
   return sha256(REQUEST_HASH_DOMAIN, canonicalAuditJson({
-    schema_id: AUDIT_SCHEMA_IDS.proposal,
-    schema_version: 1,
+    schema_id: proposalIsV2 ? AUDIT_SCHEMA_IDS_V2.proposal : AUDIT_SCHEMA_IDS.proposal,
+    schema_version: proposalIsV2 ? 2 : 1,
     message_id: event.request_message_id,
     created_at: event.observed_at,
     producer: event.source.source_id,
@@ -874,6 +876,24 @@ class AuditJournalWriter {
     return parseCanonicalAcknowledgement(stringCell(record, 'acknowledgement_json'));
   }
 
+  visitEventsForSource(
+    sourceId: string,
+    authenticationToken: Uint8Array,
+    visitor: (event: AuditEvent) => void,
+  ): void {
+    const database = this.#activeDatabase();
+    const source = authenticate(this.#sources, sourceId, authenticationToken);
+    if (typeof visitor !== 'function') {
+      return fail('DOSAI_AUDIT_PRECONDITION_0001');
+    }
+    const rows = database.prepare(
+      'SELECT event_json FROM events WHERE source_id = ? ORDER BY sequence',
+    ).iterate(source.sourceId);
+    for (const row of rows) {
+      visitor(parseCanonicalEvent(stringCell(asRecord(row), 'event_json')));
+    }
+  }
+
   close(): void {
     if (this.#database === null) {
       return;
@@ -971,9 +991,12 @@ class AuditJournalWriter {
       }
       const createdAt = exactTimestamp();
       const acknowledgementMessageId = randomUUID();
+      const eventIsV2 =
+        proposal.event_kind === 'CAPSULE_REGISTRY_REVISION_COMMITTED' ||
+        proposal.event_kind === 'CAPSULE_REGISTRY_RECOVERY_GAP';
       const event = admitAuditEvent({
-        schema_id: AUDIT_SCHEMA_IDS.event,
-        schema_version: 1,
+        schema_id: eventIsV2 ? AUDIT_SCHEMA_IDS_V2.event : AUDIT_SCHEMA_IDS.event,
+        schema_version: eventIsV2 ? 2 : 1,
         message_id: randomUUID(),
         created_at: createdAt,
         producer: 'dosai.audit-writer',

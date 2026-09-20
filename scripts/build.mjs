@@ -3,12 +3,24 @@ import { resolve } from 'node:path';
 import { build } from 'vite';
 
 const root = resolve(import.meta.dirname, '..');
+const applicationBuildModes = new Set([
+  'production',
+  'service-management-status-proof',
+]);
 
-export async function buildApplication() {
+function admitApplicationBuildMode(candidate) {
+  if (!applicationBuildModes.has(candidate)) {
+    throw new Error('DOSAI_BUILD_MODE_0001');
+  }
+  return candidate;
+}
+
+export async function buildApplication(mainMode = 'production') {
+  const admittedMainMode = admitApplicationBuildMode(mainMode);
   await rm(resolve(root, 'dist'), { force: true, recursive: true });
 
   await Promise.all([
-    build({ configFile: resolve(root, 'vite.main.config.ts'), mode: 'production' }),
+    build({ configFile: resolve(root, 'vite.main.config.ts'), mode: admittedMainMode }),
     build({ configFile: resolve(root, 'vite.preload.config.ts'), mode: 'production' }),
     build({ configFile: resolve(root, 'vite.renderer.config.ts'), mode: 'production' }),
   ]);
