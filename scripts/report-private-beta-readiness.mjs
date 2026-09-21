@@ -41,7 +41,11 @@ export async function assessPrivateBetaReadiness() {
   }
 
   const physical = boundRecords.get(
-    'docs/architecture/p3-v49-service-management-lifecycle-physical-proof-gate.json',
+    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate.json',
+  );
+  const lifecycleSource = boundRecords.get('docs/architecture/process-ownership-v50.json');
+  const lifecycleSourceAuthorization = boundRecords.get(
+    'docs/architecture/p3-v50-first-registration-authorization-record.json',
   );
   const trustRoot = boundRecords.get(
     'docs/architecture/p3-debian-archive-trust-root-source-recommendation.json',
@@ -82,6 +86,15 @@ export async function assessPrivateBetaReadiness() {
   );
   if (
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
+    physical?.subject?.commit !== checkpoint.validated_source_baseline.head ||
+    lifecycleSource?.status !== 'IMPLEMENTED_OWNER_AUTHORIZED_SOURCE_ONLY' ||
+    lifecycleSource?.runtime_status !== 'NO_GO' ||
+    Object.values(lifecycleSource?.authority ?? {}).length === 0 ||
+    Object.values(lifecycleSource?.authority ?? {}).some(value => value !== false) ||
+    lifecycleSourceAuthorization?.status !== 'ACCEPTED' ||
+    lifecycleSourceAuthorization?.credit_ceiling !== 120 ||
+    lifecycleSourceAuthorization?.paid_activity_authorized !== false ||
+    Object.values(lifecycleSourceAuthorization?.denied_scope ?? {}).some(value => value !== true) ||
     trustRoot?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
     builders?.status !== 'ACCEPTED' ||
     builderHosts?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||

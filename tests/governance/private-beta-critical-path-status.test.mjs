@@ -24,9 +24,12 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   });
   assert.equal(
     checkpoint.validated_source_baseline.head,
-    'dcea537c4ecd762b86a7a81fe84d7ae5dfb1ebd9',
+    '0585524f465231500340e592f8807aa875a739ac',
   );
-  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 597);
+  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 605);
+  assert.equal(checkpoint.validated_source_baseline.source_validation.typescript_projects_passed, 9);
+  assert.equal(checkpoint.validated_source_baseline.source_validation.normal_builds_run, 0);
+  assert.equal(checkpoint.validated_source_baseline.source_validation.build_authorized, false);
   assert.equal(checkpoint.fixture_overlay_validation.head, '0284f74d146f23581ab1833f817ac31883bcb96a');
   assert.equal(checkpoint.fixture_overlay_validation.tests_passed, 578);
   assert.equal(checkpoint.fixture_overlay_validation.integration_authorized, true);
@@ -38,6 +41,15 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   assert.equal(
     checkpoint.gates.find(({ id }) => id === 'BETA-CP-004').candidate_host_source,
     'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS',
+  );
+  const lifecycle = checkpoint.gates.find(({ id }) => id === 'BETA-CP-002');
+  assert.equal(
+    lifecycle.status,
+    'SOURCE_CORRECTED_PHYSICAL_PROOF_AWAITING_OWNER_AUTHORIZATION',
+  );
+  assert.equal(
+    lifecycle.physical_gate,
+    'P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE',
   );
   const p3Acceptance = checkpoint.gates.find(({ id }) => id === 'BETA-CP-005');
   assert.equal(p3Acceptance.proposal_prepared, true);

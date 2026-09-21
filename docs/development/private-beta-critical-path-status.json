@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T10:45:00-04:00",
+  "recorded_at": "2026-09-21T13:31:20-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -13,12 +13,14 @@
   "validated_source_baseline": {
     "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
     "branch": "codex/p3-baseline-v43-proof",
-    "head": "dcea537c4ecd762b86a7a81fe84d7ae5dfb1ebd9",
+    "head": "0585524f465231500340e592f8807aa875a739ac",
     "source_validation": {
-      "tests_passed": 597,
+      "tests_passed": 605,
       "tests_failed": 0,
       "typescript_projects_passed": 9,
-      "normal_builds_passed": 3
+      "normal_builds_run": 0,
+      "normal_builds_passed": 0,
+      "build_authorized": false
     }
   },
   "fixture_overlay_validation": {
@@ -46,6 +48,18 @@
     ]
   },
   "bound_inputs": [
+    {
+      "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate.json",
+      "sha256": "21491854a8585d8c589887e5e574dfd74d274c9a5990fedb4f7b0ae93c51ab93"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v50.json",
+      "sha256": "3fc6a98254671d98943e9df5393813c3d085d7d2496f3574fd5043c0e551d053"
+    },
+    {
+      "path": "docs/architecture/p3-v50-first-registration-authorization-record.json",
+      "sha256": "3988cf59a7ed7aef88e141db9500e869d8a28a0cc240d5f820a4430fde0ed296"
+    },
     {
       "path": "docs/architecture/p3-v49-service-management-lifecycle-physical-proof-gate.json",
       "sha256": "29cbb721241ac5807158e510041465cb64b4f70aefa252d3712dbcdd3944b4fa"
@@ -122,11 +136,12 @@
     {
       "id": "BETA-CP-002",
       "title": "Prove the packaged macOS lifecycle once",
-      "status": "FAILED_CLOSED_PRECONDITION_NOT_FOUND",
-      "blocking_evidence": "V49_REPLACEMENT_RECEIPT_PRECONDITION_FAILED_NOT_FOUND",
+      "status": "SOURCE_CORRECTED_PHYSICAL_PROOF_AWAITING_OWNER_AUTHORIZATION",
+      "blocking_evidence": "V50_PHYSICAL_PROOF_NOT_AUTHORIZED_OR_RUN",
       "source_diagnosis": "FIRST_SEEN_SERVICE_STATUS_WAS_INCORRECTLY_REJECTED_AS_DIRTY_WITH_STABLE_PATH_REMAINING_AS_AN_ENVIRONMENTAL_VARIABLE",
-      "successor_proposal": "P3_V50_FIRST_REGISTRATION_SUCCESSOR_PROPOSAL",
-      "next_action": "OBTAIN_EXPLICIT_OWNER_AUTHORIZATION_FOR_V50_SOURCE_IMPLEMENTATION"
+      "implemented_successor": "P3_FIRST_SEEN_SERVICE_PRECONDITION_SOURCE_ONLY",
+      "physical_gate": "P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE",
+      "next_action": "OBTAIN_EXACT_OWNER_AUTHORIZATION_FOR_ONE_ISOLATED_V50_PHYSICAL_PROOF"
     },
     {
       "id": "BETA-CP-003",
