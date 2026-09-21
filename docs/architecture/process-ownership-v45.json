@@ -9,7 +9,7 @@
   },
   "physical_evidence": {
     "path": "docs/development/p3-v44-signed-app-status-proof-evidence.md",
-    "sha256": "236bb9507ef7c8e9307e68bf8b156dcf7fa7fdd7de5f6f8cc3253216963f6247"
+    "sha256": "67b83f6b27f2ac103592d144031f840fb7b6efa86646ba6ced971f394fc8624d"
   },
   "observed_attempt": {
     "source_commit": "86ff4281094bb7cd35b89a479e2bb7a8e3276919",

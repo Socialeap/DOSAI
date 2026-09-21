@@ -16,8 +16,8 @@ were expressly excluded.
 
 The attempt used a fresh detached worktree at the authorized commit. Its only
 pre-build additions were local dependency links excluded from Git. The host
-keychain exposed exactly one valid code-signing identity:
-`Apple Development: shakourechar@gmail.com (UMXN25Z493)`, fingerprint
+keychain exposed exactly one valid code-signing identity matching selector
+`UMXN25Z493`, fingerprint
 `0CE0BBD4215B133BE4DA45850849625E50B54333`. The cached pinned Electron 43.2.0
 darwin-arm64 archive matched SHA-256
 `ad4a0ae3c37ee05aa06c7e2ed0627608389790f0505a2b0d20319efbe33ffe28`;
