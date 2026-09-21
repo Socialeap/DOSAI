@@ -1,0 +1,88 @@
+{
+  "record_type": "P3_V50_FIRST_REGISTRATION_SUCCESSOR_PROPOSAL",
+  "record_version": 1,
+  "status": "PROPOSED_FOR_OWNER_AUTHORIZATION",
+  "proposed_at": "2026-09-21T10:45:00-04:00",
+  "scope": "SOURCE_ONLY_FIRST_SEEN_SERVICE_PRECONDITION_CORRECTION",
+  "inputs": [
+    {
+      "path": "docs/architecture/p3-v49-not-found-source-diagnosis.json",
+      "role": "SOURCE_DIAGNOSIS"
+    },
+    {
+      "path": "src/main/execution/service-management-lifecycle-core.ts",
+      "role": "DORMANT_LIFECYCLE_REDUCER"
+    },
+    {
+      "path": "scripts/service-management-lifecycle-proof.mjs",
+      "role": "STRICT_PHYSICAL_RECEIPT_ADMISSION"
+    }
+  ],
+  "proposed_source_change": {
+    "initial_statuses_eligible_for_one_registration_attempt": [
+      "NOT_REGISTERED",
+      "NOT_FOUND"
+    ],
+    "initial_statuses_that_stop_without_mutation": [
+      "ENABLED",
+      "REQUIRES_APPROVAL"
+    ],
+    "register_attempt_limit": 1,
+    "unregister_attempt_limit": 1,
+    "retry_allowed": false,
+    "cleanup_trigger": "REGISTER_RETURNED_TRUE_OR_POST_REGISTER_STATUS_IS_ENABLED_OR_REQUIRES_APPROVAL",
+    "only_success_sequence": {
+      "before": [
+        "NOT_REGISTERED",
+        "NOT_FOUND"
+      ],
+      "register_return": true,
+      "after_register": [
+        "ENABLED",
+        "REQUIRES_APPROVAL"
+      ],
+      "unregister_return": true,
+      "after_unregister": "NOT_REGISTERED"
+    },
+    "ambiguous_outcome": "CLEANUP_UNVERIFIED_STOP_NO_RETRY"
+  },
+  "required_source_validation": [
+    "FIRST_SEEN_NOT_FOUND_RECEIVES_EXACTLY_ONE_ZERO_ARGUMENT_REGISTER_ATTEMPT",
+    "ENABLED_AND_REQUIRES_APPROVAL_RECEIVE_NO_MUTATION",
+    "REGISTER_TRUE_WITH_AMBIGUOUS_POST_STATUS_RECEIVES_ONE_CLEANUP_ATTEMPT",
+    "REGISTER_FALSE_WITH_NOT_FOUND_CANNOT_CLAIM_CLEAN_SUCCESS",
+    "FINAL_NOT_FOUND_CANNOT_CLAIM_CLEAN_SUCCESS",
+    "ALL_EXISTING_SINGLE_USE_COUNT_AND_HOSTILE_BINDING_TESTS_PASS",
+    "FULL_REPOSITORY_TESTS_AND_NORMAL_BUILDS_PASS"
+  ],
+  "future_physical_gate_requirements": {
+    "new_owner_authorization_required": true,
+    "exact_successor_commit_required": true,
+    "preserve_v49_signed_package": true,
+    "build_new_successor_package": true,
+    "stage_at_separate_stable_test_application_path": true,
+    "verify_staged_bytes_and_signatures_before_launch": true,
+    "app_launch_limit": 1,
+    "timeout_ms": 15000,
+    "retry_allowed": false,
+    "production_path_allowed": false,
+    "xpc_client_connection_allowed": false
+  },
+  "authorities": {
+    "source_implementation": false,
+    "package_build": false,
+    "test_signing": false,
+    "stable_path_staging": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_observation": false,
+    "registration": false,
+    "unregistration": false,
+    "launch_agent_bootstrap": false,
+    "xpc_connection": false,
+    "real_execution": false,
+    "production_use": false,
+    "retry": false
+  },
+  "next_gate": "EXPLICIT_OWNER_AUTHORIZATION_REQUIRED_FOR_V50_SOURCE_IMPLEMENTATION"
+}
