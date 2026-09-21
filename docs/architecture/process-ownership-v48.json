@@ -1,0 +1,98 @@
+{
+  "schema_version": 48,
+  "status": "IMPLEMENTED_STANDING_AUTHORIZATION_SOURCE_ONLY",
+  "scope": "P3_SERVICE_MANAGEMENT_LIFECYCLE_PROOF_ENTRY_INERT_ONLY",
+  "implementation_authorization": "OWNER_STANDING_AUTHORIZATION_MINOR_SOURCE_BUILD_TEST_COMMIT_2026_09_20",
+  "accepted_source_baseline": {
+    "path": "docs/architecture/process-ownership-v47.json",
+    "sha256": "549499f2c2af2aaf5f223c6ea6587e6dd1f42ef8d0714f1ba02a9dba3a5c6de9"
+  },
+  "proof_protocol": {
+    "result_prefix": "DOSAI_SERVICE_MANAGEMENT_LIFECYCLE_PROOF_V1:",
+    "fixed_addon_name": "dosai-service-management-lifecycle.node",
+    "addon_load_attempt_limit": 1,
+    "lifecycle_exercise_limit": 1,
+    "output_count": 1,
+    "operation_argument_count": 0,
+    "observe_attempt_limit": 3,
+    "register_attempt_limit": 1,
+    "unregister_attempt_limit": 1,
+    "retry_allowed": false,
+    "distinct_entry_failures": [
+      "NATIVE_ADDON_LOAD_FAILED",
+      "NATIVE_CALL_CONTRACT_FAILED",
+      "ELECTRON_READINESS_FAILED"
+    ],
+    "receipt_fields": [
+      "result",
+      "before",
+      "after_register",
+      "after_unregister",
+      "observe_attempts",
+      "register_attempts",
+      "unregister_attempts",
+      "observe_completions",
+      "register_completions",
+      "unregister_completions",
+      "consumed"
+    ],
+    "error_details_exported": false
+  },
+  "implementation_files": [
+    {
+      "path": "src/main/execution/service-management-lifecycle-proof-entry.ts",
+      "sha256": "e949182e44e03fa4800f1ca27f1f8e0ab0cc4eedc8e93fbb0728405560e9383f"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-proof-entry.test.mjs",
+      "sha256": "7f5243bcce24df8e1b49c981c9072c88353ba2f549844bfd55354cb484bd6ee0"
+    }
+  ],
+  "inert_validation": {
+    "bundle_format": "COMMONJS_TEST_ONLY",
+    "native_addon_replaced_by_in_memory_fixture": true,
+    "clean_sequence_observed": true,
+    "dirty_precondition_rejected": true,
+    "clean_registration_rejection_observed": true,
+    "single_cleanup_attempt_observed": true,
+    "uncertain_cleanup_fails_closed": true,
+    "native_call_failure_distinguished": true,
+    "load_failure_distinguished": true,
+    "binding_failure_distinguished": true,
+    "electron_readiness_failure_distinguished": true,
+    "native_module_loaded": false,
+    "service_management_invoked": false
+  },
+  "runtime_reachability": {
+    "proof_entry_source_present": true,
+    "normal_main_entry_changed": false,
+    "build_mode_present": false,
+    "package_mode_present": false,
+    "native_addon_builder_present": false,
+    "audit_runner_present": false,
+    "normal_build_inclusion": false,
+    "proof_package_inclusion": false,
+    "production_reachability": false
+  },
+  "authority": {
+    "package_build": false,
+    "signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management_runtime_call": false,
+    "registration": false,
+    "unregistration": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "production_use": false,
+    "physical_attempt": false,
+    "external_builder_provisioning": false
+  },
+  "runtime_status": "NO_GO"
+}
