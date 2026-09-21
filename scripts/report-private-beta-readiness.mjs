@@ -41,7 +41,10 @@ export async function assessPrivateBetaReadiness() {
   }
 
   const physical = boundRecords.get(
-    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate.json',
+    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v2.json',
+  );
+  const stagedLifecycleLauncher = boundRecords.get(
+    'docs/architecture/p3-v50-stable-path-launcher-source-record.json',
   );
   const lifecycleSource = boundRecords.get('docs/architecture/process-ownership-v50.json');
   const lifecycleSourceAuthorization = boundRecords.get(
@@ -91,8 +94,19 @@ export async function assessPrivateBetaReadiness() {
     'docs/architecture/p3-native-builder-host-observation-verifier-source-record.json',
   );
   if (
+    physical?.record_version !== 2 ||
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
     physical?.subject?.commit !== checkpoint.validated_source_baseline.head ||
+    physical?.fixed_attempt?.runner_path !==
+      'scripts/service-management-lifecycle-staged-proof.mjs' ||
+    physical?.fixed_attempt?.stable_test_application_path !==
+      '/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app' ||
+    stagedLifecycleLauncher?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
+    stagedLifecycleLauncher?.contract?.stable_application_path !==
+      physical?.fixed_attempt?.stable_test_application_path ||
+    stagedLifecycleLauncher?.contract?.launch_attempt_limit !== 1 ||
+    stagedLifecycleLauncher?.contract?.retry_allowed !== false ||
+    !everyAuthorityIsFalse(stagedLifecycleLauncher) ||
     lifecycleSource?.status !== 'IMPLEMENTED_OWNER_AUTHORIZED_SOURCE_ONLY' ||
     lifecycleSource?.runtime_status !== 'NO_GO' ||
     Object.values(lifecycleSource?.authority ?? {}).length === 0 ||
