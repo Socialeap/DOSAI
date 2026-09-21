@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadLifecycleFirstRegistrationSuccessor } from './p3-lifecycle-first-registration-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const recordPath = 'docs/architecture/process-ownership-v46.json';
@@ -107,9 +108,14 @@ async function loadRecord(readBytes = read) {
 }
 
 async function assertReference(reference, readBytes = read) {
+  const successor = await loadLifecycleFirstRegistrationSuccessor(root, readBytes);
   assert.deepEqual(Object.keys(reference).sort(), ['path', 'sha256']);
   assert.match(reference.sha256, /^[0-9a-f]{64}$/);
-  assert.equal(sha256(await readBytes(reference.path)), reference.sha256, reference.path);
+  assert.equal(
+    sha256(await readBytes(reference.path)),
+    successor.expected(reference.path, reference.sha256),
+    reference.path,
+  );
 }
 
 test('v46 binds the exact injection-only lifecycle core and sanitized evidence', async () => {

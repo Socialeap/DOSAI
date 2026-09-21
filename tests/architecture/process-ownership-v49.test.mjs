@@ -18,7 +18,10 @@ const altered = change => {
 test('v49 binds only the dormant lifecycle build, package, and runner composition', async () => {
   const successor = await loadLifecycleCompositionSuccessor(root);
   for (const file of pristine.modified_files) {
-    assert.equal(successor.expected(file.path, file.pre_sha256), file.post_sha256);
+    assert.equal(
+      successor.expected(file.path, file.pre_sha256),
+      successor.expected(file.path, file.post_sha256),
+    );
   }
   assert.equal(successor.expected('src/main/index.ts', 'unchanged'), 'unchanged');
   assert.deepEqual(pristine.composition, {

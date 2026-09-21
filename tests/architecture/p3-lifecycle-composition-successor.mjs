@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadLifecycleFirstRegistrationSuccessor } from './p3-lifecycle-first-registration-successor.mjs';
 
 const recordPath = 'docs/architecture/process-ownership-v49.json';
 const modifiedPreimages = new Map([
@@ -148,6 +149,10 @@ export async function loadLifecycleCompositionSuccessor(
   root,
   readBytes = path => readFile(resolve(root, path)),
 ) {
+  const firstRegistrationSuccessor = await loadLifecycleFirstRegistrationSuccessor(
+    root,
+    readBytes,
+  );
   const recordBytes = await readBytes(recordPath);
   assert.ok(recordBytes.byteLength <= 131_072, 'oversized governance record');
   const record = parseStrictJson(recordBytes);
@@ -212,18 +217,29 @@ export async function loadLifecycleCompositionSuccessor(
     assert.equal(file.pre_sha256, modifiedPreimages.get(file.path), file.path);
     assert.match(file.post_sha256, /^[0-9a-f]{64}$/);
     assert.notEqual(file.post_sha256, file.pre_sha256, file.path);
-    assert.equal(sha256(await readBytes(file.path)), file.post_sha256, file.path);
+    assert.equal(
+      sha256(await readBytes(file.path)),
+      firstRegistrationSuccessor.expected(file.path, file.post_sha256),
+      file.path,
+    );
   }
   for (const file of record.new_files) {
     assert.deepEqual(Object.keys(file).sort(), ['path', 'sha256']);
     assert.match(file.sha256, /^[0-9a-f]{64}$/);
-    assert.equal(sha256(await readBytes(file.path)), file.sha256, file.path);
+    assert.equal(
+      sha256(await readBytes(file.path)),
+      firstRegistrationSuccessor.expected(file.path, file.sha256),
+      file.path,
+    );
   }
 
   const postimages = new Map(record.modified_files.map(file => [file.path, file.post_sha256]));
   return Object.freeze({
     expected(path, historicalHash) {
-      return postimages.get(path) ?? historicalHash;
+      return firstRegistrationSuccessor.expected(
+        path,
+        postimages.get(path) ?? historicalHash,
+      );
     },
   });
 }

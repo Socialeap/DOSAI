@@ -139,7 +139,7 @@ export function createServiceManagementLifecycleCore(
       }
 
       const before = observer.observe();
-      if (before !== 'NOT_REGISTERED') {
+      if (before !== 'NOT_REGISTERED' && before !== 'NOT_FOUND') {
         return receipt('PRECONDITION_FAILED', before, before, before, 0, 0, true);
       }
 

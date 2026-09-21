@@ -224,6 +224,39 @@ test('inert bundle performs one clean lifecycle sequence with exact zero-argumen
   }
 });
 
+test('inert bundle admits first-seen not found only through one clean lifecycle sequence', async () => {
+  const { bundlePath, directory } = await buildProofBundle();
+  const calls = [];
+  try {
+    const result = await evaluateBundle(bundlePath, {
+      load: () => statusSequence(['NOT_FOUND', 'REQUIRES_APPROVAL', 'NOT_REGISTERED'], calls),
+    });
+    assert.deepEqual(calls, [
+      ['observe', 0],
+      ['register', 0],
+      ['observe', 0],
+      ['unregister', 0],
+      ['observe', 0],
+    ]);
+    assert.deepEqual(result.receipt, {
+      result: 'REGISTERED_AND_CLEANED',
+      before: 'NOT_FOUND',
+      after_register: 'REQUIRES_APPROVAL',
+      after_unregister: 'NOT_REGISTERED',
+      observe_attempts: 3,
+      register_attempts: 1,
+      unregister_attempts: 1,
+      observe_completions: 3,
+      register_completions: 1,
+      unregister_completions: 1,
+      consumed: true,
+    });
+    assert.deepEqual(result.exits, [0]);
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
+});
+
 test('inert bundle refuses dirty preconditions and handles clean registration rejection', async () => {
   const { bundlePath, directory } = await buildProofBundle();
   try {

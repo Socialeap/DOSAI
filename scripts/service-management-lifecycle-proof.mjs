@@ -128,7 +128,7 @@ export function admitLifecycleProofOutput(stdout, stderr) {
 export function isSuccessfulLifecycleProof(receipt) {
   return receipt.result === 'REGISTERED_AND_CLEANED'
     && receipt.consumed === true
-    && receipt.before === 'NOT_REGISTERED'
+    && (receipt.before === 'NOT_REGISTERED' || receipt.before === 'NOT_FOUND')
     && (receipt.after_register === 'ENABLED'
       || receipt.after_register === 'REQUIRES_APPROVAL')
     && receipt.after_unregister === 'NOT_REGISTERED'

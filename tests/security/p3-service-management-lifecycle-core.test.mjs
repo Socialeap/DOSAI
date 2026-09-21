@@ -77,7 +77,7 @@ test('lifecycle core is exact, frozen, single-use, and calls every admitted oper
 });
 
 test('unclean preconditions cannot register or unregister', () => {
-  for (const status of ['ENABLED', 'REQUIRES_APPROVAL', 'NOT_FOUND']) {
+  for (const status of ['ENABLED', 'REQUIRES_APPROVAL']) {
     const candidate = binding([status]);
     const result = createServiceManagementLifecycleCore(candidate.value).exercise();
     assert.deepEqual(result, {
@@ -91,6 +91,27 @@ test('unclean preconditions cannot register or unregister', () => {
     });
     assert.deepEqual(candidate.calls, [['observe', 0]]);
   }
+});
+
+test('first-seen not found receives one bounded registration and exact cleanup', () => {
+  const candidate = binding(['NOT_FOUND', 'ENABLED', 'NOT_REGISTERED']);
+  const result = createServiceManagementLifecycleCore(candidate.value).exercise();
+  assert.deepEqual(result, {
+    result: 'REGISTERED_AND_CLEANED',
+    before: 'NOT_FOUND',
+    after_register: 'ENABLED',
+    after_unregister: 'NOT_REGISTERED',
+    register_attempts: 1,
+    unregister_attempts: 1,
+    consumed: true,
+  });
+  assert.deepEqual(candidate.calls, [
+    ['observe', 0],
+    ['register', 0],
+    ['observe', 0],
+    ['unregister', 0],
+    ['observe', 0],
+  ]);
 });
 
 test('registration rejection stays clean only when the post-status is exactly not registered', () => {
@@ -112,6 +133,14 @@ test('registration rejection stays clean only when the post-status is exactly no
     assert.equal(result.register_attempts, 1);
     assert.equal(result.unregister_attempts, 0);
   }
+
+  const firstSeenRejected = binding(['NOT_FOUND', 'NOT_FOUND'], false);
+  const firstSeenResult = createServiceManagementLifecycleCore(
+    firstSeenRejected.value,
+  ).exercise();
+  assert.equal(firstSeenResult.result, 'CLEANUP_UNVERIFIED');
+  assert.equal(firstSeenResult.register_attempts, 1);
+  assert.equal(firstSeenResult.unregister_attempts, 0);
 });
 
 test('partial registration receives one cleanup attempt and never retries', () => {

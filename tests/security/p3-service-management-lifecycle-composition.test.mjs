@@ -144,6 +144,12 @@ test('runner strictly admits one bounded lifecycle receipt and classifies succes
   assert.ok(Object.isFrozen(receipt));
   assert.equal(isSuccessfulLifecycleProof(receipt), true);
 
+  const firstSeenSuccess = admitLifecycleProofOutput(proofOutput(validReceipt({
+    before: 'NOT_FOUND',
+    after_register: 'REQUIRES_APPROVAL',
+  })), '');
+  assert.equal(isSuccessfulLifecycleProof(firstSeenSuccess), true);
+
   const cleanRejection = admitLifecycleProofOutput(proofOutput(validReceipt({
     result: 'REGISTRATION_REJECTED_CLEAN',
     after_register: 'NOT_REGISTERED',
