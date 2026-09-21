@@ -49,14 +49,19 @@ export async function assessPrivateBetaReadiness() {
   const builders = boundRecords.get(
     'docs/architecture/p3-linux-builder-v2-acceptance-record.json',
   );
+  const builderHosts = boundRecords.get(
+    'docs/architecture/p3-native-builder-host-source-recommendation.json',
+  );
   const catalog = boundRecords.get('docs/testing/acceptance-test-catalog-v5.json');
   if (
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
     trustRoot?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
     builders?.status !== 'ACCEPTED' ||
+    builderHosts?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
     !everyAuthorityIsFalse(physical) ||
     !everyAuthorityIsFalse(trustRoot) ||
-    !everyAuthorityIsFalse(builders)
+    !everyAuthorityIsFalse(builders) ||
+    !everyAuthorityIsFalse(builderHosts)
   ) {
     throw new Error('PRIVATE_BETA_AUTHORITY_STATE_CHANGED');
   }

@@ -28,6 +28,10 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   assert.equal(checkpoint.fixture_overlay_validation.tests_passed, 578);
   assert.equal(checkpoint.fixture_overlay_validation.integration_authorized, false);
   assert.equal(checkpoint.fixture_overlay_validation.integration_completed, false);
+  assert.equal(
+    checkpoint.gates.find(({ id }) => id === 'BETA-CP-004').candidate_host_source,
+    'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS',
+  );
   for (const binding of checkpoint.bound_inputs) {
     assert.equal(sha256(await readFile(resolve(root, binding.path))), binding.sha256);
   }

@@ -289,6 +289,15 @@ suites remain open. Source tests, a local emulated Linux builder, or synthetic
 fixtures cannot satisfy those gates. The owner-set 120-credit ceiling remains
 controlling, and no paid activity is authorized by this checkpoint.
 
+Read-only repository and official-platform inspection identified two standard
+GitHub-hosted `ubuntu-24.04` jobs as a credible candidate for the required fresh
+native-x64 hosts. The public repository currently has Actions enabled and
+standard public-repository runners currently carry no runner-minute charge.
+This is not builder evidence: the proposal remains owner-gated, no workflow
+exists, and a future zero-cost host observation must prove two distinct DMI
+identities, native x64 execution, exact image versions, and no emulation before
+builder preparation can rely on that route.
+
 **Release classification:** Local read-only reporting, governance tests, and
 documentation only. No Lovable action is required. No frontend Publish is
 required. No signing, app launch, Service Management operation, key retrieval,

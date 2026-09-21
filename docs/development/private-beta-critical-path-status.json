@@ -55,6 +55,10 @@
       "sha256": "4bf6bcabafad6a038fb97a365a091a2652c5c9dddcc9153fd99e187562bb8f45"
     },
     {
+      "path": "docs/architecture/p3-native-builder-host-source-recommendation.json",
+      "sha256": "31add6a185eb79b5f95d0cc6f87c5a83b84f7bea7d0b9c9b5b380918c7bb89e5"
+    },
+    {
       "path": "docs/testing/acceptance-test-catalog-v5.json",
       "sha256": "482887c6e3d7a24d09471428a6486c9926d11a5b3e31673e3c91bf2ebf55843a"
     }
@@ -86,7 +90,8 @@
       "title": "Produce two independent native Linux builder receipts",
       "status": "MISSING_REQUIRED_EVIDENCE",
       "blocking_evidence": "QUALIFYING_INDEPENDENT_NATIVE_AMD64_BUILDER_RECEIPTS_IN_REPOSITORY_0_OF_2",
-      "next_action": "OWNER_PROVIDES_OR_AUTHORIZES_TWO_QUALIFYING_BUILD_ENVIRONMENTS"
+      "candidate_host_source": "TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS",
+      "next_action": "OWNER_ACCEPTS_AND_AUTHORIZES_ZERO_COST_HOST_OBSERVATION_BEFORE_BUILDER_PREPARATION"
     },
     {
       "id": "BETA-CP-005",
