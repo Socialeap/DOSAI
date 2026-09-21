@@ -1,0 +1,125 @@
+{
+  "record_type": "P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE",
+  "record_version": 4,
+  "status": "AWAITING_OWNER_REAUTHORIZATION",
+  "proposed_at": "2026-09-21T17:08:00-04:00",
+  "scope": "ONE_REUSE_ONLY_PRESERVED_PACKAGE_STAGING_AND_LIFECYCLE_ATTEMPT",
+  "supersedes": {
+    "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v3.json",
+    "sha256": "dee3684e0b01f3a4ca6a00760d36b9e6c9de2224e68e4878a012bfe58fc361cf",
+    "result_path": "docs/architecture/p3-v50-gate-v3-physical-proof-result.json",
+    "result_sha256": "30fb4864ced14d253ba01808f9087f776c7ec016d9d3e1ee03f119b5a76d686e",
+    "reason": "REUSE_SUCCESSFULLY_BUILT_PACKAGE_AND_BIND_ABSENT_PARENT_WRITE_PERMISSION"
+  },
+  "subjects": {
+    "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
+    "package_source_commit": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+    "preserved_package_path": "/private/tmp/dosai-v50-proof/out/DOSAI-darwin-arm64/DOSAI.app",
+    "preserved_package_manifest_entries": 606,
+    "preserved_package_manifest_sha256": "9a842b75f49aaf26c1f58e8fe83f654d1940310afbfe5606b7247a781bdc31e7",
+    "verifier_implementation_commit": "d1f28d12d31e9b506607c8dafbfc56ce9da02f91",
+    "verifier_record_commit": "41451db539a7705ea7f7bb7e64ef1f95e0eae77b",
+    "verifier_record_path": "docs/architecture/p3-v50-preserved-package-verifier-source-record.json",
+    "verifier_record_sha256": "f946c1d241a9ef65671e7785e72c211ee31982559dad57f4976e3ad63ee42489",
+    "preflight_path": "scripts/verify-p3-v50-physical-proof-preflight.mjs",
+    "preflight_sha256": "f1f070e63ec71d7d83f90d61c057d4d3fa97d56baff682743f7a8346a70cd693",
+    "preserved_package_verifier_path": "scripts/verify-p3-v50-preserved-package.mjs",
+    "preserved_package_verifier_sha256": "db65dec228e44663780239bbb49cea0041004a99b94123e30ea38b51061d71e3",
+    "staged_package_verifier_path": "scripts/verify-p3-v50-staged-package.mjs",
+    "staged_package_verifier_sha256": "22d8ad575409c08a9ddb5e768563a0c96a359a35aa79c07866ae7098aff714ad",
+    "staged_launcher_path": "scripts/service-management-lifecycle-staged-proof.mjs",
+    "staged_launcher_sha256": "33612edc8aa1b650f601b0fcd0ae0dfb4c0f5cd20ba7dc55897690d0c9f4812f"
+  },
+  "fixed_preconditions": {
+    "governed_preflight_execution_limit": 1,
+    "preserved_package_verification_limit": 1,
+    "required_result": "PASS",
+    "arguments_each": 0,
+    "stop_before_staging_on_non_pass": true,
+    "retry_allowed": false
+  },
+  "fixed_staging": {
+    "required_filesystem_permission_root": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs",
+    "stable_parent_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50",
+    "stable_application_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app",
+    "stable_executable_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app/Contents/MacOS/DOSAI",
+    "copy_executable": "/usr/bin/ditto",
+    "parent_creation_attempt_limit": 1,
+    "application_copy_attempt_limit": 1,
+    "staged_package_verification_limit": 1,
+    "verify_exact_manifest_and_all_signatures_before_launch": true
+  },
+  "fixed_identities": {
+    "team_identifier": "3RD3TADLRY",
+    "outer_app_identifier": "com.socialeap.dosai",
+    "lifecycle_addon_identifier": "com.socialeap.dosai.service-management-lifecycle-addon",
+    "launch_agent_identifier": "com.socialeap.dosai.execution-service-fixture"
+  },
+  "fixed_attempt": {
+    "package_builds": 0,
+    "test_signing_operations": 0,
+    "reuse_preserved_package": true,
+    "runner_path": "scripts/service-management-lifecycle-staged-proof.mjs",
+    "app_launches": 1,
+    "app_arguments": 0,
+    "observe_attempt_limit": 3,
+    "register_attempt_limit": 1,
+    "unregister_attempt_limit": 1,
+    "timeout_ms": 15000,
+    "timeout_signal": "SIGKILL",
+    "retry_allowed": false,
+    "launch_agent_may_bootstrap_as_registration_consequence": true,
+    "xpc_client_connection_allowed": false
+  },
+  "success_receipt": {
+    "result": "REGISTERED_AND_CLEANED",
+    "before": [
+      "NOT_REGISTERED",
+      "NOT_FOUND"
+    ],
+    "after_register": [
+      "ENABLED",
+      "REQUIRES_APPROVAL"
+    ],
+    "after_unregister": "NOT_REGISTERED",
+    "observe_attempts": 3,
+    "observe_completions": 3,
+    "register_attempts": 1,
+    "register_completions": 1,
+    "unregister_attempts": 1,
+    "unregister_completions": 1,
+    "consumed": true
+  },
+  "failure_containment": {
+    "stop_on_any_non_success": true,
+    "stop_on_missing_or_malformed_receipt": true,
+    "automatic_retry": false,
+    "automatic_recovery_launch": false,
+    "preserve_source_and_staged_packages_on_uncertainty": true,
+    "uncertain_state_label": "RESIDUAL_BACKGROUND_ITEM_STATE_UNKNOWN",
+    "further_runtime_action_requires_new_owner_authorization": true
+  },
+  "authorities": {
+    "preflight_execution": false,
+    "preserved_package_verification": false,
+    "staging_parent_creation": false,
+    "stable_path_staging": false,
+    "staged_package_verification": false,
+    "package_build": false,
+    "test_signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_observation": false,
+    "registration": false,
+    "unregistration": false,
+    "launch_agent_bootstrap": false,
+    "xpc_connection": false,
+    "vm_operation": false,
+    "guest_execution": false,
+    "real_execution": false,
+    "production_use": false,
+    "retry": false,
+    "automatic_recovery": false
+  },
+  "next_gate": "EXACT_OWNER_REAUTHORIZATION_REQUIRED_BEFORE_PREFLIGHT_VERIFICATION_STAGING_OR_LAUNCH"
+}
