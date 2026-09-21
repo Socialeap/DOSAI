@@ -41,13 +41,19 @@ export async function assessPrivateBetaReadiness() {
   }
 
   const physical = boundRecords.get(
-    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v3.json',
+    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v4.json',
   );
   const physicalPreflight = boundRecords.get(
     'docs/architecture/p3-v50-physical-proof-preflight-source-record.json',
   );
   const physicalPreflightFailure = boundRecords.get(
     'docs/architecture/p3-v50-gate-v2-physical-proof-result.json',
+  );
+  const gateV3Result = boundRecords.get(
+    'docs/architecture/p3-v50-gate-v3-physical-proof-result.json',
+  );
+  const preservedPackageVerifier = boundRecords.get(
+    'docs/architecture/p3-v50-preserved-package-verifier-source-record.json',
   );
   const stagedLifecycleLauncher = boundRecords.get(
     'docs/architecture/p3-v50-stable-path-launcher-source-record.json',
@@ -100,15 +106,22 @@ export async function assessPrivateBetaReadiness() {
     'docs/architecture/p3-native-builder-host-observation-verifier-source-record.json',
   );
   if (
-    physical?.record_version !== 3 ||
+    physical?.record_version !== 4 ||
     physical?.status !== 'AWAITING_OWNER_REAUTHORIZATION' ||
     physical?.subjects?.package_source_commit !==
       'bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc' ||
-    physical?.subjects?.preflight_implementation_commit !==
-      physicalPreflight?.implementation_commit ||
-    physical?.governed_preflight?.execution_limit !== 1 ||
-    physical?.governed_preflight?.read_only !== true ||
-    physical?.governed_preflight?.retry_allowed !== false ||
+    physical?.subjects?.preserved_package_manifest_sha256 !==
+      gateV3Result?.preserved_package?.manifest_sha256 ||
+    physical?.fixed_preconditions?.governed_preflight_execution_limit !== 1 ||
+    physical?.fixed_preconditions?.preserved_package_verification_limit !== 1 ||
+    physical?.fixed_preconditions?.retry_allowed !== false ||
+    physical?.fixed_attempt?.package_builds !== 0 ||
+    physical?.fixed_attempt?.test_signing_operations !== 0 ||
+    physical?.fixed_attempt?.reuse_preserved_package !== true ||
+    physical?.fixed_staging?.required_filesystem_permission_root !==
+      '/Users/shakoure/Library/Application Support/DOSAI/TestProofs' ||
+    physical?.fixed_staging?.application_copy_attempt_limit !== 1 ||
+    physical?.fixed_staging?.staged_package_verification_limit !== 1 ||
     physicalPreflight?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
     physicalPreflight?.observed_effects?.preflight_executions !== 0 ||
     !everyAuthorityIsFalse(physicalPreflight) ||
@@ -117,13 +130,25 @@ export async function assessPrivateBetaReadiness() {
     physicalPreflightFailure?.failure?.physical_proof_attempt_consumed !== true ||
     physicalPreflightFailure?.containment?.retry_performed !== false ||
     Object.values(physicalPreflightFailure?.observed_effects ?? {}).some(value => value !== 0) ||
+    gateV3Result?.status !==
+      'FAILED_CLOSED_STAGING_PARENT_PERMISSION_REAUTHORIZATION_REQUIRED' ||
+    gateV3Result?.governed_preflight?.result !== 'PASS' ||
+    gateV3Result?.preserved_package?.package_script_result !== 'PASS' ||
+    gateV3Result?.failure?.staged_application_copy_attempts !== 0 ||
+    gateV3Result?.observed_effects?.application_launches !== 0 ||
+    gateV3Result?.observed_effects?.registration_attempts !== 0 ||
+    gateV3Result?.observed_effects?.unregistration_attempts !== 0 ||
+    preservedPackageVerifier?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
+    preservedPackageVerifier?.contract?.manifest_sha256 !==
+      physical?.subjects?.preserved_package_manifest_sha256 ||
+    !everyAuthorityIsFalse(preservedPackageVerifier) ||
     physical?.fixed_attempt?.runner_path !==
       'scripts/service-management-lifecycle-staged-proof.mjs' ||
-    physical?.fixed_attempt?.stable_test_application_path !==
+    physical?.fixed_staging?.stable_application_path !==
       '/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app' ||
     stagedLifecycleLauncher?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
     stagedLifecycleLauncher?.contract?.stable_application_path !==
-      physical?.fixed_attempt?.stable_test_application_path ||
+      physical?.fixed_staging?.stable_application_path ||
     stagedLifecycleLauncher?.contract?.launch_attempt_limit !== 1 ||
     stagedLifecycleLauncher?.contract?.retry_allowed !== false ||
     !everyAuthorityIsFalse(stagedLifecycleLauncher) ||

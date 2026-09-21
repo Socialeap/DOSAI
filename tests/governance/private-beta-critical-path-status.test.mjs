@@ -45,14 +45,26 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   const lifecycle = checkpoint.gates.find(({ id }) => id === 'BETA-CP-002');
   assert.equal(
     lifecycle.status,
-    'FAILED_CLOSED_PREFLIGHT_REPAIRED_REAUTHORIZATION_REQUIRED',
+    'FAILED_CLOSED_STAGING_PERMISSION_REPAIRED_REUSE_ONLY_REAUTHORIZATION_REQUIRED',
   );
   assert.equal(lifecycle.stable_path_launcher_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
   assert.equal(lifecycle.gate_v2_attempt_status, 'FAILED_CLOSED_BEFORE_BUILD_NO_PHYSICAL_EFFECTS');
   assert.equal(lifecycle.preflight_repair_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
   assert.equal(
+    lifecycle.gate_v3_attempt_status,
+    'FAILED_CLOSED_AFTER_BUILD_BEFORE_STAGING_COPY_NO_RUNTIME_EFFECTS',
+  );
+  assert.equal(
+    lifecycle.preserved_v50_package_status,
+    'BUILT_AND_TEST_SIGNED_ONCE_PRESERVED_NOT_STAGED',
+  );
+  assert.equal(
+    lifecycle.preserved_package_verifier_status,
+    'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED',
+  );
+  assert.equal(
     lifecycle.physical_gate,
-    'P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V3',
+    'P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V4',
   );
   const p3Acceptance = checkpoint.gates.find(({ id }) => id === 'BETA-CP-005');
   assert.equal(p3Acceptance.proposal_prepared, true);

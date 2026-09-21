@@ -1,28 +1,32 @@
 # P3 v50 physical lifecycle proof owner packet
 
-Recorded 2026-09-21 and revised for gate v3 after gate v2 stopped before build.
-**The source correction, fixed staged-app launcher, and governed read-only
-preflight are validated, but the replacement preflight has not been executed
-and every physical authority remains false until the repository owner
-reauthorizes this exact one-attempt packet.**
+Recorded 2026-09-21 and revised for reuse-only gate v4. **One exact v50
+package has already been built and test-signed. It remains preserved and has
+never been staged or launched. Every gate-v4 authority remains false until the
+repository owner reauthorizes this exact one-attempt packet.**
 
-Gate v2 consumed its single authorization when its shell preflight referenced
-the unavailable `/usr/bin/test`. It stopped before build with zero physical
-effects and was not retried. Gate v3 replaces that ad hoc check with a fixed
-Node preflight and preserves every physical boundary from gate v2.
+Gate v2 stopped before build on an unavailable shell executable. Gate v3 passed
+its governed preflight and completed one package build and signing sequence,
+then stopped before the staging copy because the sandbox permission did not
+cover creation of the absent `TestProofs` parent. No app launch, native load,
+status call, registration, unregistration, retry, or automatic recovery
+occurred in either attempt.
 
 ## Fixed subject
 
 - Pull request: <https://github.com/Socialeap/DOSAI/pull/3>
 - Package source commit: `bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc`
-- Preflight implementation commit: `9401876829d0854f14aa22fb1963661436d0dcad`
-- Preflight source-record commit: `37a6b95a8d64ed2bbb8efeed7c1a8b10c3d18834`
-- Gate-v3 commit: `24ff078b475b6e89c75f8575e46e0399cfcea29c`
-- Governed preflight: `scripts/verify-p3-v50-physical-proof-preflight.mjs`
-- Package selector: `--signed-app-service-management-lifecycle-proof-fixture`
+- Preserved package: `/private/tmp/dosai-v50-proof/out/DOSAI-darwin-arm64/DOSAI.app`
+- Preserved manifest: 606 entries, SHA-256 `9a842b75f49aaf26c1f58e8fe83f654d1940310afbfe5606b7247a781bdc31e7`
+- Verifier implementation commit: `d1f28d12d31e9b506607c8dafbfc56ce9da02f91`
+- Verifier source-record commit: `41451db539a7705ea7f7bb7e64ef1f95e0eae77b`
+- Gate-v4 commit: `9d500945c9c00bcd82ffa8a92bbe172aa3c7cac0`
+- Required permission root: `/Users/shakoure/Library/Application Support/DOSAI/TestProofs`
 - Stable test path: `/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app`
+- Governed preflight: `scripts/verify-p3-v50-physical-proof-preflight.mjs`
+- Preserved verifier: `scripts/verify-p3-v50-preserved-package.mjs`
+- Staged verifier: `scripts/verify-p3-v50-staged-package.mjs`
 - Fixed staged-app runner: `scripts/service-management-lifecycle-staged-proof.mjs`
-- Test signing selector: `UMXN25Z493`
 - TeamIdentifier: `3RD3TADLRY`
 - Outer app: `com.socialeap.dosai`
 - Lifecycle addon: `com.socialeap.dosai.service-management-lifecycle-addon`
@@ -30,34 +34,33 @@ Node preflight and preserves every physical boundary from gate v2.
 
 ## One-attempt boundary
 
-The authorized sequence, if granted, is: execute the governed read-only
-preflight exactly once with zero arguments; stop before build unless its exact
-result is `PASS`; then build a new v50 test package without changing the
-preserved v49 package; test-sign the new package; stage it at the fixed isolated application-support path;
-verify staged bytes plus nested and outer signatures; use only the fixed
-staged-app runner to launch the staged app once with zero arguments; permit no
-more than three fixed status observations,
-one registration, and one unregistration; enforce the existing 15-second
-`SIGKILL` timeout; and stop with no retry. A preflight failure consumes this
-authorization and permits no build or second preflight.
+Gate v4 performs no package build and no signing. The sequence is: acquire
+turn-scoped read/write permission only for the exact `TestProofs` root; run the
+governed preflight once with zero arguments; run the preserved-package verifier
+once with zero arguments; proceed only if both return exact `PASS`; create the
+fixed `v50` parent once; copy the preserved package once with `/usr/bin/ditto`;
+run the staged-package verifier once; and proceed only on exact `PASS` to one
+zero-argument launch through the fixed staged runner.
 
-Registration may bootstrap the inert fixture LaunchAgent, and unregistration
-may terminate it. No XPC client connection, capsule, VM, guest, repository-code
-execution, real execution, production operation, or paid activity is included.
+The launched bundle permits at most three fixed status observations, one
+registration, and one unregistration under the existing 15-second `SIGKILL`
+timeout. Registration may bootstrap the inert fixture LaunchAgent, and
+unregistration may terminate it. No XPC client connection, capsule, VM, guest,
+repository-code execution, real execution, production operation, or paid
+activity is included.
 
 Success requires the strict `REGISTERED_AND_CLEANED` receipt, initial
 `NOT_REGISTERED` or first-seen `NOT_FOUND`, `ENABLED` or `REQUIRES_APPROVAL`
 after registration, exact terminal `NOT_REGISTERED`, and exact completed counts
 of three observations, one registration, and one unregistration. Any other
-result, timeout, missing output, malformed receipt, or uncertain final state
-stops the attempt. There is no automatic retry or recovery launch. The signed
-package and staged test application are preserved on uncertainty, and the
-residual state is reported unknown until separately authorized cleanup.
+result, permission failure, verifier failure, timeout, missing output, malformed
+receipt, or uncertain final state stops the attempt. There is no retry or
+automatic recovery.
 
 ## Copy-ready authorization
 
 ```text
-I authorize one isolated v50 gate-v3 P3 lifecycle proof from PR #3 using package source commit bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc, preflight implementation commit 9401876829d0854f14aa22fb1963661436d0dcad, preflight source-record commit 37a6b95a8d64ed2bbb8efeed7c1a8b10c3d18834, and gate commit 24ff078b475b6e89c75f8575e46e0399cfcea29c: run scripts/verify-p3-v50-physical-proof-preflight.mjs exactly once with zero arguments and proceed only on its exact PASS result; then build and test-sign one new exact package using selector UMXN25Z493 and TeamIdentifier 3RD3TADLRY while preserving the v49 package; stage it only at /Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app; verify staged bytes and all nested and outer signatures; use only scripts/service-management-lifecycle-staged-proof.mjs to launch that staged app exactly once with zero arguments; perform at most one fixed register/observe/unregister sequence for com.socialeap.dosai.execution-service-fixture; allow the inert fixture LaunchAgent to bootstrap only as a consequence of registration; require clean unregistration before success; enforce the 15-second SIGKILL timeout; and stop without retry or automatic recovery on any preflight failure, physical failure, or uncertain receipt. A non-PASS preflight consumes this authorization and permits no build or second preflight. No XPC client connection, VM, guest execution, real execution, production use, paid activity, or other service/process action is authorized.
+I authorize the exact single-attempt v50 gate-v4 reuse-only proof documented in PR #3 at gate commit 9d500945c9c00bcd82ffa8a92bbe172aa3c7cac0, using preserved package /private/tmp/dosai-v50-proof/out/DOSAI-darwin-arm64/DOSAI.app with 606-entry manifest SHA-256 9a842b75f49aaf26c1f58e8fe83f654d1940310afbfe5606b7247a781bdc31e7, verifier implementation commit d1f28d12d31e9b506607c8dafbfc56ce9da02f91, and verifier source-record commit 41451db539a7705ea7f7bb7e64ef1f95e0eae77b: obtain turn-scoped read/write permission only for /Users/shakoure/Library/Application Support/DOSAI/TestProofs; run scripts/verify-p3-v50-physical-proof-preflight.mjs exactly once and scripts/verify-p3-v50-preserved-package.mjs exactly once with zero arguments; proceed only if both return exact PASS; create the fixed v50 parent once and stage the preserved package exactly once with /usr/bin/ditto at /Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app; run scripts/verify-p3-v50-staged-package.mjs exactly once; proceed only on exact PASS to one zero-argument launch through scripts/service-management-lifecycle-staged-proof.mjs; perform at most one fixed register-observe-unregister sequence for com.socialeap.dosai.execution-service-fixture; require clean unregistration before success; enforce the 15-second SIGKILL timeout; and stop without retry or automatic recovery on any failure or uncertainty. No package build, signing operation, XPC client connection, VM, guest execution, real execution, production use, paid activity, or other service/process action is authorized.
 ```
 
 **Release classification:** isolated local test governance only. No Lovable
