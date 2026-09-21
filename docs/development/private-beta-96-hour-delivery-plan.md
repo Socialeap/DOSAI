@@ -257,3 +257,40 @@ baseline until the pinned regression is actually rerun.
 **Release classification:** Documentation only. No Lovable action is required.
 Next action: establish the reproducible sprint baseline and produce the first
 execution/integration feasibility evidence.
+
+## Current Critical-Path Checkpoint — 2026-09-21
+
+The original snapshot above is retained as planning history. Its final baseline
+paragraph is no longer current: PR #3 now contains the source-only P3 successor
+work through commit `be65853e4f55e9563cd2e983909f21b1e3c43224`; its complete
+regression passes 555 tests, all eight existing TypeScript projects, and the
+three normal application builds. This does not authorize or prove physical
+execution.
+
+PR #2's exact two-commit fixture slice was separately overlaid onto that PR #3
+head without conflicts. The disposable combined tree passed all 578 tests with
+bounded test concurrency, all nine applicable TypeScript projects, the three
+normal builds, and ten of ten local synthetic benchmark samples with zero
+external calls, model calls, or provider spend. The overlay is validation only:
+PR #2 is not integrated into PR #3 and no merge is authorized.
+
+The machine-checked [critical-path status](private-beta-critical-path-status.json)
+is now the short operational scoreboard required by this plan. Reproduce its
+fail-closed assessment with:
+
+```sh
+node scripts/report-private-beta-readiness.mjs
+```
+
+It must continue returning `NO_GO` while the exact fixture integration, one
+bounded v49 signed-app lifecycle proof, Debian trust-root observation, two
+independent native Linux builder receipts, and all three formal P3 acceptance
+suites remain open. Source tests, a local emulated Linux builder, or synthetic
+fixtures cannot satisfy those gates. The owner-set 120-credit ceiling remains
+controlling, and no paid activity is authorized by this checkpoint.
+
+**Release classification:** Local read-only reporting, governance tests, and
+documentation only. No Lovable action is required. No frontend Publish is
+required. No signing, app launch, Service Management operation, key retrieval,
+builder provisioning, VM/guest execution, provider call, or production action
+is performed by this checkpoint.
