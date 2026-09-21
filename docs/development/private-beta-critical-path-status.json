@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T17:15:00-04:00",
+  "recorded_at": "2026-09-21T18:06:58-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
