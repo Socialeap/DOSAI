@@ -1,0 +1,97 @@
+name: P3 native builder host feasibility
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: p3-native-builder-host-feasibility
+  cancel-in-progress: false
+
+jobs:
+  builder_host_a:
+    name: BUILDER_HOST_A
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Observe bounded native host identity
+        shell: bash --noprofile --norc -euo pipefail {0}
+        env:
+          DOSAI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+          DOSAI_RUNNER_OS: ${{ runner.os }}
+          DOSAI_RUNNER_ARCH: ${{ runner.arch }}
+        run: |
+          test "$DOSAI_RUNNER_ENVIRONMENT" = "github-hosted"
+          test "$DOSAI_RUNNER_OS" = "Linux"
+          test "$DOSAI_RUNNER_ARCH" = "X64"
+          test "$(uname -m)" = "x86_64"
+          test -n "${ImageOS:-}"
+          test -n "${ImageVersion:-}"
+          test -r /sys/class/dmi/id/product_uuid
+          product_uuid="$(tr '[:lower:]' '[:upper:]' < /sys/class/dmi/id/product_uuid | tr -d '\n')"
+          test -n "$product_uuid"
+          docker_arch="$(docker version --format '{{.Server.Arch}}')"
+          test "$docker_arch" = "amd64"
+          test -d /proc/sys/fs/binfmt_misc
+          active_binfmt="$(find /proc/sys/fs/binfmt_misc -maxdepth 1 -type f ! -name register ! -name status -print -quit)"
+          test -z "$active_binfmt"
+          jq -cn \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg job "$GITHUB_JOB" \
+            --arg sha "$GITHUB_SHA" \
+            --arg runner_environment "$DOSAI_RUNNER_ENVIRONMENT" \
+            --arg runner_os "$DOSAI_RUNNER_OS" \
+            --arg runner_arch "$DOSAI_RUNNER_ARCH" \
+            --arg uname_machine "$(uname -m)" \
+            --arg image_os "$ImageOS" \
+            --arg image_version "$ImageVersion" \
+            --arg kernel_release "$(uname -r)" \
+            --arg dmi_product_uuid "$product_uuid" \
+            --arg docker_server_arch "$docker_arch" \
+            '{schema:"DOSAI_P3_HOST_OBSERVATION_V1",run_id:$run_id,run_attempt:$run_attempt,job:$job,sha:$sha,runner_environment:$runner_environment,runner_os:$runner_os,runner_arch:$runner_arch,uname_machine:$uname_machine,image_os:$image_os,image_version:$image_version,kernel_release:$kernel_release,dmi_product_uuid:$dmi_product_uuid,docker_server_arch:$docker_server_arch,no_active_binfmt_misc_interpreters:true}' \
+            | sed 's/^/DOSAI_HOST_OBSERVATION_V1:/'
+
+  builder_host_b:
+    name: BUILDER_HOST_B
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Observe bounded native host identity
+        shell: bash --noprofile --norc -euo pipefail {0}
+        env:
+          DOSAI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+          DOSAI_RUNNER_OS: ${{ runner.os }}
+          DOSAI_RUNNER_ARCH: ${{ runner.arch }}
+        run: |
+          test "$DOSAI_RUNNER_ENVIRONMENT" = "github-hosted"
+          test "$DOSAI_RUNNER_OS" = "Linux"
+          test "$DOSAI_RUNNER_ARCH" = "X64"
+          test "$(uname -m)" = "x86_64"
+          test -n "${ImageOS:-}"
+          test -n "${ImageVersion:-}"
+          test -r /sys/class/dmi/id/product_uuid
+          product_uuid="$(tr '[:lower:]' '[:upper:]' < /sys/class/dmi/id/product_uuid | tr -d '\n')"
+          test -n "$product_uuid"
+          docker_arch="$(docker version --format '{{.Server.Arch}}')"
+          test "$docker_arch" = "amd64"
+          test -d /proc/sys/fs/binfmt_misc
+          active_binfmt="$(find /proc/sys/fs/binfmt_misc -maxdepth 1 -type f ! -name register ! -name status -print -quit)"
+          test -z "$active_binfmt"
+          jq -cn \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg job "$GITHUB_JOB" \
+            --arg sha "$GITHUB_SHA" \
+            --arg runner_environment "$DOSAI_RUNNER_ENVIRONMENT" \
+            --arg runner_os "$DOSAI_RUNNER_OS" \
+            --arg runner_arch "$DOSAI_RUNNER_ARCH" \
+            --arg uname_machine "$(uname -m)" \
+            --arg image_os "$ImageOS" \
+            --arg image_version "$ImageVersion" \
+            --arg kernel_release "$(uname -r)" \
+            --arg dmi_product_uuid "$product_uuid" \
+            --arg docker_server_arch "$docker_arch" \
+            '{schema:"DOSAI_P3_HOST_OBSERVATION_V1",run_id:$run_id,run_attempt:$run_attempt,job:$job,sha:$sha,runner_environment:$runner_environment,runner_os:$runner_os,runner_arch:$runner_arch,uname_machine:$uname_machine,image_os:$image_os,image_version:$image_version,kernel_release:$kernel_release,dmi_product_uuid:$dmi_product_uuid,docker_server_arch:$docker_server_arch,no_active_binfmt_misc_interpreters:true}' \
+            | sed 's/^/DOSAI_HOST_OBSERVATION_V1:/'

@@ -1,0 +1,62 @@
+{
+  "record_type": "P3_DEBIAN_ARCHIVE_TRUST_ROOT_OBSERVATION_V2_RESULT",
+  "record_version": 2,
+  "recorded_at": "2026-09-21T02:51:55-04:00",
+  "status": "PASS_READ_ONLY_SOURCE_OBSERVATION",
+  "recommendation": {
+    "path": "docs/architecture/p3-debian-archive-trust-root-source-recommendation-v2.json",
+    "sha256": "cf6bcfa60dda954cbb8aa59a72a6f5580e1ab67432f73e3b4a7893a44325312c"
+  },
+  "attempts": 1,
+  "automatic_retries": 0,
+  "key_observations": [
+    {
+      "purpose": "DEBIAN_13_ARCHIVE_AUTOMATIC",
+      "size_bytes": 11861,
+      "sha256": "6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7",
+      "primary_fingerprint": "04B54C3CDCA79751B16BC6B5225629DF75B188BD",
+      "reference_match": true
+    },
+    {
+      "purpose": "DEBIAN_13_SECURITY_ARCHIVE_AUTOMATIC",
+      "size_bytes": 11873,
+      "sha256": "844c07d242db37f283afab9d5531270a0550841e90f9f1a9c3bd599722b808b7",
+      "primary_fingerprint": "5E04A1E3223A19A20706E20F9904613D4CCE68C6",
+      "reference_match": true
+    },
+    {
+      "purpose": "DEBIAN_13_STABLE_RELEASE",
+      "size_bytes": 1384,
+      "sha256": "4d097bb93f83d731f475c5b92a0c2fcf108cfce1d4932792fca72d00b48d198b",
+      "primary_fingerprint": "41587F7DB8C774BCCF131416762F67A0B2C39DE4",
+      "reference_match": true
+    }
+  ],
+  "references": [
+    {
+      "purpose": "AUTOMATIC_KEYS",
+      "url": "https://lists.debian.org/debian-devel-announce/2025/04/msg00001.html",
+      "size_bytes": 29691,
+      "sha256": "5384b92ed7ad6cf8ce31afff8b5edf88fc0e997ef641c7c43bffc0660d92615d",
+      "comparison_passed": true
+    },
+    {
+      "purpose": "STABLE_RELEASE_KEY",
+      "url": "https://sources.debian.org/data/main/d/debian-archive-keyring/2025.1/active-keys/add-trixie-stable",
+      "size_bytes": 1526,
+      "sha256": "c9057397844b0a67b7c8f3bf2b01e207b68eaa29fe52fdd0cc5ccb9ee1faebb9",
+      "primary_fingerprint": "41587F7DB8C774BCCF131416762F67A0B2C39DE4",
+      "comparison_passed": true
+    }
+  ],
+  "total_key_bytes": 25118,
+  "containment": {
+    "temporary_bytes_deleted_verified": true,
+    "key_import_performed": false,
+    "host_trust_store_used": false,
+    "signature_verification_performed": false,
+    "package_or_index_retrieval_performed": false,
+    "builder_or_guest_execution_performed": false,
+    "production_use": false
+  }
+}

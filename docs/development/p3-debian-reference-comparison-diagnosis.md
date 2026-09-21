@@ -19,5 +19,13 @@ unreviewed bug report, host trust store, package manager, or the downloaded key
 material itself as independent authority. No further key or metadata retrieval
 is authorized by this diagnosis.
 
+The owner subsequently authorized a corrected read-only observation. The v2
+recommendation selects the immutable Debian Sources copy of
+`debian-archive-keyring` 2025.1 `active-keys/add-trixie-stable` as the separate
+official source-package reference for the stable key, while retaining the
+developer announcement for the two automatic keys. The two sources now have
+non-overlapping declared coverage; no page is required to attest a key it does
+not contain.
+
 No Lovable action is required. There is no backend activation or frontend
 Publish step.

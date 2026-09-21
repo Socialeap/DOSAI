@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T02:22:24-04:00",
+  "recorded_at": "2026-09-21T02:51:55-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -72,7 +72,7 @@
     },
     {
       "path": "docs/architecture/private-beta-bounded-action-authorization.json",
-      "sha256": "2273f5ccf8ab2308c4a7661c8c2cb43533b3fb2733508ac85d3849dd520e806b"
+      "sha256": "ea22aaaa5a081f713e8e803545fe44b549675fdcc9d9ee65d25c3120a3b1758c"
     },
     {
       "path": "docs/architecture/p3-v49-service-management-lifecycle-physical-proof-result.json",
@@ -85,6 +85,22 @@
     {
       "path": "docs/architecture/p3-native-builder-host-feasibility-observation-result.json",
       "sha256": "ffa15260491e0f016931323f7cc31b5a0dd7cbdfa8e40145b1b90990f6385080"
+    },
+    {
+      "path": "docs/architecture/p3-v49-service-management-lifecycle-replacement-result.json",
+      "sha256": "44a3a3ab7d5c228b45fdf359fb1c62cc65003e28ee5018e0b7855fabaa15245f"
+    },
+    {
+      "path": "docs/architecture/p3-debian-archive-trust-root-source-recommendation-v2.json",
+      "sha256": "cf6bcfa60dda954cbb8aa59a72a6f5580e1ab67432f73e3b4a7893a44325312c"
+    },
+    {
+      "path": "docs/architecture/p3-debian-archive-trust-root-observation-v2-result.json",
+      "sha256": "110e58a90799c9c71980a7c9f800e59fa77cd1dbd4987d0d6baae3503bedc837"
+    },
+    {
+      "path": "docs/architecture/p3-native-builder-host-workflow-preparation-result.json",
+      "sha256": "66fabc578190804316bb8608e395361f524ca0f09eb05663df90830c699bdd37"
     }
   ],
   "gates": [
@@ -98,16 +114,16 @@
     {
       "id": "BETA-CP-002",
       "title": "Prove the packaged macOS lifecycle once",
-      "status": "DEPENDENCY_PREFLIGHT_VALIDATED_REAUTHORIZATION_REQUIRED",
-      "blocking_evidence": "RUNNER_DEPENDENCY_RESOLUTION_FAILED_BEFORE_APP_LAUNCH",
-      "next_action": "REQUEST_ONE_NEW_NO_RETRY_APP_LAUNCH_AUTHORIZATION_FOR_THE_PRESERVED_EXACT_PACKAGE"
+      "status": "FAILED_CLOSED_PRECONDITION_NOT_FOUND",
+      "blocking_evidence": "V49_REPLACEMENT_RECEIPT_PRECONDITION_FAILED_NOT_FOUND",
+      "next_action": "DIAGNOSE_NOT_FOUND_SOURCE_AND_PACKAGE_BOUNDARY_WITHOUT_RUNTIME_ACTION"
     },
     {
       "id": "BETA-CP-003",
       "title": "Accept and observe the Debian archive trust roots",
-      "status": "FAILED_CLOSED_REAUTHORIZATION_REQUIRED",
-      "blocking_evidence": "INDEPENDENT_REFERENCE_COMPARISON_INCOMPLETE",
-      "next_action": "SELECT_AUTHORITATIVE_INDEPENDENT_REFERENCE_FOR_STABLE_RELEASE_KEY"
+      "status": "PASS",
+      "blocking_evidence": null,
+      "next_action": "PRESERVE_V2_DIGESTS_AND_NO_IMPORT_BOUNDARY"
     },
     {
       "id": "BETA-CP-004",
@@ -115,8 +131,8 @@
       "status": "MISSING_REQUIRED_EVIDENCE",
       "blocking_evidence": "QUALIFYING_INDEPENDENT_NATIVE_AMD64_BUILDER_RECEIPTS_IN_REPOSITORY_0_OF_2",
       "candidate_host_source": "TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS",
-      "host_observation_status": "BLOCKED_BEFORE_WORKFLOW_CREATION",
-      "next_action": "OBTAIN_SEPARATE_AUTHORIZATION_FOR_DEFAULT_BRANCH_WORKFLOW_AVAILABILITY"
+      "host_observation_status": "WORKFLOW_PREPARED_UNMERGED_NOT_DISPATCHABLE",
+      "next_action": "OBTAIN_SEPARATE_AUTHORIZATION_FOR_PR_MERGE_OR_DEFAULT_BRANCH_CHANGE"
     },
     {
       "id": "BETA-CP-005",
@@ -132,7 +148,7 @@
       "id": "BETA-CP-006",
       "title": "Run the representative full-functionality beta workflow",
       "status": "NOT_READY",
-      "blocking_evidence": "CRITICAL_PATH_GATES_BETA_CP_001_THROUGH_BETA_CP_005_ARE_OPEN",
+      "blocking_evidence": "CRITICAL_PATH_GATES_BETA_CP_002_BETA_CP_004_AND_BETA_CP_005_ARE_OPEN",
       "next_action": "RUN_ONLY_ON_THE_EXACT_INTEGRATED_CANDIDATE_AFTER_ALL_PRIOR_GATES_PASS"
     }
   ]

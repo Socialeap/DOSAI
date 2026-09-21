@@ -55,7 +55,6 @@ test('critical-path report remains fail-closed until every required gate passes'
   assert.equal(report.paid_activity_authorized, false);
   assert.deepEqual(report.blockers.map(({ id }) => id), [
     'BETA-CP-002',
-    'BETA-CP-003',
     'BETA-CP-004',
     'BETA-CP-005',
     'BETA-CP-006',
@@ -67,6 +66,9 @@ test('checkpoint never converts source or compatibility evidence into runtime au
   assert.equal(checkpoint.fixture_overlay_validation.tests_failed, 0);
   assert.equal(checkpoint.fixture_overlay_validation.provider_spend, 0);
   assert.equal(checkpoint.gates.find(({ id }) => id === 'BETA-CP-001').status, 'PASS');
-  assert.ok(checkpoint.gates.slice(1).every(({ status }) => status !== 'PASS'));
+  assert.equal(checkpoint.gates.find(({ id }) => id === 'BETA-CP-003').status, 'PASS');
+  assert.ok(checkpoint.gates
+    .filter(({ id }) => !['BETA-CP-001', 'BETA-CP-003'].includes(id))
+    .every(({ status }) => status !== 'PASS'));
   assert.equal(checkpoint.gates.at(-1).status, 'NOT_READY');
 });
