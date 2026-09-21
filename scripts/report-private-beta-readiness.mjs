@@ -87,6 +87,9 @@ export async function assessPrivateBetaReadiness() {
   const hostWorkflowPreparation = boundRecords.get(
     'docs/architecture/p3-native-builder-host-workflow-preparation-result.json',
   );
+  const hostObservationVerifier = boundRecords.get(
+    'docs/architecture/p3-native-builder-host-observation-verifier-source-record.json',
+  );
   if (
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
     physical?.subject?.commit !== checkpoint.validated_source_baseline.head ||
@@ -125,7 +128,11 @@ export async function assessPrivateBetaReadiness() {
     trustRootV2Result?.status !== 'PASS_READ_ONLY_SOURCE_OBSERVATION' ||
     trustRootV2Result?.containment?.key_import_performed !== false ||
     hostWorkflowPreparation?.status !== 'PREPARED_UNMERGED_NOT_DISPATCHABLE' ||
-    hostWorkflowPreparation?.external_effects?.workflow_dispatches !== 0
+    hostWorkflowPreparation?.external_effects?.workflow_dispatches !== 0 ||
+    hostObservationVerifier?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
+    hostObservationVerifier?.contract?.success_status !== 'PASS_CANDIDATE_HOSTS_ONLY' ||
+    hostObservationVerifier?.contract?.builder_receipts_produced_on_success !== 0 ||
+    !everyAuthorityIsFalse(hostObservationVerifier)
   ) {
     throw new Error('PRIVATE_BETA_AUTHORITY_STATE_CHANGED');
   }

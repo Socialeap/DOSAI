@@ -38,10 +38,10 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
     'ee135d8e1bc14ded2f9a9155b3daf49a0baf1e1c',
     '7f2d52044fe28d6e8a9a24a10852fcbd9f386d44',
   ]);
-  assert.equal(
-    checkpoint.gates.find(({ id }) => id === 'BETA-CP-004').candidate_host_source,
-    'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS',
-  );
+  const builders = checkpoint.gates.find(({ id }) => id === 'BETA-CP-004');
+  assert.equal(builders.candidate_host_source, 'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS');
+  assert.equal(builders.offline_verifier_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
+  assert.equal(builders.offline_verifier_success_claim, 'PASS_CANDIDATE_HOSTS_ONLY');
   const lifecycle = checkpoint.gates.find(({ id }) => id === 'BETA-CP-002');
   assert.equal(
     lifecycle.status,
