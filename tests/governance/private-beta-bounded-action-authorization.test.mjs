@@ -14,7 +14,7 @@ const record = parseStrictJson(await readFile(resolve(
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 test('bounded action authorization binds the exact three reviewed proposals', async () => {
-  assert.equal(record.status, 'AUTHORIZED_NOT_CONSUMED');
+  assert.equal(record.status, 'PARTIALLY_CONSUMED_FAILED_CLOSED');
   assert.equal(record.authorization_source, 'EXPLICIT_REPOSITORY_OWNER_MESSAGE_IN_CODEX_TASK');
   assert.equal(record.authorized_actions.length, 3);
   for (const action of record.authorized_actions) {
@@ -25,6 +25,11 @@ test('bounded action authorization binds the exact three reviewed proposals', as
     assert.equal(action.attempt_limit, 1);
     assert.equal(action.retry_allowed, false);
   }
+  assert.deepEqual(record.authorized_actions.map(({ attempts_consumed }) => attempts_consumed), [
+    1,
+    1,
+    0,
+  ]);
 });
 
 test('authorization preserves the zero-cost and no-production boundary', () => {

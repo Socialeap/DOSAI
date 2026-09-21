@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T02:13:56-04:00",
+  "recorded_at": "2026-09-21T02:22:24-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -72,7 +72,19 @@
     },
     {
       "path": "docs/architecture/private-beta-bounded-action-authorization.json",
-      "sha256": "00710eb769086dcd26cd27f497681153815289f8eedccf8dbf36cf8a4e78191b"
+      "sha256": "2273f5ccf8ab2308c4a7661c8c2cb43533b3fb2733508ac85d3849dd520e806b"
+    },
+    {
+      "path": "docs/architecture/p3-v49-service-management-lifecycle-physical-proof-result.json",
+      "sha256": "4b0f7bdb29e81c45b6bfd1caf94b20a092f8f160aaa1e234ccdfe7b941003294"
+    },
+    {
+      "path": "docs/architecture/p3-debian-archive-trust-root-observation-result.json",
+      "sha256": "9e66158e1010848dd4d45ac10a52151c956ffe09020ece73f7a21136279a7d97"
+    },
+    {
+      "path": "docs/architecture/p3-native-builder-host-feasibility-observation-result.json",
+      "sha256": "ffa15260491e0f016931323f7cc31b5a0dd7cbdfa8e40145b1b90990f6385080"
     }
   ],
   "gates": [
@@ -86,16 +98,16 @@
     {
       "id": "BETA-CP-002",
       "title": "Prove the packaged macOS lifecycle once",
-      "status": "AUTHORIZED_NOT_RUN",
-      "blocking_evidence": "V49_PHYSICAL_PROOF_NOT_RUN",
-      "next_action": "RUN_ONE_EXACT_BOUNDED_SIGNED_APP_ATTEMPT"
+      "status": "DEPENDENCY_PREFLIGHT_VALIDATED_REAUTHORIZATION_REQUIRED",
+      "blocking_evidence": "RUNNER_DEPENDENCY_RESOLUTION_FAILED_BEFORE_APP_LAUNCH",
+      "next_action": "REQUEST_ONE_NEW_NO_RETRY_APP_LAUNCH_AUTHORIZATION_FOR_THE_PRESERVED_EXACT_PACKAGE"
     },
     {
       "id": "BETA-CP-003",
       "title": "Accept and observe the Debian archive trust roots",
-      "status": "AUTHORIZED_NOT_RUN",
-      "blocking_evidence": "TRUST_ROOT_SOURCE_NOT_ACCEPTED_OR_OBSERVED",
-      "next_action": "RUN_ONE_READ_ONLY_BOUNDED_OFFICIAL_SOURCE_OBSERVATION"
+      "status": "FAILED_CLOSED_REAUTHORIZATION_REQUIRED",
+      "blocking_evidence": "INDEPENDENT_REFERENCE_COMPARISON_INCOMPLETE",
+      "next_action": "SELECT_AUTHORITATIVE_INDEPENDENT_REFERENCE_FOR_STABLE_RELEASE_KEY"
     },
     {
       "id": "BETA-CP-004",
@@ -103,8 +115,8 @@
       "status": "MISSING_REQUIRED_EVIDENCE",
       "blocking_evidence": "QUALIFYING_INDEPENDENT_NATIVE_AMD64_BUILDER_RECEIPTS_IN_REPOSITORY_0_OF_2",
       "candidate_host_source": "TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS",
-      "host_observation_status": "AUTHORIZED_NOT_RUN",
-      "next_action": "RUN_ONE_ZERO_COST_TWO_HOST_FEASIBILITY_OBSERVATION_WITHOUT_BUILDER_EXECUTION"
+      "host_observation_status": "BLOCKED_BEFORE_WORKFLOW_CREATION",
+      "next_action": "OBTAIN_SEPARATE_AUTHORIZATION_FOR_DEFAULT_BRANCH_WORKFLOW_AVAILABILITY"
     },
     {
       "id": "BETA-CP-005",

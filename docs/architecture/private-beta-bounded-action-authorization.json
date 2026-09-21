@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_PRIVATE_BETA_BOUNDED_ACTION_AUTHORIZATION",
   "record_version": 1,
-  "status": "AUTHORIZED_NOT_CONSUMED",
+  "status": "PARTIALLY_CONSUMED_FAILED_CLOSED",
   "authorized_at": "2026-09-21T02:13:56-04:00",
   "authorization_source": "EXPLICIT_REPOSITORY_OWNER_MESSAGE_IN_CODEX_TASK",
   "operational_constraints": {
@@ -20,6 +20,8 @@
         "sha256": "29cbb721241ac5807158e510041465cb64b4f70aefa252d3712dbcdd3944b4fa"
       },
       "attempt_limit": 1,
+      "attempts_consumed": 1,
+      "outcome": "FAILED_BEFORE_APP_LAUNCH_NO_RECEIPT",
       "retry_allowed": false,
       "exact_subject_commit": "ec470119051e227409c4e994dc74743c7fe9e0bc"
     },
@@ -30,6 +32,8 @@
         "sha256": "006b60c83a6404b18ff4c5463d26f9d126d28efd74b97add9f2e5be40b82a266"
       },
       "attempt_limit": 1,
+      "attempts_consumed": 1,
+      "outcome": "FAILED_CLOSED_REFERENCE_COMPARISON_INCOMPLETE",
       "retry_allowed": false,
       "key_import_allowed": false
     },
@@ -40,6 +44,8 @@
         "sha256": "31add6a185eb79b5f95d0cc6f87c5a83b84f7bea7d0b9c9b5b380918c7bb89e5"
       },
       "attempt_limit": 1,
+      "attempts_consumed": 0,
+      "outcome": "BLOCKED_BEFORE_WORKFLOW_CREATION_DEFAULT_BRANCH_REQUIRED",
       "retry_allowed": false,
       "workflow_dispatch_only": true,
       "builder_execution_allowed": false

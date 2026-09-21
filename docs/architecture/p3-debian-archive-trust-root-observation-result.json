@@ -1,0 +1,48 @@
+{
+  "record_type": "P3_DEBIAN_ARCHIVE_TRUST_ROOT_OBSERVATION_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T02:22:24-04:00",
+  "status": "FAILED_CLOSED_REAUTHORIZATION_REQUIRED",
+  "authorization_path": "docs/architecture/private-beta-bounded-action-authorization.json",
+  "network_attempts": 1,
+  "automatic_retries": 0,
+  "key_observations": [
+    {
+      "purpose": "DEBIAN_13_ARCHIVE_AUTOMATIC",
+      "url": "https://ftp-master.debian.org/keys/archive-key-13.asc",
+      "size_bytes": 11861,
+      "sha256": "6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7",
+      "primary_fingerprint": "04B54C3CDCA79751B16BC6B5225629DF75B188BD",
+      "expected_fingerprint_matched": true
+    },
+    {
+      "purpose": "DEBIAN_13_SECURITY_ARCHIVE_AUTOMATIC",
+      "url": "https://ftp-master.debian.org/keys/archive-key-13-security.asc",
+      "size_bytes": 11873,
+      "sha256": "844c07d242db37f283afab9d5531270a0550841e90f9f1a9c3bd599722b808b7",
+      "primary_fingerprint": "5E04A1E3223A19A20706E20F9904613D4CCE68C6",
+      "expected_fingerprint_matched": true
+    },
+    {
+      "purpose": "DEBIAN_13_STABLE_RELEASE",
+      "url": "https://ftp-master.debian.org/keys/release-13.asc",
+      "size_bytes": 1384,
+      "sha256": "4d097bb93f83d731f475c5b92a0c2fcf108cfce1d4932792fca72d00b48d198b",
+      "primary_fingerprint": "41587F7DB8C774BCCF131416762F67A0B2C39DE4",
+      "expected_fingerprint_matched": true
+    }
+  ],
+  "independent_reference": {
+    "url": "https://lists.debian.org/debian-devel-announce/2025/04/msg00001.html",
+    "retrieval_attempted": true,
+    "comparison_result": "INCOMPLETE_NO_SUCCESS_RECEIPT"
+  },
+  "containment": {
+    "key_import_performed": false,
+    "signature_verification_performed": false,
+    "package_or_index_retrieval_performed": false,
+    "temporary_bytes_deleted_verified": true,
+    "retry_performed": false,
+    "further_observation_requires_new_owner_authorization": true
+  }
+}

@@ -59,6 +59,15 @@ export async function assessPrivateBetaReadiness() {
   const authorization = boundRecords.get(
     'docs/architecture/private-beta-bounded-action-authorization.json',
   );
+  const lifecycleResult = boundRecords.get(
+    'docs/architecture/p3-v49-service-management-lifecycle-physical-proof-result.json',
+  );
+  const trustRootResult = boundRecords.get(
+    'docs/architecture/p3-debian-archive-trust-root-observation-result.json',
+  );
+  const hostObservationResult = boundRecords.get(
+    'docs/architecture/p3-native-builder-host-feasibility-observation-result.json',
+  );
   if (
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
     trustRoot?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
@@ -70,9 +79,15 @@ export async function assessPrivateBetaReadiness() {
     !everyAuthorityIsFalse(builderHosts) ||
     p3AcceptanceProposal?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
     !everyAuthorityIsFalse(p3AcceptanceProposal) ||
-    authorization?.status !== 'AUTHORIZED_NOT_CONSUMED' ||
+    authorization?.status !== 'PARTIALLY_CONSUMED_FAILED_CLOSED' ||
     authorization?.operational_constraints?.maximum_charge_usd !== 0 ||
-    authorization?.operational_constraints?.retry_authorized !== false
+    authorization?.operational_constraints?.retry_authorized !== false ||
+    lifecycleResult?.status !== 'FAILED_CLOSED_REAUTHORIZATION_REQUIRED' ||
+    lifecycleResult?.runner_result?.app_launches !== 0 ||
+    trustRootResult?.status !== 'FAILED_CLOSED_REAUTHORIZATION_REQUIRED' ||
+    trustRootResult?.containment?.temporary_bytes_deleted_verified !== true ||
+    hostObservationResult?.status !== 'BLOCKED_BEFORE_WORKFLOW_CREATION' ||
+    hostObservationResult?.observed_effects?.workflow_dispatches !== 0
   ) {
     throw new Error('PRIVATE_BETA_AUTHORITY_STATE_CHANGED');
   }

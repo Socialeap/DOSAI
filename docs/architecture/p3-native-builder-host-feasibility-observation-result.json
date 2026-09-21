@@ -1,0 +1,23 @@
+{
+  "record_type": "P3_NATIVE_BUILDER_HOST_FEASIBILITY_OBSERVATION_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T02:22:24-04:00",
+  "status": "BLOCKED_BEFORE_WORKFLOW_CREATION",
+  "authorization_path": "docs/architecture/private-beta-bounded-action-authorization.json",
+  "blocker": {
+    "code": "WORKFLOW_DISPATCH_REQUIRES_WORKFLOW_ON_DEFAULT_BRANCH",
+    "official_reference": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onworkflow_dispatch",
+    "default_branch_change_authorized": false,
+    "pull_request_merge_authorized": false
+  },
+  "observed_effects": {
+    "workflow_created": false,
+    "workflow_dispatches": 0,
+    "runner_allocations": 0,
+    "provider_charge_usd": 0,
+    "checkout_performed": false,
+    "artifact_uploaded": false,
+    "builder_or_guest_execution_performed": false
+  },
+  "next_gate": "DEFAULT_BRANCH_WORKFLOW_AVAILABILITY_REQUIRES_SEPARATE_MERGE_OR_DIRECT_DEFAULT_BRANCH_AUTHORIZATION"
+}
