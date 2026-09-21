@@ -24,9 +24,9 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   });
   assert.equal(
     checkpoint.validated_source_baseline.head,
-    '7f2d52044fe28d6e8a9a24a10852fcbd9f386d44',
+    'dcea537c4ecd762b86a7a81fe84d7ae5dfb1ebd9',
   );
-  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 587);
+  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 597);
   assert.equal(checkpoint.fixture_overlay_validation.head, '0284f74d146f23581ab1833f817ac31883bcb96a');
   assert.equal(checkpoint.fixture_overlay_validation.tests_passed, 578);
   assert.equal(checkpoint.fixture_overlay_validation.integration_authorized, true);
