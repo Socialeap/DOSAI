@@ -130,7 +130,7 @@ test('v36 hash-binds exact implementation and successor-aware guard postimages',
       continue;
     }
     assert.equal(file.path, 'scripts/package.mjs');
-    assert.equal(observedHash, v37PackageScript.sha256);
+    assert.equal(observedHash, successors.expected(file.path, v37PackageScript.sha256));
   }
 });
 

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 import { loadProofObservabilitySuccessor } from './p3-proof-observability-successor.mjs';
 
 const recordPath = 'docs/architecture/process-ownership-v44.json';
@@ -35,6 +36,7 @@ export async function loadStatusProofSuccessor(
   root,
   readBytes = path => readFile(resolve(root, path)),
 ) {
+  const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root, readBytes);
   const observabilitySuccessor = await loadProofObservabilitySuccessor(root, readBytes);
   const load = async path => {
     const bytes = await readBytes(path);
@@ -46,7 +48,10 @@ export async function loadStatusProofSuccessor(
     assert.match(reference.sha256, /^[0-9a-f]{64}$/);
     assert.equal(
       sha256(await readBytes(reference.path)),
-      observabilitySuccessor.expected(reference.path, reference.sha256),
+      lifecycleSuccessor.expected(
+        reference.path,
+        observabilitySuccessor.expected(reference.path, reference.sha256),
+      ),
       reference.path,
     );
   };
@@ -89,7 +94,10 @@ export async function loadStatusProofSuccessor(
     assert.notEqual(file.post_sha256, file.pre_sha256, file.path);
     assert.equal(
       sha256(await readBytes(file.path)),
-      observabilitySuccessor.expected(file.path, file.post_sha256),
+      lifecycleSuccessor.expected(
+        file.path,
+        observabilitySuccessor.expected(file.path, file.post_sha256),
+      ),
       file.path,
     );
   }
@@ -98,7 +106,10 @@ export async function loadStatusProofSuccessor(
   const postimages = new Map(record.modified_files.map(file => [file.path, file.post_sha256]));
   return Object.freeze({
     expected(path, historicalHash) {
-      return observabilitySuccessor.expected(path, postimages.get(path) ?? historicalHash);
+      return lifecycleSuccessor.expected(
+        path,
+        observabilitySuccessor.expected(path, postimages.get(path) ?? historicalHash),
+      );
     },
   });
 }

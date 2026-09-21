@@ -151,9 +151,12 @@ test('v26 preserves registration, launch, and effect denials while v28 binds pac
   const v28Service = v28.native_helpers.find(({ id }) => id === 'execution-service');
   assert.equal(
     createHash('sha256').update(packageSource).digest('hex'),
-    v37.native_helpers.find(({ id }) => id === 'service-management-status-addon')
-      .physical_proof_implemented_files
-      .find(({ path }) => path === 'scripts/package.mjs').sha256,
+    successors.expected(
+      'scripts/package.mjs',
+      v37.native_helpers.find(({ id }) => id === 'service-management-status-addon')
+        .physical_proof_implemented_files
+        .find(({ path }) => path === 'scripts/package.mjs').sha256,
+    ),
   );
   for (const field of [
     'launch_agent_plist_active_declaration_authority',

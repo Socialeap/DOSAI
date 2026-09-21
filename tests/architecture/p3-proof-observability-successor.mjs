@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const recordPath = 'docs/architecture/process-ownership-v45.json';
 const modifiedPaths = Object.freeze([
@@ -43,6 +44,7 @@ export async function loadProofObservabilitySuccessor(
   root,
   readBytes = path => readFile(resolve(root, path)),
 ) {
+  const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root, readBytes);
   const load = async path => {
     const bytes = await readBytes(path);
     assert.ok(bytes.byteLength <= 262144, 'oversized governance record');
@@ -51,7 +53,11 @@ export async function loadProofObservabilitySuccessor(
   const exactReference = async reference => {
     assert.deepEqual(Object.keys(reference).sort(), ['path', 'sha256']);
     assert.match(reference.sha256, /^[0-9a-f]{64}$/);
-    assert.equal(sha256(await readBytes(reference.path)), reference.sha256, reference.path);
+    assert.equal(
+      sha256(await readBytes(reference.path)),
+      lifecycleSuccessor.expected(reference.path, reference.sha256),
+      reference.path,
+    );
   };
 
   const record = await load(recordPath);
@@ -118,14 +124,18 @@ export async function loadProofObservabilitySuccessor(
     assert.match(file.post_sha256, /^[0-9a-f]{64}$/);
     assert.equal(file.pre_sha256, historicalHashes.get(file.path), file.path);
     assert.notEqual(file.post_sha256, file.pre_sha256, file.path);
-    assert.equal(sha256(await readBytes(file.path)), file.post_sha256, file.path);
+    assert.equal(
+      sha256(await readBytes(file.path)),
+      lifecycleSuccessor.expected(file.path, file.post_sha256),
+      file.path,
+    );
   }
   for (const file of record.support_files) await exactReference(file);
 
   const postimages = new Map(record.modified_files.map(file => [file.path, file.post_sha256]));
   return Object.freeze({
     expected(path, historicalHash) {
-      return postimages.get(path) ?? historicalHash;
+      return lifecycleSuccessor.expected(path, postimages.get(path) ?? historicalHash);
     },
   });
 }

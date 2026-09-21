@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 import { loadStatusProofSuccessor } from './p3-status-proof-successor.mjs';
 
 export const guardedPaths = Object.freeze([22, 24, 26, 27, 28, 29, 30, 36, 37, 42]
@@ -32,6 +33,7 @@ const recordKeys = [
 // Architecture-test support only. Passing a candidate test does not accept a phase or grant effects.
 export async function loadGuardSuccessors(root, readBytes = path => readFile(resolve(root, path))) {
   let proofSuccessor;
+  const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root, readBytes);
   const load = async path => {
     const bytes = await readBytes(path);
     assert.ok(bytes.byteLength <= 262144, 'oversized governance record');
@@ -42,7 +44,10 @@ export async function loadGuardSuccessors(root, readBytes = path => readFile(res
     assert.match(file.sha256, /^[0-9a-f]{64}$/);
     assert.equal(
       hash(await readBytes(file.path)),
-      proofSuccessor.expected(file.path, file.sha256),
+      lifecycleSuccessor.expected(
+        file.path,
+        proofSuccessor.expected(file.path, file.sha256),
+      ),
       file.path,
     );
   };
@@ -100,8 +105,8 @@ export async function loadGuardSuccessors(root, readBytes = path => readFile(res
   }
   return Object.freeze({
     expected(path, historicalHash) {
-      if (path === v20Path) return v20Hash;
-      return postimages.get(path) ?? historicalHash;
+      if (path === v20Path) return lifecycleSuccessor.expected(path, v20Hash);
+      return lifecycleSuccessor.expected(path, postimages.get(path) ?? historicalHash);
     },
   });
 }

@@ -18,9 +18,16 @@ const manifest = JSON.parse(
 const v37 = JSON.parse(
   await readFile(join(root, 'docs/architecture/process-ownership-v37.json'), 'utf8'),
 );
+const v49 = JSON.parse(
+  await readFile(join(root, 'docs/architecture/process-ownership-v49.json'), 'utf8'),
+);
 const v37StatusProofEntry = resolve(
   root,
   'src/main/execution/service-management-status-proof-entry.ts',
+);
+const v49LifecycleProofEntry = resolve(
+  root,
+  'src/main/execution/service-management-lifecycle-proof-entry.ts',
 );
 
 function containsPath(parent, child) {
@@ -216,6 +223,12 @@ test('source imports follow declared first-party and external allowlists', async
             );
             return v37Main.service_management_status_physical_proof_allowed_external_imports;
           })()
+          : path === v49LifecycleProofEntry
+            ? (() => {
+              assert.equal(v49.status, 'IMPLEMENTED_STANDING_AUTHORIZATION_SOURCE_ONLY');
+              assert.equal(v49.runtime_status, 'NO_GO');
+              return ['electron', 'node:module', 'node:path'];
+            })()
           : owner.allowed_external_imports;
         assert.ok(
           allowedExternalImports.includes(specifier),

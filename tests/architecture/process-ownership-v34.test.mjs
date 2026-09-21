@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v33Path = resolve(root, 'docs/architecture/process-ownership-v33.json');
 const v33Bytes = await readFile(v33Path);
 const v33 = JSON.parse(v33Bytes);
@@ -104,7 +106,11 @@ test('v34 hash-binds the exact compile implementation and successor-aware guards
     ...addon.compile_proof_implemented_files,
     ...addon.compile_proof_guard_remediations,
   ]) {
-    assert.equal(await hashFile(file.path), successorFiles.get(file.path) ?? file.sha256, file.path);
+    assert.equal(
+      await hashFile(file.path),
+      lifecycleSuccessor.expected(file.path, successorFiles.get(file.path) ?? file.sha256),
+      file.path,
+    );
   }
 });
 

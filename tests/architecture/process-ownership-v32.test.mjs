@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v31Path = resolve(root, 'docs/architecture/process-ownership-v31.json');
 const v31Bytes = await readFile(v31Path);
 const v31 = JSON.parse(v31Bytes);
@@ -167,13 +169,25 @@ test('v32 binds the source-only native and injection-only Main implementation wi
     const successorDigest = successorFiles.get(file.path);
     if (successorDigest) {
       assert.notEqual(currentDigest, file.sha256, file.path);
-      assert.equal(currentDigest, successorDigest, file.path);
+      assert.equal(
+        currentDigest,
+        lifecycleSuccessor.expected(file.path, successorDigest),
+        file.path,
+      );
     } else {
-      assert.equal(currentDigest, file.sha256, file.path);
+      assert.equal(
+        currentDigest,
+        lifecycleSuccessor.expected(file.path, file.sha256),
+        file.path,
+      );
     }
   }
   for (const file of addon.guard_remediations) {
-    assert.equal(await hashFile(file.path), successorGuards.get(file.path) ?? file.sha256, file.path);
+    assert.equal(
+      await hashFile(file.path),
+      lifecycleSuccessor.expected(file.path, successorGuards.get(file.path) ?? file.sha256),
+      file.path,
+    );
   }
 });
 
@@ -246,6 +260,10 @@ test('v32 preserves every accepted immutable adapter input', async () => {
       .map((file) => [file.path, file.sha256]),
   );
   for (const file of after.immutable_inputs) {
-    assert.equal(await hashFile(file.path), successorFiles.get(file.path) ?? file.sha256, file.path);
+    assert.equal(
+      await hashFile(file.path),
+      lifecycleSuccessor.expected(file.path, successorFiles.get(file.path) ?? file.sha256),
+      file.path,
+    );
   }
 });

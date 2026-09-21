@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 import { loadProofObservabilitySuccessor } from './p3-proof-observability-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -15,9 +16,13 @@ const altered = change => {
 };
 
 test('v45 binds only source-level proof attribution and grants no physical authority', async () => {
+  const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
   const successor = await loadProofObservabilitySuccessor(root);
   for (const file of pristine.modified_files) {
-    assert.equal(successor.expected(file.path, file.pre_sha256), file.post_sha256);
+    assert.equal(
+      successor.expected(file.path, file.pre_sha256),
+      lifecycleSuccessor.expected(file.path, file.post_sha256),
+    );
   }
   assert.equal(successor.expected('src/main/index.ts', 'unchanged'), 'unchanged');
   assert.equal(pristine.observed_attempt.attempt_count, 1);

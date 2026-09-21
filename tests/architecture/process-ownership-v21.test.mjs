@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v20Path = resolve(root, 'docs/architecture/process-ownership-v20.json');
 const v21Path = resolve(root, 'docs/architecture/process-ownership-v21.json');
 const v20Bytes = await readFile(v20Path);
@@ -135,9 +137,13 @@ test('v21 hash-locks every accepted executable-candidate input', async () => {
     const digest = await hashFile(file.path);
     if (successorFiles.has(file.path)) {
       assert.notEqual(digest, file.sha256, file.path);
-      assert.equal(digest, successorFiles.get(file.path), file.path);
+      assert.equal(
+        digest,
+        lifecycleSuccessor.expected(file.path, successorFiles.get(file.path)),
+        file.path,
+      );
     } else {
-      assert.equal(digest, file.sha256, file.path);
+      assert.equal(digest, lifecycleSuccessor.expected(file.path, file.sha256), file.path);
     }
   }
 });

@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 
 import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mjs';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const recordPath = 'docs/architecture/process-ownership-v48.json';
@@ -106,9 +107,14 @@ async function loadRecord(readBytes = read) {
 }
 
 async function assertReference(reference, readBytes = read) {
+  const successor = await loadLifecycleCompositionSuccessor(root, readBytes);
   assert.deepEqual(Object.keys(reference).sort(), ['path', 'sha256']);
   assert.match(reference.sha256, /^[0-9a-f]{64}$/);
-  assert.equal(sha256(await readBytes(reference.path)), reference.sha256, reference.path);
+  assert.equal(
+    sha256(await readBytes(reference.path)),
+    successor.expected(reference.path, reference.sha256),
+    reference.path,
+  );
 }
 
 test('v48 binds the exact inert lifecycle proof entry and test over v47', async () => {
@@ -117,14 +123,11 @@ test('v48 binds the exact inert lifecycle proof entry and test over v47', async 
   for (const reference of record.implementation_files) await assertReference(reference);
 });
 
-test('v48 lifecycle proof entry remains absent from all build and package selectors', async () => {
+test('v48 lifecycle proof entry remains absent from normal app entries and has one successor selector', async () => {
   for (const path of [
     'src/main/index.ts',
     'src/preload/index.ts',
     'src/renderer/App.tsx',
-    'scripts/build.mjs',
-    'scripts/package.mjs',
-    'vite.main.config.ts',
   ]) {
     assert.equal(
       (await read(path)).toString('utf8').includes('service-management-lifecycle-proof-entry'),
@@ -132,6 +135,21 @@ test('v48 lifecycle proof entry remains absent from all build and package select
       path,
     );
   }
+  assert.equal(
+    (await read('scripts/build.mjs')).toString('utf8')
+      .includes('service-management-lifecycle-proof'),
+    true,
+  );
+  assert.equal(
+    (await read('scripts/package.mjs')).toString('utf8')
+      .includes('--signed-app-service-management-lifecycle-proof-fixture'),
+    true,
+  );
+  assert.equal(
+    (await read('vite.main.config.ts')).toString('utf8')
+      .includes('service-management-lifecycle-proof-entry'),
+    true,
+  );
 });
 
 test('v48 rejects lineage, limits, reachability, authority, and runtime expansion', async () => {

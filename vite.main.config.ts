@@ -7,11 +7,17 @@ const serviceManagementStatusProofEntry = resolve(
   root,
   'src/main/execution/service-management-status-proof-entry.ts',
 );
+const serviceManagementLifecycleProofEntry = resolve(
+  root,
+  'src/main/execution/service-management-lifecycle-proof-entry.ts',
+);
 
 export default defineConfig(({ mode }) => {
-  const entry = mode === 'service-management-status-proof'
-    ? serviceManagementStatusProofEntry
-    : standardMainEntry;
+  const entry = mode === 'service-management-lifecycle-proof'
+    ? serviceManagementLifecycleProofEntry
+    : mode === 'service-management-status-proof'
+      ? serviceManagementStatusProofEntry
+      : standardMainEntry;
   return {
     build: {
       emptyOutDir: false,

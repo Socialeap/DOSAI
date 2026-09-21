@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 import { guardedPaths, loadGuardSuccessors } from './p3-guard-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -15,14 +16,25 @@ const altered = change => {
 };
 
 test('v43 proves exact accepted lineage, ten bounded postimages and no runtime authority', async () => {
+  const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
   const successor = await loadGuardSuccessors(root);
   assert.equal(guardedPaths.length, 10);
   assert.deepEqual(guardedPaths, [22, 24, 26, 27, 28, 29, 30, 36, 37, 42]
     .map(version => `tests/architecture/process-ownership-v${version}.test.mjs`));
-  for (const file of pristine.implemented_files) assert.equal(successor.expected(file.path, 'old'), file.sha256);
+  for (const file of pristine.implemented_files) {
+    assert.equal(
+      successor.expected(file.path, 'old'),
+      lifecycleSuccessor.expected(file.path, file.sha256),
+    );
+  }
   assert.equal(successor.expected('src/main/index.ts', 'unchanged'), 'unchanged');
-  assert.equal(successor.expected('tests/architecture/process-ownership-v20.test.mjs', 'old'),
-    '91f4e30d01f03bd19d203341107cded4c5cccb4f0512453e58de826f6f8721f7');
+  assert.equal(
+    successor.expected('tests/architecture/process-ownership-v20.test.mjs', 'old'),
+    lifecycleSuccessor.expected(
+      'tests/architecture/process-ownership-v20.test.mjs',
+      '91f4e30d01f03bd19d203341107cded4c5cccb4f0512453e58de826f6f8721f7',
+    ),
+  );
 });
 
 test('v43 rejects widened, missing, duplicate and traversal path sets before reading them', async () => {
@@ -74,10 +86,12 @@ test('v43 rejects any changed guard or support postimage, accepted v20 or unaffe
 test('v43 rejects malformed and duplicate-key records without opening proposed postimage paths', async () => {
   for (const source of ['{', '{"schema_version":43,"schema_version":43}', 'x'.repeat(262145)]) {
     const opened = [];
-    await assert.rejects(loadGuardSuccessors(root, path => {
+    await assert.rejects(loadGuardSuccessors(root, async path => {
       opened.push(path);
-      return Buffer.from(source);
+      return path === recordPath ? Buffer.from(source) : read(path);
     }));
-    assert.deepEqual(opened, [recordPath]);
+    assert.equal(opened.at(-1), recordPath);
+    assert.equal(opened.includes('../../outside'), false);
+    assert.equal(opened.includes('src/main/index.ts'), false);
   }
 });

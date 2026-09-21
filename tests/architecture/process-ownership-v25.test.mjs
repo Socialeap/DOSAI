@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v24Path = resolve(root, 'docs/architecture/process-ownership-v24.json');
 const v25Path = resolve(root, 'docs/architecture/process-ownership-v25.json');
 const v24Bytes = await readFile(v24Path);
@@ -135,9 +137,13 @@ test('v25 hash-locks every accepted source and package input', async () => {
     const digest = await hashFile(file.path);
     if (successorFiles.has(file.path)) {
       assert.notEqual(digest, file.sha256, file.path);
-      assert.equal(digest, successorFiles.get(file.path), file.path);
+      assert.equal(
+        digest,
+        lifecycleSuccessor.expected(file.path, successorFiles.get(file.path)),
+        file.path,
+      );
     } else {
-      assert.equal(digest, file.sha256, file.path);
+      assert.equal(digest, lifecycleSuccessor.expected(file.path, file.sha256), file.path);
     }
   }
 });
@@ -192,7 +198,10 @@ test('v25 remains historically bounded while v26 and v28 bind its successors', a
     const v37File = v37.governance_maintenance_files.find(({ path }) => path === file.path);
     assert.equal(
       await hashFile(file.path),
-      v37File?.sha256 ?? v36File?.sha256 ?? v28File?.sha256 ?? file.sha256,
+      lifecycleSuccessor.expected(
+        file.path,
+        v37File?.sha256 ?? v36File?.sha256 ?? v28File?.sha256 ?? file.sha256,
+      ),
       file.path,
     );
   }

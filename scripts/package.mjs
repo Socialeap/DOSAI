@@ -35,6 +35,11 @@ import {
   secureEnclaveProofHelperName,
 } from './secure-enclave-helper.mjs';
 import {
+  buildServiceManagementLifecycleAddon,
+  serviceManagementLifecycleAddonIdentifier,
+  serviceManagementLifecycleAddonName,
+} from './service-management-lifecycle-addon.mjs';
+import {
   buildServiceManagementStatusAddon,
   serviceManagementStatusAddonIdentifier,
   serviceManagementStatusAddonName,
@@ -80,7 +85,11 @@ const staticStatusAddonArgument =
   '--static-named-service-launch-agent-status-addon-fixture';
 const signedAppStatusProofArgument =
   '--signed-app-service-management-status-proof-fixture';
+const signedAppLifecycleProofArgument =
+  '--signed-app-service-management-lifecycle-proof-fixture';
 const staticStatusAddonRelativePath = `Contents/Resources/${serviceManagementStatusAddonName}`;
+const staticLifecycleAddonRelativePath =
+  `Contents/Resources/${serviceManagementLifecycleAddonName}`;
 const staticNamedServiceLaunchAgentValue = Object.freeze({
   Label: watchdogNamedServiceFixtureIdentifier,
   BundleProgram: staticNamedServiceRelativePath,
@@ -98,6 +107,8 @@ function admitPackageArguments(arguments_) {
       staticStatusAddonFixture: false,
       staticWatchdogFixture: false,
       signedAppStatusProofFixture: false,
+      staticLifecycleAddonFixture: false,
+      signedAppLifecycleProofFixture: false,
     });
   }
   if (arguments_.length === 1 && arguments_[0] === staticWatchdogArgument) {
@@ -108,6 +119,8 @@ function admitPackageArguments(arguments_) {
       staticStatusAddonFixture: false,
       staticWatchdogFixture: true,
       signedAppStatusProofFixture: false,
+      staticLifecycleAddonFixture: false,
+      signedAppLifecycleProofFixture: false,
     });
   }
   if (arguments_.length === 1 && arguments_[0] === staticNamedServiceArgument) {
@@ -118,6 +131,8 @@ function admitPackageArguments(arguments_) {
       staticStatusAddonFixture: false,
       staticWatchdogFixture: true,
       signedAppStatusProofFixture: false,
+      staticLifecycleAddonFixture: false,
+      signedAppLifecycleProofFixture: false,
     });
   }
   if (
@@ -131,6 +146,8 @@ function admitPackageArguments(arguments_) {
       staticStatusAddonFixture: false,
       staticWatchdogFixture: true,
       signedAppStatusProofFixture: false,
+      staticLifecycleAddonFixture: false,
+      signedAppLifecycleProofFixture: false,
     });
   }
   if (arguments_.length === 1 && arguments_[0] === staticStatusAddonArgument) {
@@ -141,6 +158,8 @@ function admitPackageArguments(arguments_) {
       staticStatusAddonFixture: true,
       staticWatchdogFixture: true,
       signedAppStatusProofFixture: false,
+      staticLifecycleAddonFixture: false,
+      signedAppLifecycleProofFixture: false,
     });
   }
   if (arguments_.length === 1 && arguments_[0] === signedAppStatusProofArgument) {
@@ -151,6 +170,23 @@ function admitPackageArguments(arguments_) {
       staticStatusAddonFixture: true,
       staticWatchdogFixture: true,
       signedAppStatusProofFixture: true,
+      staticLifecycleAddonFixture: false,
+      signedAppLifecycleProofFixture: false,
+    });
+  }
+  if (
+    arguments_.length < 2
+    && arguments_[0] === signedAppLifecycleProofArgument
+  ) {
+    return Object.freeze({
+      anonymousWatchdogFixture: false,
+      staticNamedServiceLaunchAgentFixture: true,
+      staticNamedServiceFixture: true,
+      staticStatusAddonFixture: false,
+      staticWatchdogFixture: true,
+      signedAppStatusProofFixture: false,
+      staticLifecycleAddonFixture: true,
+      signedAppLifecycleProofFixture: true,
     });
   }
   throw new Error('DOSAI_PACKAGE_ARGUMENTS_0001');
@@ -231,9 +267,11 @@ async function checksumVerifiedElectronZipDirectory() {
 }
 
 await buildApplication(
-  packageMode.signedAppStatusProofFixture
-    ? 'service-management-status-proof'
-    : 'production',
+  packageMode.signedAppLifecycleProofFixture
+    ? 'service-management-lifecycle-proof'
+    : packageMode.signedAppStatusProofFixture
+      ? 'service-management-status-proof'
+      : 'production',
 );
 await rm(outDir, { force: true, recursive: true });
 await buildSecureEnclaveProofHelper(builtSecureEnclaveHelper);
@@ -281,6 +319,7 @@ const packagedNamedServiceLaunchAgent = join(
   staticNamedServiceLaunchAgentRelativePath,
 );
 const packagedStatusAddon = join(appBundle, staticStatusAddonRelativePath);
+const packagedLifecycleAddon = join(appBundle, staticLifecycleAddonRelativePath);
 
 await Promise.all([
   access(executable),
@@ -460,6 +499,11 @@ if (packageMode.staticNamedServiceFixture) {
   } else {
     await assert.rejects(access(packagedStatusAddon));
   }
+  if (packageMode.staticLifecycleAddonFixture) {
+    await buildServiceManagementLifecycleAddon(packagedLifecycleAddon);
+  } else {
+    await assert.rejects(access(packagedLifecycleAddon));
+  }
 
   await codesign([
     '--force',
@@ -470,8 +514,14 @@ if (packageMode.staticNamedServiceFixture) {
     appBundle,
   ]);
   await codesign(['--verify', '--strict', '--verbose=2', packagedNamedServiceFixture]);
-  if (packageMode.staticStatusAddonFixture) {
-    await codesign(['--verify', '--strict', '--verbose=2', packagedStatusAddon]);
+  const packagedSelectedAddon = packageMode.staticLifecycleAddonFixture
+    ? packagedLifecycleAddon
+    : packagedStatusAddon;
+  const selectedAddonIdentifier = packageMode.staticLifecycleAddonFixture
+    ? serviceManagementLifecycleAddonIdentifier
+    : serviceManagementStatusAddonIdentifier;
+  if (packageMode.staticStatusAddonFixture || packageMode.staticLifecycleAddonFixture) {
+    await codesign(['--verify', '--strict', '--verbose=2', packagedSelectedAddon]);
   }
   await codesign(['--verify', '--deep', '--strict', '--verbose=2', appBundle]);
 
@@ -481,8 +531,8 @@ if (packageMode.staticNamedServiceFixture) {
   const appRequirement =
     `identifier "${appIdentifier}" and anchor apple generic `
     + `and certificate leaf[subject.OU] = "${staticNamedServiceTeamIdentifier}"`;
-  const statusAddonRequirement =
-    `identifier "${serviceManagementStatusAddonIdentifier}" and anchor apple generic `
+  const selectedAddonRequirement =
+    `identifier "${selectedAddonIdentifier}" and anchor apple generic `
     + `and certificate leaf[subject.OU] = "${staticNamedServiceTeamIdentifier}"`;
   await codesign([
     '--verify',
@@ -499,13 +549,13 @@ if (packageMode.staticNamedServiceFixture) {
     `=${appRequirement}`,
     appBundle,
   ]);
-  if (packageMode.staticStatusAddonFixture) {
+  if (packageMode.staticStatusAddonFixture || packageMode.staticLifecycleAddonFixture) {
     await codesign([
       '--verify',
       '--strict',
       '-R',
-      `=${statusAddonRequirement}`,
-      packagedStatusAddon,
+      `=${selectedAddonRequirement}`,
+      packagedSelectedAddon,
     ]);
   }
 
@@ -548,7 +598,7 @@ if (packageMode.staticNamedServiceFixture) {
     assert.equal(libraries.stdout.includes(forbiddenFramework), false, forbiddenFramework);
   }
 
-  if (packageMode.staticStatusAddonFixture) {
+  if (packageMode.staticStatusAddonFixture || packageMode.staticLifecycleAddonFixture) {
     const [
       addonSigning,
       addonArchitectures,
@@ -556,23 +606,23 @@ if (packageMode.staticNamedServiceFixture) {
       addonLibraries,
       addonSymbols,
     ] = await Promise.all([
-      signingDescription(packagedStatusAddon),
-      execFileAsync('/usr/bin/lipo', ['-archs', packagedStatusAddon], {
+      signingDescription(packagedSelectedAddon),
+      execFileAsync('/usr/bin/lipo', ['-archs', packagedSelectedAddon], {
         encoding: 'utf8',
       }),
-      execFileAsync('/usr/bin/xcrun', ['vtool', '-show-build', packagedStatusAddon], {
+      execFileAsync('/usr/bin/xcrun', ['vtool', '-show-build', packagedSelectedAddon], {
         encoding: 'utf8',
       }),
-      execFileAsync('/usr/bin/otool', ['-L', packagedStatusAddon], {
+      execFileAsync('/usr/bin/otool', ['-L', packagedSelectedAddon], {
         encoding: 'utf8',
       }),
-      execFileAsync('/usr/bin/nm', ['-g', packagedStatusAddon], {
+      execFileAsync('/usr/bin/nm', ['-g', packagedSelectedAddon], {
         encoding: 'utf8',
       }),
     ]);
     assert.match(
       addonSigning,
-      new RegExp(`Identifier=${serviceManagementStatusAddonIdentifier}`),
+      new RegExp(`Identifier=${selectedAddonIdentifier}`),
     );
     assert.match(
       addonSigning,
@@ -595,6 +645,7 @@ if (packageMode.staticNamedServiceFixture) {
       [
         '_napi_create_function',
         '_napi_create_string_utf8',
+        ...(packageMode.staticLifecycleAddonFixture ? ['_napi_get_boolean'] : []),
         '_napi_get_cb_info',
         '_napi_set_named_property',
       ],
@@ -644,6 +695,14 @@ if (packageMode.staticStatusAddonFixture) {
     `Verified static Service Management status addon ${staticStatusAddonRelativePath} without loading or invocation`,
   );
 }
+if (packageMode.staticLifecycleAddonFixture) {
+  console.log(
+    `Verified static Service Management lifecycle addon ${staticLifecycleAddonRelativePath} without loading or invocation`,
+  );
+}
 if (packageMode.signedAppStatusProofFixture) {
   console.log('Packaged the signed-app status-proof bundle without launching it');
+}
+if (packageMode.signedAppLifecycleProofFixture) {
+  console.log('Packaged the signed-app lifecycle-proof bundle without launching it');
 }

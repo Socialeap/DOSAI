@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v30Path = resolve(root, 'docs/architecture/process-ownership-v30.json');
 const v30Bytes = await readFile(v30Path);
 const v30 = JSON.parse(v30Bytes);
@@ -192,7 +194,11 @@ test('v31 hash-locks inputs while v32 and v34 bind exact implemented successor f
       .map((file) => [file.path, file.sha256]),
   );
   for (const file of addon.immutable_inputs) {
-    assert.equal(await hashFile(file.path), packageSuccessors.get(file.path) ?? file.sha256, file.path);
+    assert.equal(
+      await hashFile(file.path),
+      lifecycleSuccessor.expected(file.path, packageSuccessors.get(file.path) ?? file.sha256),
+      file.path,
+    );
   }
   assert.deepEqual(v32.supersedes, {
     path: 'docs/architecture/process-ownership-v31.json',

@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 
 import {
@@ -11,6 +12,7 @@ import type { ServiceManagementStatusObservation } from './service-management-st
 
 const resultPrefix = 'DOSAI_SERVICE_MANAGEMENT_LIFECYCLE_PROOF_V1:';
 const lifecycleAddonName = 'dosai-service-management-lifecycle.node';
+const requireFromProofEntry = createRequire(__filename);
 const nativeAddonLoadFailure = 'NATIVE_ADDON_LOAD_FAILED' as const;
 const nativeCallContractFailure = 'NATIVE_CALL_CONTRACT_FAILED' as const;
 const electronReadinessFailure = 'ELECTRON_READINESS_FAILED' as const;
@@ -105,7 +107,7 @@ function uncertainLifecycleFailure(): LifecycleProofReceipt {
 }
 
 function loadFixedLifecycleAddon(): unknown {
-  return module.require(join(process.resourcesPath, lifecycleAddonName));
+  return requireFromProofEntry(join(process.resourcesPath, lifecycleAddonName));
 }
 
 function admitNativeBinding(candidate: unknown): AdmittedNativeBinding | undefined {

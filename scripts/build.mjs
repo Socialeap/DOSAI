@@ -5,6 +5,7 @@ import { build } from 'vite';
 const root = resolve(import.meta.dirname, '..');
 const applicationBuildModes = new Set([
   'production',
+  'service-management-lifecycle-proof',
   'service-management-status-proof',
 ]);
 

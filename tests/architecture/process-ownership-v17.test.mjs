@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { access, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v16Path = resolve(root, 'docs/architecture/process-ownership-v16.json');
 const v17Path = resolve(root, 'docs/architecture/process-ownership-v17.json');
 const v16Bytes = await readFile(v16Path);
@@ -132,9 +134,13 @@ test('v17 hash-locks accepted inputs and the v19 transport preimage', async () =
       assert.notEqual(digest, file.sha256, file.path);
     } else if (successorFiles.has(file.path)) {
       assert.notEqual(digest, file.sha256, file.path);
-      assert.equal(digest, successorFiles.get(file.path), file.path);
+      assert.equal(
+        digest,
+        lifecycleSuccessor.expected(file.path, successorFiles.get(file.path)),
+        file.path,
+      );
     } else {
-      assert.equal(digest, file.sha256, file.path);
+      assert.equal(digest, lifecycleSuccessor.expected(file.path, file.sha256), file.path);
     }
   }
 });

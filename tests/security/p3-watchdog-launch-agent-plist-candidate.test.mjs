@@ -6,6 +6,10 @@ import test from 'node:test';
 import plist from 'plist';
 
 const root = resolve(import.meta.dirname, '../..');
+const { loadLifecycleCompositionSuccessor } = await import(
+  '../architecture/p3-lifecycle-composition-successor.mjs'
+);
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const candidatePath = resolve(
   root,
   'native-helpers/execution-service/com.socialeap.dosai.execution-service-fixture.plist',
@@ -148,8 +152,11 @@ test('source declaration is composed only by the exact v28 mode and remains effe
     createHash('sha256')
       .update(packageSource)
       .digest('hex'),
-    v37Addon.physical_proof_implemented_files
-      .find(({ path }) => path === 'scripts/package.mjs').sha256,
+    lifecycleSuccessor.expected(
+      'scripts/package.mjs',
+      v37Addon.physical_proof_implemented_files
+        .find(({ path }) => path === 'scripts/package.mjs').sha256,
+    ),
   );
   assert.doesNotMatch(
     packageSource,

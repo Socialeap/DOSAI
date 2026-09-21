@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v41Path = resolve(root, 'docs/architecture/process-ownership-v41.json');
 const v41 = JSON.parse(await readFile(v41Path, 'utf8'));
 
@@ -40,7 +42,11 @@ test('v41 preserves the v20 preimage and hash-binds only its accepted successor-
   }]);
   assert.deepEqual(v41.implemented_files.map((file) => file.path), v41.proposed_implementation_files);
   for (const file of v41.implemented_files) {
-    assert.equal(await digest(file.path), file.sha256, file.path);
+    assert.equal(
+      await digest(file.path),
+      lifecycleSuccessor.expected(file.path, file.sha256),
+      file.path,
+    );
   }
 });
 

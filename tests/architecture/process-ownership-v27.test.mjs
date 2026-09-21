@@ -181,9 +181,12 @@ test('v27 remains bounded while v28 records implementation without effects', () 
   const v28Service = v28.native_helpers.find(({ id }) => id === 'execution-service');
   assert.equal(
     createHash('sha256').update(packageSource).digest('hex'),
-    v37.native_helpers.find(({ id }) => id === 'service-management-status-addon')
-      .physical_proof_implemented_files
-      .find(({ path }) => path === 'scripts/package.mjs').sha256,
+    successors.expected(
+      'scripts/package.mjs',
+      v37.native_helpers.find(({ id }) => id === 'service-management-status-addon')
+        .physical_proof_implemented_files
+        .find(({ path }) => path === 'scripts/package.mjs').sha256,
+    ),
   );
   for (const field of [
     'launch_agent_static_package_source_observed',

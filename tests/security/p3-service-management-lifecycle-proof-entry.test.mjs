@@ -94,14 +94,21 @@ async function evaluateBundle(bundlePath, { load, ready = true }) {
   const requireStub = identifier => {
     if (identifier === 'electron') return { app };
     if (identifier === 'node:path') return nodePath;
+    if (identifier === 'node:module') {
+      return {
+        createRequire(filename) {
+          assert.equal(filename, bundlePath);
+          return path => {
+            loads.push(path);
+            return load();
+          };
+        },
+      };
+    }
     throw new Error(`Unexpected bundled require: ${identifier}`);
   };
   const moduleStub = {
     exports: {},
-    require(path) {
-      loads.push(path);
-      return load();
-    },
   };
   const processStub = Object.freeze({
     resourcesPath,
@@ -132,10 +139,15 @@ async function evaluateBundle(bundlePath, { load, ready = true }) {
   return { exits, loads, receipt, writes };
 }
 
-test('lifecycle proof entry is fixed, one-shot, and absent from every reachable entrypoint', async () => {
+test('lifecycle proof entry is fixed, one-shot, and limited to dedicated proof selectors', async () => {
   assert.match(entrySource, /^import \{ app \} from 'electron';$/m);
+  assert.match(entrySource, /^import \{ createRequire \} from 'node:module';$/m);
   assert.match(entrySource, /^import \{ join \} from 'node:path';$/m);
-  assert.match(entrySource, /module\.require\(join\(process\.resourcesPath, lifecycleAddonName\)\)/);
+  assert.match(entrySource, /createRequire\(__filename\)/);
+  assert.match(
+    entrySource,
+    /requireFromProofEntry\(join\(process\.resourcesPath, lifecycleAddonName\)\)/,
+  );
   assert.match(entrySource, /dosai-service-management-lifecycle\.node/);
   assert.match(entrySource, /createServiceManagementLifecycleCore\(monitoredBinding\)\.exercise\(\)/);
   assert.match(
@@ -154,9 +166,6 @@ test('lifecycle proof entry is fixed, one-shot, and absent from every reachable 
     'src/main/index.ts',
     'src/preload/index.ts',
     'src/renderer/App.tsx',
-    'scripts/build.mjs',
-    'scripts/package.mjs',
-    'vite.main.config.ts',
   ]) {
     assert.equal(
       (await readFile(nodePath.resolve(root, path), 'utf8'))
@@ -165,6 +174,18 @@ test('lifecycle proof entry is fixed, one-shot, and absent from every reachable 
       path,
     );
   }
+  assert.match(
+    await readFile(nodePath.resolve(root, 'vite.main.config.ts'), 'utf8'),
+    /service-management-lifecycle-proof-entry\.ts/,
+  );
+  assert.match(
+    await readFile(nodePath.resolve(root, 'scripts/build.mjs'), 'utf8'),
+    /service-management-lifecycle-proof/,
+  );
+  assert.match(
+    await readFile(nodePath.resolve(root, 'scripts/package.mjs'), 'utf8'),
+    /--signed-app-service-management-lifecycle-proof-fixture/,
+  );
 });
 
 test('inert bundle performs one clean lifecycle sequence with exact zero-argument calls', async () => {

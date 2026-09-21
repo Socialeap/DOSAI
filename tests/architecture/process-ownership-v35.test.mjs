@@ -3,8 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { loadLifecycleCompositionSuccessor } from './p3-lifecycle-composition-successor.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const lifecycleSuccessor = await loadLifecycleCompositionSuccessor(root);
 const v34Path = resolve(root, 'docs/architecture/process-ownership-v34.json');
 const v34Bytes = await readFile(v34Path);
 const v34 = JSON.parse(v34Bytes);
@@ -145,7 +147,11 @@ test('v35 binds accepted inputs while v36 binds the exact signed package success
     ...v37.governance_maintenance_files,
   ].map((file) => [file.path, file.sha256]));
   for (const file of addon.static_package_immutable_inputs) {
-    assert.equal(await hashFile(file.path), successorFiles.get(file.path) ?? file.sha256, file.path);
+    assert.equal(
+      await hashFile(file.path),
+      lifecycleSuccessor.expected(file.path, successorFiles.get(file.path) ?? file.sha256),
+      file.path,
+    );
   }
   assert.deepEqual(addon.static_package_proposed_files, [
     'scripts/service-management-status-addon.mjs',
