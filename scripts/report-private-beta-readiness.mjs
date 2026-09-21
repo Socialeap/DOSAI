@@ -56,6 +56,9 @@ export async function assessPrivateBetaReadiness() {
   const p3AcceptanceProposal = boundRecords.get(
     'docs/architecture/p3-acceptance-fixture-generation-proposal.json',
   );
+  const authorization = boundRecords.get(
+    'docs/architecture/private-beta-bounded-action-authorization.json',
+  );
   if (
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
     trustRoot?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
@@ -66,7 +69,10 @@ export async function assessPrivateBetaReadiness() {
     !everyAuthorityIsFalse(builders) ||
     !everyAuthorityIsFalse(builderHosts) ||
     p3AcceptanceProposal?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
-    !everyAuthorityIsFalse(p3AcceptanceProposal)
+    !everyAuthorityIsFalse(p3AcceptanceProposal) ||
+    authorization?.status !== 'AUTHORIZED_NOT_CONSUMED' ||
+    authorization?.operational_constraints?.maximum_charge_usd !== 0 ||
+    authorization?.operational_constraints?.retry_authorized !== false
   ) {
     throw new Error('PRIVATE_BETA_AUTHORITY_STATE_CHANGED');
   }

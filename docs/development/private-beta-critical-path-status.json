@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T01:10:30-04:00",
+  "recorded_at": "2026-09-21T02:13:56-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -13,11 +13,11 @@
   "validated_source_baseline": {
     "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
     "branch": "codex/p3-baseline-v43-proof",
-    "head": "be65853e4f55e9563cd2e983909f21b1e3c43224",
+    "head": "7f2d52044fe28d6e8a9a24a10852fcbd9f386d44",
     "source_validation": {
-      "tests_passed": 555,
+      "tests_passed": 587,
       "tests_failed": 0,
-      "typescript_projects_passed": 8,
+      "typescript_projects_passed": 9,
       "normal_builds_passed": 3
     }
   },
@@ -38,8 +38,12 @@
     "external_calls": 0,
     "model_calls": 0,
     "provider_spend": 0,
-    "integration_authorized": false,
-    "integration_completed": false
+    "integration_authorized": true,
+    "integration_completed": true,
+    "integrated_commit_postimages": [
+      "ee135d8e1bc14ded2f9a9155b3daf49a0baf1e1c",
+      "7f2d52044fe28d6e8a9a24a10852fcbd9f386d44"
+    ]
   },
   "bound_inputs": [
     {
@@ -65,27 +69,31 @@
     {
       "path": "docs/architecture/p3-acceptance-fixture-generation-proposal.json",
       "sha256": "16d90624de634c836d4631c8ec1f96cd4b8ff535e5316f0703a2d8b832ed71af"
+    },
+    {
+      "path": "docs/architecture/private-beta-bounded-action-authorization.json",
+      "sha256": "00710eb769086dcd26cd27f497681153815289f8eedccf8dbf36cf8a4e78191b"
     }
   ],
   "gates": [
     {
       "id": "BETA-CP-001",
       "title": "Integrate the locally governed fixture path",
-      "status": "READY_PENDING_OWNER_AUTHORIZATION",
-      "blocking_evidence": "PR2_EXACT_COMMITS_NOT_PRESENT_IN_PR3",
-      "next_action": "INTEGRATE_EXACT_REVIEWED_COMMITS_WITHOUT_MERGING"
+      "status": "PASS",
+      "blocking_evidence": null,
+      "next_action": "PRESERVE_EXACT_INTEGRATED_COMMITS_THROUGH_REVIEW"
     },
     {
       "id": "BETA-CP-002",
       "title": "Prove the packaged macOS lifecycle once",
-      "status": "AWAITING_OWNER_AUTHORIZATION",
+      "status": "AUTHORIZED_NOT_RUN",
       "blocking_evidence": "V49_PHYSICAL_PROOF_NOT_RUN",
       "next_action": "RUN_ONE_EXACT_BOUNDED_SIGNED_APP_ATTEMPT"
     },
     {
       "id": "BETA-CP-003",
       "title": "Accept and observe the Debian archive trust roots",
-      "status": "AWAITING_OWNER_ACCEPTANCE_AND_AUTHORIZATION",
+      "status": "AUTHORIZED_NOT_RUN",
       "blocking_evidence": "TRUST_ROOT_SOURCE_NOT_ACCEPTED_OR_OBSERVED",
       "next_action": "RUN_ONE_READ_ONLY_BOUNDED_OFFICIAL_SOURCE_OBSERVATION"
     },
@@ -95,7 +103,8 @@
       "status": "MISSING_REQUIRED_EVIDENCE",
       "blocking_evidence": "QUALIFYING_INDEPENDENT_NATIVE_AMD64_BUILDER_RECEIPTS_IN_REPOSITORY_0_OF_2",
       "candidate_host_source": "TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS",
-      "next_action": "OWNER_ACCEPTS_AND_AUTHORIZES_ZERO_COST_HOST_OBSERVATION_BEFORE_BUILDER_PREPARATION"
+      "host_observation_status": "AUTHORIZED_NOT_RUN",
+      "next_action": "RUN_ONE_ZERO_COST_TWO_HOST_FEASIBILITY_OBSERVATION_WITHOUT_BUILDER_EXECUTION"
     },
     {
       "id": "BETA-CP-005",

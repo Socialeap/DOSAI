@@ -1,0 +1,54 @@
+{
+  "record_type": "DOSAI_PRIVATE_BETA_BOUNDED_ACTION_AUTHORIZATION",
+  "record_version": 1,
+  "status": "AUTHORIZED_NOT_CONSUMED",
+  "authorized_at": "2026-09-21T02:13:56-04:00",
+  "authorization_source": "EXPLICIT_REPOSITORY_OWNER_MESSAGE_IN_CODEX_TASK",
+  "operational_constraints": {
+    "credit_ceiling": 120,
+    "maximum_charge_usd": 0,
+    "merge_authorized": false,
+    "production_use_authorized": false,
+    "real_execution_authorized": false,
+    "retry_authorized": false
+  },
+  "authorized_actions": [
+    {
+      "id": "V49_SIGNED_APP_LIFECYCLE_PROOF",
+      "bound_record": {
+        "path": "docs/architecture/p3-v49-service-management-lifecycle-physical-proof-gate.json",
+        "sha256": "29cbb721241ac5807158e510041465cb64b4f70aefa252d3712dbcdd3944b4fa"
+      },
+      "attempt_limit": 1,
+      "retry_allowed": false,
+      "exact_subject_commit": "ec470119051e227409c4e994dc74743c7fe9e0bc"
+    },
+    {
+      "id": "DEBIAN_TRUST_ROOT_READ_ONLY_OBSERVATION",
+      "bound_record": {
+        "path": "docs/architecture/p3-debian-archive-trust-root-source-recommendation.json",
+        "sha256": "006b60c83a6404b18ff4c5463d26f9d126d28efd74b97add9f2e5be40b82a266"
+      },
+      "attempt_limit": 1,
+      "retry_allowed": false,
+      "key_import_allowed": false
+    },
+    {
+      "id": "GITHUB_TWO_HOST_ZERO_COST_FEASIBILITY_OBSERVATION",
+      "bound_record": {
+        "path": "docs/architecture/p3-native-builder-host-source-recommendation.json",
+        "sha256": "31add6a185eb79b5f95d0cc6f87c5a83b84f7bea7d0b9c9b5b380918c7bb89e5"
+      },
+      "attempt_limit": 1,
+      "retry_allowed": false,
+      "workflow_dispatch_only": true,
+      "builder_execution_allowed": false
+    }
+  ],
+  "stop_conditions": [
+    "STOP_ON_FIRST_FAILURE_WITHOUT_RETRY",
+    "STOP_ON_MISSING_OR_MALFORMED_RECEIPT",
+    "STOP_BEFORE_ANY_PAID_ACTIVITY",
+    "STOP_BEFORE_ANY_SCOPE_EXPANSION"
+  ]
+}

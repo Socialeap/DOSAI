@@ -22,12 +22,19 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
     merge_authorized: false,
     production_use_authorized: false,
   });
-  assert.equal(checkpoint.validated_source_baseline.head, 'be65853e4f55e9563cd2e983909f21b1e3c43224');
-  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 555);
+  assert.equal(
+    checkpoint.validated_source_baseline.head,
+    '7f2d52044fe28d6e8a9a24a10852fcbd9f386d44',
+  );
+  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 587);
   assert.equal(checkpoint.fixture_overlay_validation.head, '0284f74d146f23581ab1833f817ac31883bcb96a');
   assert.equal(checkpoint.fixture_overlay_validation.tests_passed, 578);
-  assert.equal(checkpoint.fixture_overlay_validation.integration_authorized, false);
-  assert.equal(checkpoint.fixture_overlay_validation.integration_completed, false);
+  assert.equal(checkpoint.fixture_overlay_validation.integration_authorized, true);
+  assert.equal(checkpoint.fixture_overlay_validation.integration_completed, true);
+  assert.deepEqual(checkpoint.fixture_overlay_validation.integrated_commit_postimages, [
+    'ee135d8e1bc14ded2f9a9155b3daf49a0baf1e1c',
+    '7f2d52044fe28d6e8a9a24a10852fcbd9f386d44',
+  ]);
   assert.equal(
     checkpoint.gates.find(({ id }) => id === 'BETA-CP-004').candidate_host_source,
     'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS',
@@ -47,7 +54,6 @@ test('critical-path report remains fail-closed until every required gate passes'
   assert.equal(report.operational_credit_ceiling, 120);
   assert.equal(report.paid_activity_authorized, false);
   assert.deepEqual(report.blockers.map(({ id }) => id), [
-    'BETA-CP-001',
     'BETA-CP-002',
     'BETA-CP-003',
     'BETA-CP-004',
@@ -60,6 +66,7 @@ test('checkpoint never converts source or compatibility evidence into runtime au
   assert.equal(checkpoint.validated_source_baseline.source_validation.tests_failed, 0);
   assert.equal(checkpoint.fixture_overlay_validation.tests_failed, 0);
   assert.equal(checkpoint.fixture_overlay_validation.provider_spend, 0);
-  assert.ok(checkpoint.gates.every(({ status }) => status !== 'PASS'));
+  assert.equal(checkpoint.gates.find(({ id }) => id === 'BETA-CP-001').status, 'PASS');
+  assert.ok(checkpoint.gates.slice(1).every(({ status }) => status !== 'PASS'));
   assert.equal(checkpoint.gates.at(-1).status, 'NOT_READY');
 });
