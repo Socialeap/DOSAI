@@ -60,6 +60,9 @@ export async function assessPrivateBetaReadiness() {
   const p3AcceptanceProposal = boundRecords.get(
     'docs/architecture/p3-acceptance-fixture-generation-proposal.json',
   );
+  const p3HandlerPlan = boundRecords.get(
+    'docs/architecture/p3-acceptance-handler-implementation-proposal.json',
+  );
   const authorization = boundRecords.get(
     'docs/architecture/private-beta-bounded-action-authorization.json',
   );
@@ -104,6 +107,9 @@ export async function assessPrivateBetaReadiness() {
     !everyAuthorityIsFalse(builderHosts) ||
     p3AcceptanceProposal?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
     !everyAuthorityIsFalse(p3AcceptanceProposal) ||
+    p3HandlerPlan?.status !== 'PROPOSED_SOURCE_PLAN_NOT_AUTHORIZED' ||
+    p3HandlerPlan?.current_assurance?.acceptance_proven_assertion_count !== 0 ||
+    !everyAuthorityIsFalse(p3HandlerPlan) ||
     authorization?.status !== 'AUTHORIZED_ACTIONS_CONSUMED_WITH_ONE_PASS_ONE_FAIL_ONE_PREPARED' ||
     authorization?.operational_constraints?.maximum_charge_usd !== 0 ||
     authorization?.operational_constraints?.retry_authorized !== false ||

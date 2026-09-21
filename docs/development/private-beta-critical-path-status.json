@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T13:31:20-04:00",
+  "recorded_at": "2026-09-21T14:17:25-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -85,6 +85,10 @@
       "sha256": "16d90624de634c836d4631c8ec1f96cd4b8ff535e5316f0703a2d8b832ed71af"
     },
     {
+      "path": "docs/architecture/p3-acceptance-handler-implementation-proposal.json",
+      "sha256": "a458733e72bf2babc65be0e343f91889e87abd9f7c76e3eef358157c158e5c13"
+    },
+    {
       "path": "docs/architecture/private-beta-bounded-action-authorization.json",
       "sha256": "ea22aaaa5a081f713e8e803545fe44b549675fdcc9d9ee65d25c3120a3b1758c"
     },
@@ -162,12 +166,15 @@
     {
       "id": "BETA-CP-005",
       "title": "Implement and pass formal P3 acceptance",
-      "status": "NOT_IMPLEMENTED",
+      "status": "IMPLEMENTATION_PLAN_PREPARED_NOT_AUTHORIZED",
       "blocking_evidence": "P3_AT_001_P3_AT_002_P3_AT_003_ARE_NOT_IMPLEMENTED",
       "proposal_prepared": true,
+      "handler_plan_prepared": true,
+      "declared_assertion_occurrences": 27,
+      "acceptance_proven_assertion_occurrences": 0,
       "proposed_fixture_schema": "urn:dosai:schema:acceptance-fixture-manifest:4",
       "proposed_manifest_count": 3,
-      "next_action": "AFTER_PHYSICAL_PREREQUISITES_OWNER_REVIEWS_SCHEMA_MANIFESTS_AND_HANDLER_BOUNDARIES"
+      "next_action": "PASS_PHYSICAL_PREREQUISITES_THEN_OWNER_ACCEPTS_EXACT_SCHEMA_MANIFEST_AND_HANDLER_PLAN_BYTES"
     },
     {
       "id": "BETA-CP-006",
