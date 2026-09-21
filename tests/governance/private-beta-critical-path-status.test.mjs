@@ -45,7 +45,7 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   const lifecycle = checkpoint.gates.find(({ id }) => id === 'BETA-CP-002');
   assert.equal(
     lifecycle.status,
-    'FAILED_CLOSED_STAGING_PERMISSION_REPAIRED_REUSE_ONLY_REAUTHORIZATION_REQUIRED',
+    'PASS',
   );
   assert.equal(lifecycle.stable_path_launcher_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
   assert.equal(lifecycle.gate_v2_attempt_status, 'FAILED_CLOSED_BEFORE_BUILD_NO_PHYSICAL_EFFECTS');
@@ -56,16 +56,18 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   );
   assert.equal(
     lifecycle.preserved_v50_package_status,
-    'BUILT_AND_TEST_SIGNED_ONCE_PRESERVED_NOT_STAGED',
+    'BUILT_AND_TEST_SIGNED_ONCE_PRESERVED_AND_STAGED_VERIFIED',
   );
   assert.equal(
     lifecycle.preserved_package_verifier_status,
-    'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED',
+    'PASS_SOURCE_AND_STAGED_COPY',
   );
   assert.equal(
     lifecycle.physical_gate,
     'P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V4',
   );
+  assert.equal(lifecycle.gate_v4_attempt_status, 'PASS_REGISTERED_AND_CLEANED');
+  assert.equal(lifecycle.terminal_background_item_status, 'NOT_REGISTERED');
   const p3Acceptance = checkpoint.gates.find(({ id }) => id === 'BETA-CP-005');
   assert.equal(p3Acceptance.proposal_prepared, true);
   assert.equal(p3Acceptance.handler_plan_prepared, true);
@@ -84,7 +86,6 @@ test('critical-path report remains fail-closed until every required gate passes'
   assert.equal(report.operational_credit_ceiling, 120);
   assert.equal(report.paid_activity_authorized, false);
   assert.deepEqual(report.blockers.map(({ id }) => id), [
-    'BETA-CP-002',
     'BETA-CP-004',
     'BETA-CP-005',
     'BETA-CP-006',
@@ -96,9 +97,10 @@ test('checkpoint never converts source or compatibility evidence into runtime au
   assert.equal(checkpoint.fixture_overlay_validation.tests_failed, 0);
   assert.equal(checkpoint.fixture_overlay_validation.provider_spend, 0);
   assert.equal(checkpoint.gates.find(({ id }) => id === 'BETA-CP-001').status, 'PASS');
+  assert.equal(checkpoint.gates.find(({ id }) => id === 'BETA-CP-002').status, 'PASS');
   assert.equal(checkpoint.gates.find(({ id }) => id === 'BETA-CP-003').status, 'PASS');
   assert.ok(checkpoint.gates
-    .filter(({ id }) => !['BETA-CP-001', 'BETA-CP-003'].includes(id))
+    .filter(({ id }) => !['BETA-CP-001', 'BETA-CP-002', 'BETA-CP-003'].includes(id))
     .every(({ status }) => status !== 'PASS'));
   assert.equal(checkpoint.gates.at(-1).status, 'NOT_READY');
 });

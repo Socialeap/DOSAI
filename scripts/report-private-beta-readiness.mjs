@@ -43,6 +43,9 @@ export async function assessPrivateBetaReadiness() {
   const physical = boundRecords.get(
     'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v4.json',
   );
+  const gateV4Result = boundRecords.get(
+    'docs/architecture/p3-v50-gate-v4-physical-proof-result.json',
+  );
   const physicalPreflight = boundRecords.get(
     'docs/architecture/p3-v50-physical-proof-preflight-source-record.json',
   );
@@ -122,6 +125,23 @@ export async function assessPrivateBetaReadiness() {
       '/Users/shakoure/Library/Application Support/DOSAI/TestProofs' ||
     physical?.fixed_staging?.application_copy_attempt_limit !== 1 ||
     physical?.fixed_staging?.staged_package_verification_limit !== 1 ||
+    gateV4Result?.status !== 'PASS_REGISTERED_AND_CLEANED' ||
+    gateV4Result?.subjects?.gate_commit !== '9d500945c9c00bcd82ffa8a92bbe172aa3c7cac0' ||
+    gateV4Result?.preflight?.result !== 'PASS' ||
+    gateV4Result?.preserved_package_verification?.result !== 'PASS' ||
+    gateV4Result?.staging?.application_copy_completions !== 1 ||
+    gateV4Result?.staged_package_verification?.result !== 'PASS' ||
+    gateV4Result?.receipt?.result !== 'REGISTERED_AND_CLEANED' ||
+    gateV4Result?.receipt?.before !== 'NOT_FOUND' ||
+    gateV4Result?.receipt?.after_register !== 'ENABLED' ||
+    gateV4Result?.receipt?.after_unregister !== 'NOT_REGISTERED' ||
+    gateV4Result?.receipt?.observe_completions !== 3 ||
+    gateV4Result?.receipt?.register_completions !== 1 ||
+    gateV4Result?.receipt?.unregister_completions !== 1 ||
+    gateV4Result?.containment?.clean_unregistration_proven !== true ||
+    gateV4Result?.containment?.retry_performed !== false ||
+    gateV4Result?.observed_effects?.xpc_client_connections !== 0 ||
+    gateV4Result?.observed_effects?.provider_charge_usd !== 0 ||
     physicalPreflight?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
     physicalPreflight?.observed_effects?.preflight_executions !== 0 ||
     !everyAuthorityIsFalse(physicalPreflight) ||

@@ -49,6 +49,10 @@
   },
   "bound_inputs": [
     {
+      "path": "docs/architecture/p3-v50-gate-v4-physical-proof-result.json",
+      "sha256": "0a3346e274e587f24160c3a68be73c69a6d24cc8b2b5b3db60444501c0e295d9"
+    },
+    {
       "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v4.json",
       "sha256": "c544b258eac00ca327573d34a1f4c605ecfa1230d3d768fb459fd59ab323d37a"
     },
@@ -176,18 +180,20 @@
     {
       "id": "BETA-CP-002",
       "title": "Prove the packaged macOS lifecycle once",
-      "status": "FAILED_CLOSED_STAGING_PERMISSION_REPAIRED_REUSE_ONLY_REAUTHORIZATION_REQUIRED",
-      "blocking_evidence": "V50_GATE_V3_STAGING_PARENT_PERMISSION_DENIED_GATE_V4_NOT_AUTHORIZED_OR_RUN",
+      "status": "PASS",
+      "blocking_evidence": null,
       "source_diagnosis": "FIRST_SEEN_SERVICE_STATUS_WAS_INCORRECTLY_REJECTED_AS_DIRTY_WITH_STABLE_PATH_REMAINING_AS_AN_ENVIRONMENTAL_VARIABLE",
       "implemented_successor": "P3_FIRST_SEEN_SERVICE_PRECONDITION_SOURCE_ONLY",
       "stable_path_launcher_status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
       "gate_v2_attempt_status": "FAILED_CLOSED_BEFORE_BUILD_NO_PHYSICAL_EFFECTS",
       "preflight_repair_status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
       "gate_v3_attempt_status": "FAILED_CLOSED_AFTER_BUILD_BEFORE_STAGING_COPY_NO_RUNTIME_EFFECTS",
-      "preserved_v50_package_status": "BUILT_AND_TEST_SIGNED_ONCE_PRESERVED_NOT_STAGED",
-      "preserved_package_verifier_status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
+      "preserved_v50_package_status": "BUILT_AND_TEST_SIGNED_ONCE_PRESERVED_AND_STAGED_VERIFIED",
+      "preserved_package_verifier_status": "PASS_SOURCE_AND_STAGED_COPY",
       "physical_gate": "P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V4",
-      "next_action": "OBTAIN_EXACT_OWNER_REAUTHORIZATION_FOR_ONE_REUSE_ONLY_VERIFICATION_STAGING_AND_LIFECYCLE_ATTEMPT"
+      "gate_v4_attempt_status": "PASS_REGISTERED_AND_CLEANED",
+      "terminal_background_item_status": "NOT_REGISTERED",
+      "next_action": "PRESERVE_EXACT_GATE_V4_RECEIPT_AND_ADVANCE_TO_INDEPENDENT_NATIVE_LINUX_BUILDERS"
     },
     {
       "id": "BETA-CP-003",
@@ -224,7 +230,7 @@
       "id": "BETA-CP-006",
       "title": "Run the representative full-functionality beta workflow",
       "status": "NOT_READY",
-      "blocking_evidence": "CRITICAL_PATH_GATES_BETA_CP_002_BETA_CP_004_AND_BETA_CP_005_ARE_OPEN",
+      "blocking_evidence": "CRITICAL_PATH_GATES_BETA_CP_004_AND_BETA_CP_005_ARE_OPEN",
       "next_action": "RUN_ONLY_ON_THE_EXACT_INTEGRATED_CANDIDATE_AFTER_ALL_PRIOR_GATES_PASS"
     }
   ]
