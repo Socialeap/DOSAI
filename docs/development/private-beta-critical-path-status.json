@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T15:42:00-04:00",
+  "recorded_at": "2026-09-21T16:40:00-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -13,9 +13,9 @@
   "validated_source_baseline": {
     "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
     "branch": "codex/p3-baseline-v43-proof",
-    "head": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+    "head": "24ff078b475b6e89c75f8575e46e0399cfcea29c",
     "source_validation": {
-      "tests_passed": 621,
+      "tests_passed": 631,
       "tests_failed": 0,
       "typescript_projects_passed": 9,
       "normal_builds_run": 0,
@@ -48,6 +48,18 @@
     ]
   },
   "bound_inputs": [
+    {
+      "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v3.json",
+      "sha256": "dee3684e0b01f3a4ca6a00760d36b9e6c9de2224e68e4878a012bfe58fc361cf"
+    },
+    {
+      "path": "docs/architecture/p3-v50-physical-proof-preflight-source-record.json",
+      "sha256": "8b92f1d2499190685ab85a126a73eef80a19fcfcd526243c6c7f12c48307da31"
+    },
+    {
+      "path": "docs/architecture/p3-v50-gate-v2-physical-proof-result.json",
+      "sha256": "53ff62ccac4015ce3604da54fd0c8f25e68cbaa34192f11a8df9b0e681848e22"
+    },
     {
       "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v2.json",
       "sha256": "55fa96404e04349fdf77bd80aabbdaa4a533713dab810f11a72fafb92d0ad80f"
@@ -152,13 +164,15 @@
     {
       "id": "BETA-CP-002",
       "title": "Prove the packaged macOS lifecycle once",
-      "status": "SOURCE_AND_STABLE_PATH_LAUNCHER_CORRECTED_PHYSICAL_PROOF_AWAITING_OWNER_AUTHORIZATION",
-      "blocking_evidence": "V50_GATE_V2_PHYSICAL_PROOF_NOT_AUTHORIZED_OR_RUN",
+      "status": "FAILED_CLOSED_PREFLIGHT_REPAIRED_REAUTHORIZATION_REQUIRED",
+      "blocking_evidence": "V50_GATE_V2_PREFLIGHT_FAILED_GATE_V3_NOT_AUTHORIZED_OR_RUN",
       "source_diagnosis": "FIRST_SEEN_SERVICE_STATUS_WAS_INCORRECTLY_REJECTED_AS_DIRTY_WITH_STABLE_PATH_REMAINING_AS_AN_ENVIRONMENTAL_VARIABLE",
       "implemented_successor": "P3_FIRST_SEEN_SERVICE_PRECONDITION_SOURCE_ONLY",
       "stable_path_launcher_status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
-      "physical_gate": "P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V2",
-      "next_action": "OBTAIN_EXACT_OWNER_AUTHORIZATION_FOR_ONE_ISOLATED_V50_PHYSICAL_PROOF"
+      "gate_v2_attempt_status": "FAILED_CLOSED_BEFORE_BUILD_NO_PHYSICAL_EFFECTS",
+      "preflight_repair_status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
+      "physical_gate": "P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V3",
+      "next_action": "OBTAIN_EXACT_OWNER_REAUTHORIZATION_FOR_ONE_GOVERNED_PREFLIGHT_THEN_ONE_ISOLATED_V50_PHYSICAL_PROOF"
     },
     {
       "id": "BETA-CP-003",

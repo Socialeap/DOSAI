@@ -24,9 +24,9 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   });
   assert.equal(
     checkpoint.validated_source_baseline.head,
-    'bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc',
+    '24ff078b475b6e89c75f8575e46e0399cfcea29c',
   );
-  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 621);
+  assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 631);
   assert.equal(checkpoint.validated_source_baseline.source_validation.typescript_projects_passed, 9);
   assert.equal(checkpoint.validated_source_baseline.source_validation.normal_builds_run, 0);
   assert.equal(checkpoint.validated_source_baseline.source_validation.build_authorized, false);
@@ -45,12 +45,14 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   const lifecycle = checkpoint.gates.find(({ id }) => id === 'BETA-CP-002');
   assert.equal(
     lifecycle.status,
-    'SOURCE_AND_STABLE_PATH_LAUNCHER_CORRECTED_PHYSICAL_PROOF_AWAITING_OWNER_AUTHORIZATION',
+    'FAILED_CLOSED_PREFLIGHT_REPAIRED_REAUTHORIZATION_REQUIRED',
   );
   assert.equal(lifecycle.stable_path_launcher_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
+  assert.equal(lifecycle.gate_v2_attempt_status, 'FAILED_CLOSED_BEFORE_BUILD_NO_PHYSICAL_EFFECTS');
+  assert.equal(lifecycle.preflight_repair_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
   assert.equal(
     lifecycle.physical_gate,
-    'P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V2',
+    'P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE_V3',
   );
   const p3Acceptance = checkpoint.gates.find(({ id }) => id === 'BETA-CP-005');
   assert.equal(p3Acceptance.proposal_prepared, true);

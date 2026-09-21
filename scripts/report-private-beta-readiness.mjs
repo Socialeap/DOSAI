@@ -41,7 +41,13 @@ export async function assessPrivateBetaReadiness() {
   }
 
   const physical = boundRecords.get(
-    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v2.json',
+    'docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v3.json',
+  );
+  const physicalPreflight = boundRecords.get(
+    'docs/architecture/p3-v50-physical-proof-preflight-source-record.json',
+  );
+  const physicalPreflightFailure = boundRecords.get(
+    'docs/architecture/p3-v50-gate-v2-physical-proof-result.json',
   );
   const stagedLifecycleLauncher = boundRecords.get(
     'docs/architecture/p3-v50-stable-path-launcher-source-record.json',
@@ -94,9 +100,23 @@ export async function assessPrivateBetaReadiness() {
     'docs/architecture/p3-native-builder-host-observation-verifier-source-record.json',
   );
   if (
-    physical?.record_version !== 2 ||
-    physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
-    physical?.subject?.commit !== checkpoint.validated_source_baseline.head ||
+    physical?.record_version !== 3 ||
+    physical?.status !== 'AWAITING_OWNER_REAUTHORIZATION' ||
+    physical?.subjects?.package_source_commit !==
+      'bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc' ||
+    physical?.subjects?.preflight_implementation_commit !==
+      physicalPreflight?.implementation_commit ||
+    physical?.governed_preflight?.execution_limit !== 1 ||
+    physical?.governed_preflight?.read_only !== true ||
+    physical?.governed_preflight?.retry_allowed !== false ||
+    physicalPreflight?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
+    physicalPreflight?.observed_effects?.preflight_executions !== 0 ||
+    !everyAuthorityIsFalse(physicalPreflight) ||
+    physicalPreflightFailure?.status !==
+      'FAILED_CLOSED_PREFLIGHT_TOOL_PATH_REAUTHORIZATION_REQUIRED' ||
+    physicalPreflightFailure?.failure?.physical_proof_attempt_consumed !== true ||
+    physicalPreflightFailure?.containment?.retry_performed !== false ||
+    Object.values(physicalPreflightFailure?.observed_effects ?? {}).some(value => value !== 0) ||
     physical?.fixed_attempt?.runner_path !==
       'scripts/service-management-lifecycle-staged-proof.mjs' ||
     physical?.fixed_attempt?.stable_test_application_path !==
