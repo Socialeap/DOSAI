@@ -1,0 +1,32 @@
+{
+  "record_type": "P3_NATIVE_BUILDER_HOST_WORKFLOW_PREPARATION_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T02:51:55-04:00",
+  "status": "PREPARED_UNMERGED_NOT_DISPATCHABLE",
+  "workflow": {
+    "path": ".github/workflows/p3-native-builder-host-feasibility.yml",
+    "sha256": "04c1220cf1d6919c663aa678cc8ab51a05e2478ea4a99fa88ce6aa342b2830d3",
+    "trigger": "workflow_dispatch",
+    "permissions": "NONE",
+    "jobs": [
+      "BUILDER_HOST_A",
+      "BUILDER_HOST_B"
+    ],
+    "runner": "ubuntu-24.04",
+    "checkout": false,
+    "third_party_actions": false,
+    "secrets": false,
+    "cache": false,
+    "artifact_upload": false,
+    "maximum_charge_usd": 0
+  },
+  "external_effects": {
+    "workflow_dispatches": 0,
+    "runner_allocations": 0,
+    "builder_execution": false,
+    "provider_charge_usd": 0
+  },
+  "merge_authorized": false,
+  "default_branch_change_authorized": false,
+  "next_gate": "SEPARATE_OWNER_AUTHORIZATION_REQUIRED_FOR_MERGE_OR_DEFAULT_BRANCH_CHANGE"
+}

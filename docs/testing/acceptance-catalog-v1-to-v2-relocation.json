@@ -1,0 +1,94 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-catalog-relocation:1",
+  "schema_version": 1,
+  "created_at": "2026-07-31T21:20:52.656Z",
+  "status": "ACCEPTED",
+  "finding_id": "P1-GATE-001",
+  "predecessor": {
+    "path": "docs/testing/acceptance-test-catalog-v1.json",
+    "version": 1,
+    "sha256": "b633d4dfc92e4a83729ff53ecaa22617f87628b306843b45a68c2669acdf6b49",
+    "status": "ACCEPTED"
+  },
+  "successor": {
+    "path": "docs/testing/acceptance-test-catalog-v2.json",
+    "version": 2,
+    "sha256": "5fe489ee6695aa5c42c477173753bf3ef6e233f293e8925be4aebd633bc4a914",
+    "status": "ACCEPTED"
+  },
+  "invariants": ["NO_REQUIREMENT_REMOVED", "NO_AUTHORITY_INTRODUCED_EARLY", "OWNER_PHASE_PROOF_REQUIRED", "RELEASE_MATRIX_PRESERVED", "VERSIONED_EVIDENCE_ISOLATION"],
+  "relocations": [
+    {
+      "coverage_id": "CURRENT_HOST_PACKAGE_LIFECYCLE",
+      "disposition": "RETAINED_IN_PHASE",
+      "from_scenarios": ["P1-AT-001-S01"],
+      "to_scenarios": ["P1-AT-001-S01"],
+      "owner_phases": ["P1"],
+      "coverage_statement": "Build, launch, quit, and relaunch the package on the current registered development host with pinned runtime and minimum-version metadata."
+    },
+    {
+      "coverage_id": "PHYSICAL_RELEASE_OS_MATRIX",
+      "disposition": "RELOCATED_TO_OWNER_PHASE",
+      "from_scenarios": ["P1-AT-001-S01"],
+      "to_scenarios": ["P11-AT-001-S01"],
+      "owner_phases": ["P11"],
+      "coverage_statement": "Run clean installs on minimum and current physical Apple Silicon profiles before release."
+    },
+    {
+      "coverage_id": "RENDERER_AND_APP_RECOVERY",
+      "disposition": "RETAINED_IN_PHASE",
+      "from_scenarios": ["P1-AT-001-S02"],
+      "to_scenarios": ["P1-AT-001-S02"],
+      "owner_phases": ["P1"],
+      "coverage_statement": "Recover the renderer and restart after unclean application termination without authority expansion or unmanaged state."
+    },
+    {
+      "coverage_id": "WORKER_CRASH_RECOVERY",
+      "disposition": "RELOCATED_TO_OWNER_PHASE",
+      "from_scenarios": ["P1-AT-001-S02"],
+      "to_scenarios": ["P3-AT-003-S02"],
+      "owner_phases": ["P3"],
+      "coverage_statement": "Recover and reconcile governed workers only after worker ownership, capsules, and crash reconciliation exist."
+    },
+    {
+      "coverage_id": "TYPED_BRIDGE_MAIN_LOOP_LOAD",
+      "disposition": "RETAINED_IN_PHASE",
+      "from_scenarios": ["P1-AT-003-S02"],
+      "to_scenarios": ["P1-AT-003-S02"],
+      "owner_phases": ["P1"],
+      "coverage_statement": "Saturate the fixed read-only typed bridge while renderer and main-loop responsiveness remain bounded."
+    },
+    {
+      "coverage_id": "FUTURE_AUTHORITY_ABSENCE",
+      "disposition": "RETAINED_IN_PHASE",
+      "from_scenarios": ["P1-AT-003-S02"],
+      "to_scenarios": ["P1-AT-003-S02"],
+      "owner_phases": ["P1"],
+      "coverage_statement": "Prove worker, execution, and trusted-stop authority remain absent from the Phase 1 package."
+    },
+    {
+      "coverage_id": "TRUSTED_STOP_UNDER_SATURATION",
+      "disposition": "RELOCATED_TO_OWNER_PHASE",
+      "from_scenarios": ["P1-AT-003-S02"],
+      "to_scenarios": ["P3-AT-003-S01"],
+      "owner_phases": ["P3"],
+      "coverage_statement": "Keep the independent trusted-stop path effective under saturation after owned execution exists."
+    },
+    {
+      "coverage_id": "DATABASE_WORKER_SATURATION",
+      "disposition": "RELOCATED_TO_OWNER_PHASE",
+      "from_scenarios": ["P1-AT-003-S02"],
+      "to_scenarios": ["P7-AT-001-S03"],
+      "owner_phases": ["P7"],
+      "coverage_statement": "Saturate bounded database workers while persistence, search, cancellation, and lifecycle invariants hold."
+    },
+    {
+      "coverage_id": "DERIVATION_WORKER_SATURATION",
+      "disposition": "RELOCATED_TO_OWNER_PHASE",
+      "from_scenarios": ["P1-AT-003-S02"],
+      "to_scenarios": ["P9-AT-002-S03"],
+      "owner_phases": ["P9"],
+      "coverage_statement": "Saturate parser, stream, and image workers while bounded fallback and canonical-source invariants hold."
+    }
+  ]
+}

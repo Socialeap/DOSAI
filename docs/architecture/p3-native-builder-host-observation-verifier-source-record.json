@@ -1,0 +1,72 @@
+{
+  "record_type": "P3_NATIVE_BUILDER_HOST_OBSERVATION_VERIFIER_SOURCE_RECORD",
+  "record_version": 1,
+  "status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
+  "implemented_at": "2026-09-21T14:55:00-04:00",
+  "scope": "OFFLINE_TWO_HOST_OBSERVATION_VERIFICATION_ONLY",
+  "inputs": [
+    {
+      "path": ".github/workflows/p3-native-builder-host-feasibility.yml",
+      "sha256": "04c1220cf1d6919c663aa678cc8ab51a05e2478ea4a99fa88ce6aa342b2830d3"
+    },
+    {
+      "path": "docs/architecture/p3-native-builder-host-source-recommendation.json",
+      "sha256": "31add6a185eb79b5f95d0cc6f87c5a83b84f7bea7d0b9c9b5b380918c7bb89e5"
+    },
+    {
+      "path": "docs/architecture/p3-native-builder-host-workflow-preparation-result.json",
+      "sha256": "66fabc578190804316bb8608e395361f524ca0f09eb05663df90830c699bdd37"
+    }
+  ],
+  "implementation": {
+    "path": "scripts/verify-p3-native-builder-host-observation.mjs",
+    "sha256": "b74f7f1c8810200496e94f9b0efab3ffc5304fb89737990d8883f04f2b56f372"
+  },
+  "test": {
+    "path": "tests/governance/p3-native-builder-host-observation-verifier.test.mjs",
+    "sha256": "d6f3b8186260a2468c57d02d7e5db60484b7e03143f64d784e809e46e487ffca"
+  },
+  "contract": {
+    "input_lines": 2,
+    "maximum_input_bytes": 16384,
+    "required_jobs": [
+      "builder_host_a",
+      "builder_host_b"
+    ],
+    "required_runner_environment": "github-hosted",
+    "required_runner_os": "Linux",
+    "required_runner_arch": "X64",
+    "required_uname_machine": "x86_64",
+    "required_docker_server_arch": "amd64",
+    "active_binfmt_misc_allowed": false,
+    "distinct_dmi_product_uuids_required": true,
+    "raw_dmi_product_uuid_in_receipt": false,
+    "expected_sha_required": true,
+    "same_run_attempt_required": true,
+    "same_runner_image_required": true,
+    "success_status": "PASS_CANDIDATE_HOSTS_ONLY",
+    "physical_linux_builder_verified_on_success": false,
+    "builder_receipts_produced_on_success": 0,
+    "provider_charge_usd": 0
+  },
+  "authorities": {
+    "workflow_creation": false,
+    "workflow_dispatch": false,
+    "runner_allocation": false,
+    "github_token_use": false,
+    "repository_checkout": false,
+    "cache_use": false,
+    "artifact_upload": false,
+    "network_retrieval": false,
+    "builder_image_load": false,
+    "container_launch": false,
+    "guest_compilation": false,
+    "guest_execution": false,
+    "builder_receipt_acceptance": false,
+    "provider_spend": false,
+    "pull_request_merge": false,
+    "default_branch_change": false,
+    "production_use": false
+  },
+  "next_gate": "SEPARATE_OWNER_AUTHORIZATION_REQUIRED_FOR_MERGE_OR_DEFAULT_BRANCH_CHANGE_AND_ONE_ZERO_COST_DISPATCH"
+}

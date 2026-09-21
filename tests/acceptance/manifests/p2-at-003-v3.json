@@ -1,0 +1,69 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-fixture-manifest:3",
+  "schema_version": 3,
+  "manifest_id": "8a6710e9-86dd-4306-862d-2a8c81b24c8d",
+  "created_at": "2026-08-01T01:55:00.000Z",
+  "data_class": "D5",
+  "catalog_version": 5,
+  "suite_id": "P2-AT-003",
+  "fixture_version": 3,
+  "status": "ACCEPTED",
+  "runner": { "id": "dosai-acceptance", "version": "0.2.0" },
+  "secret_canary_set_version": 1,
+  "platform_profiles": ["MACOS_ARM64_V1"],
+  "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "JOURNAL", "MANIFEST", "VERIFIER", "CLEANUP"],
+  "cases": [
+    {
+      "id": "P2-AT-003-S01-C01",
+      "scenario_id": "P2-AT-003-S01",
+      "mode": "FAULT",
+      "handler_id": "P2_AUDIT_FAULT_CORPUS",
+      "input_profile": "P2_AUDIT_BOUNDARY_FAULTS_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "8cfa609bb87d9961764af907e7cd3e7a29476cfd72d3dc767855ccb6b63ef8c3" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P2_SCHEMAS_ACCEPTED"],
+      "setup_operations": ["CREATE_OWNER_ONLY_TEMP_STORE"],
+      "action_deadline_ms": 600000,
+      "assertions": [
+        { "id": "P2_AUDIT_DURABILITY_FAULTS_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL", "COMMAND"] },
+        { "id": "P2_AUDIT_RESTART_AND_RACE_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] },
+        { "id": "P2_CHECKPOINT_KEY_AND_FORK_FAULTS_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "VERIFIER"] },
+        { "id": "P2_OFFLINE_ANCHOR_VERIFIER_CORPUS_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "VERIFIER"] },
+        { "id": "P2_LOCAL_JOURNAL_PROBE_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "NO_EFFECT_AUTHORITY_PRESENT",
+      "teardown_postconditions": ["TEMP_STORAGE_REMOVED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P2.3", "I11", "I12", "I13"],
+      "limitations": ["SECURE_ENCLAVE_RUNTIME_PROOF_DEFERRED_EXTERNAL", "REKOR_V2_PUBLICATION_PROOF_DEFERRED_EXTERNAL", "SYNTHETIC_NO_EFFECT_SCOPE"]
+    },
+    {
+      "id": "P2-AT-003-S02-C01",
+      "scenario_id": "P2-AT-003-S02",
+      "mode": "RECOVERY",
+      "handler_id": "P2_DEGRADED_ASSURANCE_RECOVERY",
+      "input_profile": "P2_DEGRADED_ASSURANCE_RECOVERY_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "05456015e70ce215923161e7002432b5e8e730a1c30df20c4c8fd147b2e0d855" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P2_SCHEMAS_ACCEPTED"],
+      "setup_operations": ["CREATE_OWNER_ONLY_TEMP_STORE"],
+      "action_deadline_ms": 600000,
+      "assertions": [
+        { "id": "P2_ASSURANCE_RANGES_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "VERIFIER"] },
+        { "id": "P2_ASSURANCE_OUTAGE_DENIES_AUTHORIZATION", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] },
+        { "id": "P2_EMERGENCY_STOP_AUDIT_INDEPENDENT_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS"] },
+        { "id": "P2_CLEANUP_TEMP_STORAGE", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] },
+        { "id": "P2_WORKTREE_REMAINS_CLEAN", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "EMERGENCY_STOP_REMAINS_AVAILABLE",
+      "teardown_postconditions": ["TEMP_STORAGE_REMOVED", "WORKTREE_UNCHANGED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P2.3", "I11", "I12", "I13"],
+      "limitations": ["SECURE_ENCLAVE_RUNTIME_PROOF_DEFERRED_EXTERNAL", "REKOR_V2_PUBLICATION_PROOF_DEFERRED_EXTERNAL", "SYNTHETIC_NO_EFFECT_SCOPE"]
+    }
+  ]
+}

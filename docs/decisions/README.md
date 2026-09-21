@@ -37,7 +37,19 @@ rewrite accepted history; supersede it with a new ADR.
 | [0008](0008-persistence-search-retention-and-deletion.md) | Accepted | `2026-07-31T12:04:27-04:00` | Persistence, search, retention, and deletion |
 | [0009](0009-reviewed-skill-bundle-supply-chain.md) | Accepted | `2026-07-31T12:11:32-04:00` | Reviewed skill-bundle supply chain |
 | [0010](0010-canonical-evidence-and-lossy-derivations.md) | Accepted | `2026-07-31T14:12:44-04:00` | Canonical evidence and lossy derivations |
+| [0011](0011-acceptance-gate-phasing-and-coverage-preservation.md) | Accepted | `2026-07-31T17:28:39-04:00` | Acceptance gate phasing and coverage preservation |
+| [0012](0012-secure-enclave-checkpoints-and-rekor-v2-anchoring.md) | Accepted | `2026-07-31T19:41:14-04:00` | Secure Enclave checkpoints and Rekor v2 anchoring |
+| [0013](0013-relocate-p2-4-external-proofs-to-release-hardening.md) | Accepted | `2026-07-31T23:54:35-04:00` | Relocate P2.4 external proofs to P11 release hardening |
+| [0014](0014-linux-microvm-isolation-backend.md) | Accepted | `2026-08-01T14:23:28-04:00` | Linux microVM isolation backend |
+| [0015](0015-reproducible-linux-guest-supply-chain.md) | Accepted | `2026-08-01T15:56:50-04:00` | Reproducible Linux guest supply chain |
+| [0016](0016-guest-agent-language-and-toolchain.md) | Accepted | `2026-08-01T18:35:27-04:00` | Guest-agent language and toolchain; exact versions corrected by ADR 0017 |
+| [0017](0017-correct-buildroot-guest-agent-go-pin.md) | Accepted | `2026-08-01T18:35:27-04:00` | Correct Buildroot guest-agent Go pin |
+| [0018](0018-native-linux-independent-builders.md) | Accepted | `2026-08-02T03:16:53-04:00` | Native Linux independent builders |
+| [0019](0019-capsule-registry-audit-journal-binding.md) | Accepted | `2026-08-02T16:15:41-04:00` | Capsule registry audit-journal binding |
+| [0020](0020-per-user-execution-service-watchdog-control-lane.md) | Accepted | `2026-08-02T17:34:57-04:00` | Per-user execution-service watchdog control lane |
+| [0021](0021-electron-main-service-management-status-adapter.md) | Accepted | `2026-08-06T03:59:18-04:00` | Electron Main Service Management status adapter |
 
 The repository owner may accept, reject, or request revisions to each ADR
 individually. The register and ADR file must receive the same status update and
-date. P0.4 remains incomplete until the required set is accepted.
+date. Later proposed ADRs do not reopen the accepted P0.4 baseline; each remains
+owned by its named delivery phase until synchronized acceptance.

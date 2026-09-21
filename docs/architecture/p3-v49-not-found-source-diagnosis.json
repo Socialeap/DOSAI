@@ -1,0 +1,58 @@
+{
+  "record_type": "P3_V49_NOT_FOUND_SOURCE_DIAGNOSIS",
+  "record_version": 1,
+  "status": "DIAGNOSED_NO_RUNTIME_ACTION",
+  "recorded_at": "2026-09-21T10:45:00-04:00",
+  "subject": {
+    "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
+    "source_commit": "ec470119051e227409c4e994dc74743c7fe9e0bc",
+    "replacement_result": "docs/architecture/p3-v49-service-management-lifecycle-replacement-result.json",
+    "observed_result": "FAILED_CLOSED_PRECONDITION_NOT_FOUND"
+  },
+  "verified_package_facts": {
+    "plist_relative_path": "Contents/Library/LaunchAgents/com.socialeap.dosai.execution-service-fixture.plist",
+    "bundle_program": "Contents/Library/LaunchServices/com.socialeap.dosai.execution-service-fixture",
+    "plist_name_matches_adapter": true,
+    "outer_identifier": "com.socialeap.dosai",
+    "helper_identifier": "com.socialeap.dosai.execution-service-fixture",
+    "team_identifier": "3RD3TADLRY",
+    "outer_and_nested_signatures_previously_verified": true,
+    "replacement_launch_path_class": "PRIVATE_TMP_DIRECT_BUNDLE_EXECUTABLE"
+  },
+  "authoritative_findings": [
+    {
+      "source": "LOCAL_APPLE_SDK_SMAppService.h",
+      "claim": "A LaunchAgent plist name must identify a plist in the calling app Contents/Library/LaunchAgents directory, and BundleProgram is an app-bundle-relative executable path."
+    },
+    {
+      "source": "https://developer.apple.com/documentation/servicemanagement/updating-helper-executables-from-earlier-versions-of-macos",
+      "claim": "Apple's supported bundle structure places LaunchAgent plists in Contents/Library/LaunchAgents and replaces Program with bundle-relative BundleProgram."
+    },
+    {
+      "source": "https://developer.apple.com/forums/thread/719862",
+      "claim": "Apple Developer Technical Support explains that notFound can mean the system has never seen the service and therefore cannot report its state."
+    },
+    {
+      "source": "https://developer.apple.com/documentation/servicemanagement/updating-your-app-package-installer-to-use-the-new-service-management-api",
+      "claim": "Apple's package-installer sample executes its Service Management command tool from a stable installed application-support path."
+    }
+  ],
+  "diagnosis": {
+    "package_layout_defect_proven": false,
+    "signature_defect_proven": false,
+    "native_addon_failure_proven": false,
+    "most_likely_primary_cause": "FIRST_SEEN_SERVICE_STATUS_WAS_INCORRECTLY_REJECTED_AS_DIRTY",
+    "remaining_environmental_variable": "DIRECT_EXECUTION_FROM_PRIVATE_TMP_INSTEAD_OF_A_STABLE_INSTALLED_TEST_PATH",
+    "reason_current_receipt_is_INSUFFICIENT": "The bounded adapter intentionally maps the platform notFound state, nil service construction, unknown values, and Objective-C exceptions to the same fail-closed NOT_FOUND observation."
+  },
+  "safety_conclusion": {
+    "v49_result_remains_valid": true,
+    "v49_result_claim": "FAIL_CLOSED_WITHOUT_REGISTRATION",
+    "registration_occurred": false,
+    "unregistration_occurred": false,
+    "service_launch_occurred": false,
+    "retry_authorized": false,
+    "runtime_action_required_for_diagnosis": false
+  },
+  "next_gate": "OWNER_ACCEPTS_EXACT_V50_SOURCE_ONLY_SUCCESSOR_BEFORE_BEHAVIOR_CHANGE"
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 41,
+  "status": "ACCEPTED",
+  "proposed_at": "2026-08-13T18:44:39-04:00",
+  "validated_at": "2026-08-13T18:45:37-04:00",
+  "accepted_at": "2026-08-13T18:49:03-04:00",
+  "implemented_at": "2026-08-13T18:49:03-04:00",
+  "scope": "P3_WATCHDOG_CLIENT_SECOND_HISTORICAL_SUCCESSOR_GUARD_ONLY",
+  "full_manifest_replacement": false,
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v40.json",
+    "sha256": "b853b1d43cb5788e9876304b78ccb5ebf6bf951d3ecac644ee1bddcfd43c5f2c"
+  },
+  "governed_baselines": [
+    {
+      "path": "docs/architecture/process-ownership-v20.json",
+      "sha256": "397658f28c29f3d2f538eda9087b5588c2411bcb386b16401f0d6492447c7566"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v40.json",
+      "sha256": "b853b1d43cb5788e9876304b78ccb5ebf6bf951d3ecac644ee1bddcfd43c5f2c"
+    }
+  ],
+  "preimplementation_files": [
+    {
+      "path": "tests/architecture/process-ownership-v20.test.mjs",
+      "sha256": "66c4751173bfbb2bff376c36551bcf5978c87270ed70fde2714f0105ed885156"
+    }
+  ],
+  "proposed_implementation_files": [
+    "tests/architecture/process-ownership-v20.test.mjs"
+  ],
+  "implemented_files": [
+    {
+      "path": "tests/architecture/process-ownership-v20.test.mjs",
+      "sha256": "91f4e30d01f03bd19d203341107cded4c5cccb4f0512453e58de826f6f8721f7"
+    }
+  ],
+  "required_contract": {
+    "historical_guard_target": "tests/architecture/process-ownership-v20.test.mjs",
+    "historical_governance_record": "docs/architecture/process-ownership-v20.json",
+    "authorized_successor_record": "docs/architecture/process-ownership-v40.json",
+    "authorized_successor_path": "tests/architecture/process-ownership-v12.test.mjs",
+    "successor_record_status": "ACCEPTED",
+    "successor_postimage_must_match": true,
+    "non_successor_v20_guard_files_must_remain_hash_exact": true,
+    "unrecorded_successor_digest_rejected": true
+  },
+  "required_adversarial_cases": [
+    "V20_GUARD_ACCEPTS_ONLY_THE_EXACT_ACCEPTED_V40_V12_GUARD_POSTIMAGE",
+    "V20_GUARD_REJECTS_A_DIFFERENT_V12_GUARD_DIGEST",
+    "V20_GUARD_RETAINS_EXACT_HASH_CHECKS_FOR_ALL_OTHER_V20_GUARD_FILES",
+    "SECOND_SUCCESSOR_GUARD_SOURCE_RETAINS_NO_RUNTIME_AUTHORITY"
+  ],
+  "authority": {
+    "runtime_authority": false,
+    "xpc_connection": false,
+    "native_module_load": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "package_or_signing": false,
+    "production_use": false
+  },
+  "immutable_outside_scope": [
+    "Every v20 governance record and every historical source/test path other than the one named v20 architecture guard.",
+    "The accepted v40 v12-guard postimage, including its exact hash binding and all authority denials.",
+    "Every client, native fixture, package, signing, proof, Service Management, XPC, builder, execution, audit, schema, and production path."
+  ],
+  "implementation_authorization": "OWNER_ACCEPTED_SECOND_HISTORICAL_GUARD_TEST_ONLY",
+  "implementation_outcome": "IMPLEMENTED_NO_RUNTIME_AUTHORITY"
+}

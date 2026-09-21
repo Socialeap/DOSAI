@@ -1,0 +1,78 @@
+{
+  "record_type": "P3_V50_GATE_V3_PHYSICAL_PROOF_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T16:50:00-04:00",
+  "status": "FAILED_CLOSED_STAGING_PARENT_PERMISSION_REAUTHORIZATION_REQUIRED",
+  "authorization_source": "OWNER_CHAT_EXACT_SINGLE_ATTEMPT_V50_GATE_V3",
+  "subjects": {
+    "package_source_commit": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+    "gate_commit": "24ff078b475b6e89c75f8575e46e0399cfcea29c",
+    "gate_path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v3.json",
+    "gate_sha256": "dee3684e0b01f3a4ca6a00760d36b9e6c9de2224e68e4878a012bfe58fc361cf"
+  },
+  "governed_preflight": {
+    "executions": 1,
+    "arguments": 0,
+    "result": "PASS",
+    "subject_commit": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+    "cached_electron_archive_verified": true,
+    "governed_dependencies_present": true,
+    "preserved_v49_package_present": true,
+    "staged_v50_application_absent": true
+  },
+  "preserved_package": {
+    "path": "/private/tmp/dosai-v50-proof/out/DOSAI-darwin-arm64/DOSAI.app",
+    "builds": 1,
+    "test_signing_sequences_completed": 1,
+    "package_script_result": "PASS",
+    "manifest_algorithm": "SORTED_RECURSIVE_JSON_ENTRIES_WITH_FILE_SHA256_MODE_SIZE_AND_SYMLINK_TARGET",
+    "manifest_entries": 606,
+    "manifest_sha256": "9a842b75f49aaf26c1f58e8fe83f654d1940310afbfe5606b7247a781bdc31e7",
+    "package_present_after_failure": true
+  },
+  "failure": {
+    "stage": "STABLE_PATH_PARENT_CREATION",
+    "code": "STAGING_PARENT_PERMISSION_DENIED",
+    "path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50",
+    "message": "Operation not permitted",
+    "staging_parent_creation_attempts": 1,
+    "staging_parent_creation_completions": 0,
+    "staged_application_copy_attempts": 0,
+    "physical_proof_attempt_consumed": true,
+    "lifecycle_receipt_produced": false
+  },
+  "post_failure_observation": {
+    "source_package_present": true,
+    "staging_parent_present": false,
+    "staged_application_present": false,
+    "restricted_context_signature_reverification": "CSSMERR_TP_NOT_TRUSTED",
+    "authoritative_signing_result": "PACKAGE_SCRIPT_PASSED_IN_AUTHORIZED_CONTEXT",
+    "signature_reverification_success_claim": false
+  },
+  "observed_effects": {
+    "governed_preflight_executions": 1,
+    "package_builds": 1,
+    "test_signing_sequences": 1,
+    "staged_application_copies": 0,
+    "application_launches": 0,
+    "native_module_loads": 0,
+    "status_observations": 0,
+    "registration_attempts": 0,
+    "unregistration_attempts": 0,
+    "workflow_dispatches": 0,
+    "provider_charge_usd": 0
+  },
+  "containment": {
+    "stopped_before_staging_copy": true,
+    "stopped_before_launch": true,
+    "retry_performed": false,
+    "automatic_recovery_performed": false,
+    "preserved_v49_package_present": true,
+    "preserved_v50_package_present": true,
+    "v50_staging_parent_absent": true,
+    "v50_staged_application_absent": true,
+    "background_item_state": "UNCHANGED_NO_APP_LAUNCH",
+    "further_physical_action_requires_new_owner_authorization": true
+  },
+  "next_gate": "BIND_PRESERVED_PACKAGE_AND_EXACT_PARENT_PERMISSION_BEFORE_REUSE_ONLY_OWNER_REAUTHORIZATION"
+}

@@ -1,0 +1,113 @@
+{
+  "record_type": "P3_NATIVE_BUILDER_HOST_SOURCE_RECOMMENDATION",
+  "record_version": 1,
+  "status": "PROPOSED_FOR_OWNER_REVIEW",
+  "proposed_at": "2026-09-21T01:20:10-04:00",
+  "scope": "HOST_FEASIBILITY_OBSERVATION_RECOMMENDATION_ONLY",
+  "preconditions": [
+    {
+      "path": "docs/decisions/0018-native-linux-independent-builders.md",
+      "sha256": "834e76a5943406908e4ef077e1bd230c63d4b2ef36e953447a4ce8fdc765584d"
+    },
+    {
+      "path": "docs/architecture/p3-linux-builder-v2-acceptance-record.json",
+      "sha256": "4bf6bcabafad6a038fb97a365a091a2652c5c9dddcc9153fd99e187562bb8f45"
+    }
+  ],
+  "repository_observation": {
+    "repository": "Socialeap/DOSAI",
+    "observed_at": "2026-09-21T01:20:10-04:00",
+    "visibility": "PUBLIC",
+    "actions_enabled": true,
+    "allowed_actions": "all",
+    "workflow_files_at_observation": 0,
+    "observation_is_mutable_external_state": true
+  },
+  "candidate": {
+    "provider": "GITHUB_HOSTED_STANDARD",
+    "runner_label": "ubuntu-24.04",
+    "expected_runner_environment": "github-hosted",
+    "expected_os": "Linux",
+    "expected_architecture": "X64",
+    "required_jobs": 2,
+    "same_provider_allowed_by_adr": true,
+    "distinct_fresh_vm_required_per_job": true,
+    "candidate_only": true,
+    "physical_linux_builder_verified": false
+  },
+  "official_references": [
+    {
+      "purpose": "RUNNER_FRESH_VM_ARCHITECTURE_AND_PUBLIC_REPOSITORY_COST",
+      "url": "https://docs.github.com/en/actions/reference/runners/github-hosted-runners"
+    },
+    {
+      "purpose": "RUNNER_CONTEXT_FIELDS_AND_NAME_NON_UNIQUENESS",
+      "url": "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts"
+    },
+    {
+      "purpose": "PUBLIC_STANDARD_RUNNER_BILLING",
+      "url": "https://docs.github.com/en/billing/concepts/product-billing/github-actions"
+    },
+    {
+      "purpose": "RUNNER_IMAGE_VERSION_PROVENANCE",
+      "url": "https://github.com/actions/runner-images/blob/main/README.md"
+    }
+  ],
+  "future_host_observation_contract": {
+    "trigger": "WORKFLOW_DISPATCH_ONLY",
+    "workflow_permissions": "NONE",
+    "third_party_actions": false,
+    "repository_checkout": false,
+    "secrets_consumed": false,
+    "cache_used": false,
+    "artifact_uploaded": false,
+    "larger_or_paid_runner_allowed": false,
+    "maximum_charge_usd": 0,
+    "jobs": [
+      "BUILDER_HOST_A",
+      "BUILDER_HOST_B"
+    ],
+    "required_common_observations": [
+      "GITHUB_RUN_ID",
+      "GITHUB_RUN_ATTEMPT",
+      "GITHUB_JOB",
+      "GITHUB_SHA",
+      "RUNNER_ENVIRONMENT_GITHUB_HOSTED",
+      "RUNNER_OS_LINUX",
+      "RUNNER_ARCH_X64",
+      "UNAME_MACHINE_X86_64",
+      "RUNNER_IMAGE_NAME",
+      "RUNNER_IMAGE_VERSION",
+      "KERNEL_RELEASE",
+      "DMI_PRODUCT_UUID",
+      "DOCKER_SERVER_ARCH_AMD64",
+      "NO_ACTIVE_BINFMT_MISC_INTERPRETERS"
+    ],
+    "runner_name_is_identity": false,
+    "distinct_identity_rule": "NONEMPTY_DMI_PRODUCT_UUIDS_MUST_DIFFER",
+    "stop_if_identity_missing_or_equal": true,
+    "stop_if_image_version_missing": true,
+    "stop_if_architecture_mismatch": true,
+    "stop_if_emulation_detected": true,
+    "host_observation_satisfies_builder_receipt": false,
+    "builder_image_or_guest_execution_allowed": false
+  },
+  "authorities": {
+    "workflow_creation": false,
+    "workflow_dispatch": false,
+    "runner_allocation": false,
+    "github_token_use": false,
+    "repository_checkout": false,
+    "cache_use": false,
+    "artifact_upload": false,
+    "network_retrieval": false,
+    "builder_image_load": false,
+    "container_launch": false,
+    "guest_compilation": false,
+    "guest_execution": false,
+    "builder_receipt_acceptance": false,
+    "provider_spend": false,
+    "production_use": false
+  },
+  "next_gate": "OWNER_ACCEPTANCE_AND_SEPARATE_ZERO_COST_HOST_OBSERVATION_AUTHORIZATION_REQUIRED"
+}

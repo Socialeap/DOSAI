@@ -1,0 +1,77 @@
+{
+  "schema_version": 40,
+  "status": "ACCEPTED",
+  "proposed_at": "2026-08-13T17:48:57-04:00",
+  "validated_at": "2026-08-13T17:50:26-04:00",
+  "accepted_at": "2026-08-13T18:43:30-04:00",
+  "implemented_at": "2026-08-13T18:43:30-04:00",
+  "scope": "P3_WATCHDOG_CLIENT_HISTORICAL_SUCCESSOR_GUARD_ONLY",
+  "full_manifest_replacement": false,
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v39.json",
+    "sha256": "bcf02d4fb081240e9c4fa2fb8c771518fa7d9aeed9bbb0e9df58cc5168ecc0b1"
+  },
+  "governed_baselines": [
+    {
+      "path": "docs/architecture/process-ownership-v12.json",
+      "sha256": "908846c04150e1288a502966b48b7f24e651983685ef386f1a60604f4259fd76"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v39.json",
+      "sha256": "bcf02d4fb081240e9c4fa2fb8c771518fa7d9aeed9bbb0e9df58cc5168ecc0b1"
+    }
+  ],
+  "preimplementation_files": [
+    {
+      "path": "tests/architecture/process-ownership-v12.test.mjs",
+      "sha256": "75425ed2de0c96a7d1881833dd8b5affc68e4f825097def356d6a76d68aa8a09"
+    }
+  ],
+  "proposed_implementation_files": [
+    "tests/architecture/process-ownership-v12.test.mjs"
+  ],
+  "implemented_files": [
+    {
+      "path": "tests/architecture/process-ownership-v12.test.mjs",
+      "sha256": "24bec2421182f813765c6daadf903e5ea7394ebcec4a65d1d7efc7f8b3158030"
+    }
+  ],
+  "required_contract": {
+    "historical_guard_target": "tests/architecture/process-ownership-v12.test.mjs",
+    "historical_governance_record": "docs/architecture/process-ownership-v12.json",
+    "authorized_successor_record": "docs/architecture/process-ownership-v39.json",
+    "authorized_successor_path": "src/main/execution/watchdog-control-client.ts",
+    "successor_record_status": "ACCEPTED",
+    "successor_postimage_must_match": true,
+    "non_successor_v12_bound_files_must_remain_hash_exact": true,
+    "unrecorded_successor_digest_rejected": true
+  },
+  "required_adversarial_cases": [
+    "V12_GUARD_ACCEPTS_ONLY_THE_EXACT_ACCEPTED_V39_CLIENT_POSTIMAGE",
+    "V12_GUARD_REJECTS_A_DIFFERENT_CLIENT_DIGEST",
+    "V12_GUARD_RETAINS_EXACT_HASH_CHECKS_FOR_ALL_OTHER_V12_BOUND_FILES",
+    "SUCCESSOR_GUARD_SOURCE_RETAINS_NO_RUNTIME_AUTHORITY"
+  ],
+  "authority": {
+    "runtime_authority": false,
+    "xpc_connection": false,
+    "native_module_load": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "package_or_signing": false,
+    "production_use": false
+  },
+  "immutable_outside_scope": [
+    "Every v12 governance record and every historical source/test path other than the one named v12 architecture guard.",
+    "The accepted v39 client and security-test postimages, including their exact hash binding and all authority denials.",
+    "Every native fixture, package, signing, proof, Service Management, XPC, builder, execution, audit, schema, and production path."
+  ],
+  "implementation_authorization": "OWNER_ACCEPTED_HISTORICAL_GUARD_TEST_ONLY",
+  "implementation_outcome": "IMPLEMENTED_NO_RUNTIME_AUTHORITY"
+}

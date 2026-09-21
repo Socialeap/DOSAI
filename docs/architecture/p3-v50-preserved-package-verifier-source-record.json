@@ -1,0 +1,85 @@
+{
+  "record_type": "P3_V50_PRESERVED_PACKAGE_VERIFIER_SOURCE_RECORD",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T17:00:00-04:00",
+  "status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
+  "scope": "READ_ONLY_FIXED_PRESERVED_AND_STAGED_V50_PACKAGE_VERIFICATION",
+  "implementation_authorization": "OWNER_STANDING_AUTHORIZATION_FOR_MINOR_SOURCE_TEST_DOCUMENTATION_AND_COMMIT_ADJUSTMENTS",
+  "implementation_commit": "d1f28d12d31e9b506607c8dafbfc56ce9da02f91",
+  "bound_failure": {
+    "path": "docs/architecture/p3-v50-gate-v3-physical-proof-result.json",
+    "sha256": "30fb4864ced14d253ba01808f9087f776c7ec016d9d3e1ee03f119b5a76d686e"
+  },
+  "source_files": [
+    {
+      "path": "scripts/p3-v50-package-verification.mjs",
+      "sha256": "25179ffd32acf133e3933caab31ade1535cb4ce5bd270cd281105b4525f73d59"
+    },
+    {
+      "path": "scripts/verify-p3-v50-preserved-package.mjs",
+      "sha256": "db65dec228e44663780239bbb49cea0041004a99b94123e30ea38b51061d71e3"
+    },
+    {
+      "path": "scripts/verify-p3-v50-staged-package.mjs",
+      "sha256": "22d8ad575409c08a9ddb5e768563a0c96a359a35aa79c07866ae7098aff714ad"
+    },
+    {
+      "path": "tests/governance/p3-v50-preserved-package-verification.test.mjs",
+      "sha256": "32f53250ac7fcd2ea13d66f2bf325cc0185476d73bc95fcdf8f4388413be55da"
+    },
+    {
+      "path": "docs/development/p3-v50-preserved-package-verifier-evidence.md",
+      "sha256": "14e3155d756e6e9068e54f919c4a9a2b750aea6babaf8342fb5219a6e58d9b42"
+    }
+  ],
+  "contract": {
+    "preserved_package_path": "/private/tmp/dosai-v50-proof/out/DOSAI-darwin-arm64/DOSAI.app",
+    "staged_package_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app",
+    "manifest_entries": 606,
+    "manifest_sha256": "9a842b75f49aaf26c1f58e8fe83f654d1940310afbfe5606b7247a781bdc31e7",
+    "expected_team_identifier": "3RD3TADLRY",
+    "preserved_wrapper_arguments": 0,
+    "staged_wrapper_arguments": 0,
+    "network_allowed": false,
+    "write_allowed": false,
+    "build_allowed": false,
+    "signing_allowed": false,
+    "staging_allowed": false,
+    "application_launch_allowed": false,
+    "service_management_allowed": false
+  },
+  "observed_effects": {
+    "verifier_executions": 0,
+    "package_builds": 0,
+    "signing_operations": 0,
+    "staged_application_copies": 0,
+    "application_launches": 0,
+    "native_module_loads": 0,
+    "service_management_calls": 0
+  },
+  "authorities": {
+    "preserved_package_verification": false,
+    "staged_package_verification": false,
+    "package_build": false,
+    "test_signing": false,
+    "staging_parent_creation": false,
+    "stable_path_staging": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_observation": false,
+    "registration": false,
+    "unregistration": false,
+    "launch_agent_bootstrap": false,
+    "xpc_connection": false,
+    "vm_operation": false,
+    "guest_execution": false,
+    "real_execution": false,
+    "workflow_dispatch": false,
+    "pull_request_merge": false,
+    "paid_activity": false,
+    "production_use": false,
+    "retry": false,
+    "automatic_recovery": false
+  },
+  "next_gate": "BIND_REUSE_ONLY_GATE_WITH_EXACT_PARENT_WRITE_PERMISSION_BEFORE_OWNER_REAUTHORIZATION"
+}

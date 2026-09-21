@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:audit-anchor-receipt:1",
+  "title": "DOSAI Verified Rekor v2 Anchor Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "receipt_id", "created_at", "producer", "producer_generation", "data_class", "backend", "checkpoint_digest", "previous_anchor_receipt_digest", "trusted_root_digest", "signing_config_digest", "log_origin", "log_key_id_base64", "log_index", "tree_size", "canonicalized_body_base64", "inclusion_hashes_base64", "checkpoint_envelope", "assurance"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:audit-anchor-receipt:1" },
+    "schema_version": { "const": 1 },
+    "receipt_id": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "const": "dosai.anchor-verifier" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "data_class": { "const": "D5" },
+    "backend": { "const": "SIGSTORE_REKOR_V2" },
+    "checkpoint_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "previous_anchor_receipt_digest": {
+      "oneOf": [{ "$ref": "urn:dosai:schema:common:1#/$defs/digest" }, { "type": "null" }]
+    },
+    "trusted_root_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "signing_config_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "log_origin": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "log_key_id_base64": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$" },
+    "log_index": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "tree_size": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "canonicalized_body_base64": { "type": "string", "pattern": "^[A-Za-z0-9+/]+={0,2}$", "maxLength": 8192 },
+    "inclusion_hashes_base64": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$" }
+    },
+    "checkpoint_envelope": { "type": "string", "minLength": 1, "maxLength": 16384 },
+    "assurance": { "const": "INCLUSION_PROOF_VERIFIED_NO_TRUSTED_TIME" }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 44,
+  "status": "IMPLEMENTED_OWNER_AUTHORIZED_SOURCE_REPAIR",
+  "scope": "P3_STATUS_PROOF_COMMONJS_STARTUP_REPAIR_ONLY",
+  "implementation_authorization": "OWNER_AUTHORIZED_BOUNDED_SOURCE_REPAIR_2026_09_20",
+  "accepted_proof_baseline": {
+    "path": "docs/architecture/process-ownership-v37.json",
+    "sha256": "490ed96c98f54b6d5eb6620541805cf9a0c85322274ba8fd9b66c963a773d980"
+  },
+  "guard_reconciliation": {
+    "path": "docs/architecture/process-ownership-v43.json",
+    "sha256": "ddc7505596cf4769ae94963baf45c67289e16fd8aceb35678b81731a9f6333eb"
+  },
+  "modified_files": [
+    {
+      "path": "src/main/execution/service-management-status-proof-entry.ts",
+      "pre_sha256": "5df5b579ce5b791fb7658653ef75e6e1967f90fc350006ea900b2354e9639698",
+      "post_sha256": "0a6bf35a6d80e495b3c6a3d1799788dcacfe40425d8340208c60d19644dbb389"
+    },
+    {
+      "path": "tests/security/p3-service-management-status-addon-physical-proof-candidate.test.mjs",
+      "pre_sha256": "988befc03a27ce794ef87111344b13924c31aee888445a5b7cfffcf90756e4ec",
+      "post_sha256": "3822b844a4275552f6b0ed1fa359125f8ac6bbfe01d04edb7f99b6b5ed68fb37"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v37.test.mjs",
+      "pre_sha256": "837408fe8f97be9f90cb6ff6f9321ef300d4e796a49abc0e18dd7a804b1e8dee",
+      "post_sha256": "0640e5b9a5428207889882cb14e3a42a9e7a5628829b19d0a856f4c079a405f2"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v42.test.mjs",
+      "pre_sha256": "918bf42ba91e9f39126e8042ce78e46cfef939acd786737c954480cfeb40a26f",
+      "post_sha256": "4a15a5fb6d724c9dae21df80ecbc818d6cf78287589e6437868acc1733ae868c"
+    },
+    {
+      "path": "tests/architecture/p3-guard-successor.mjs",
+      "pre_sha256": "32b57febbfd143779037d6b4dde46cfcd83fc35ae769482f8971fe44c6c82f40",
+      "post_sha256": "363c9fa0f727fc7831955b4ec8956e1bb46a3d37b2169b322e165f1dbc646a5b"
+    }
+  ],
+  "support_files": [
+    {
+      "path": "tests/architecture/p3-status-proof-successor.mjs",
+      "sha256": "f601c1afbdc8a00cd41a0dac535036c789967d0841fe4d948d5ef1da20e843be"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v44.test.mjs",
+      "sha256": "367d5e9a4ed57a8e67a67c8d523a95d34f17ccb433a2dc8e459f055699f69f5c"
+    }
+  ],
+  "authority": {
+    "package_or_signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "production_use": false
+  },
+  "runtime_status": "NO_GO"
+}

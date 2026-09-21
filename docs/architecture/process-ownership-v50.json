@@ -1,0 +1,126 @@
+{
+  "schema_version": 50,
+  "status": "IMPLEMENTED_OWNER_AUTHORIZED_SOURCE_ONLY",
+  "scope": "P3_FIRST_SEEN_SERVICE_PRECONDITION_SOURCE_ONLY",
+  "implementation_authorization": "OWNER_AUTHORIZED_EXACT_SOURCE_ONLY_V50_2026_09_21",
+  "accepted_source_baseline": {
+    "path": "docs/architecture/process-ownership-v49.json",
+    "sha256": "ba1a5d6248df83e6bd2af4852b97f37fe13bdfdef075b20a392aeb524b0cc020"
+  },
+  "diagnosis_input": {
+    "path": "docs/architecture/p3-v49-not-found-source-diagnosis.json",
+    "sha256": "2558f04d2d207a9f34c12ab7972816f397898cbe5f924b99798fc52d869bd179"
+  },
+  "proposal_input": {
+    "path": "docs/architecture/p3-v50-first-registration-successor-proposal.json",
+    "sha256": "e72339e2ef42a6ca09ec12c356cecbbf1d48ef39efe129fe4981199dcb655ace"
+  },
+  "authorization_record": {
+    "path": "docs/architecture/p3-v50-first-registration-authorization-record.json",
+    "sha256": "3988cf59a7ed7aef88e141db9500e869d8a28a0cc240d5f820a4430fde0ed296"
+  },
+  "protocol": {
+    "single_use": true,
+    "eligible_initial_statuses": ["NOT_REGISTERED", "NOT_FOUND"],
+    "dirty_initial_statuses": ["ENABLED", "REQUIRES_APPROVAL"],
+    "register_attempt_limit": 1,
+    "unregister_attempt_limit": 1,
+    "operation_argument_count": 0,
+    "cleanup_trigger": "REGISTER_TRUE_OR_ACTIVE_POST_STATUS",
+    "successful_post_register_statuses": ["ENABLED", "REQUIRES_APPROVAL"],
+    "clean_terminal_status": "NOT_REGISTERED",
+    "retry_allowed": false,
+    "ambiguous_status_fails_closed": true
+  },
+  "modified_files": [
+    {
+      "path": "src/main/execution/service-management-lifecycle-core.ts",
+      "pre_sha256": "f4baaa90c804eb1b5c1351b329b62423aeea4a29acf569f764dddae22ec75be7",
+      "post_sha256": "c01658f6beac0ca5a985e5b4a9aee6e38e0aaabacfdf8beeb744a79fadd3e61b"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-core.test.mjs",
+      "pre_sha256": "34a84971186e8b73cad6d51408dfb2a0c684294e198ed714ed27671017f8636f",
+      "post_sha256": "574cf8a9951482d60013d3c61701a61206d733fb570d36b1381a111e88b850bf"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-proof-entry.test.mjs",
+      "pre_sha256": "40f298f53e839e9f216de7f365aea100ee159e3deffe0b2b494a3d9b9a7ee63f",
+      "post_sha256": "05af62bd72da56ae821407840b39c1d3f11c2aa7d287ab0e48c81d853c91c430"
+    },
+    {
+      "path": "scripts/service-management-lifecycle-proof.mjs",
+      "pre_sha256": "e86755efd3ef6286573b199792fcb9e7ea7a1d139edd750b8ab9be4f704f4278",
+      "post_sha256": "32be03d438a8c140475ff04808997271fd4ce50f7c2124c8a2e81d20086c68fd"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-composition.test.mjs",
+      "pre_sha256": "ee12e0c1d68c35438baf8fdec23c7ddbacdb04279c3fc4b9b58a0f9ea7837193",
+      "post_sha256": "c841e0ea276d07a23df8caca4a154e8bb1a6a5c6fa902a890dbbc829d0f8031a"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v46.test.mjs",
+      "pre_sha256": "2bca4c739c339a1dcb9460bda1eb169cffc1a863532e1afba46d6ce473112efa",
+      "post_sha256": "12c5f255e2bddbdd740f9388a16f74fc548631bfb5db013cacfcc4c453dd4d66"
+    },
+    {
+      "path": "tests/architecture/p3-lifecycle-composition-successor.mjs",
+      "pre_sha256": "de6c527daf24700af047b47d66a549561912bd14f178c3d2189760b84ad7e491",
+      "post_sha256": "0eb519608215d1ca66b82ba6ef411fbb071cf73c423bd29165803f29ab749932"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v49.test.mjs",
+      "pre_sha256": "683eedd32bd818d83652d12cb0da9f190fd2980f73e3c4789dac50e96b469414",
+      "post_sha256": "78d9915794d6c8ff6b01c6cf2f05cb5b598d3d85a561669dd03881ac3684ffbd"
+    }
+  ],
+  "new_files": [
+    {
+      "path": "tests/architecture/p3-lifecycle-first-registration-successor.mjs",
+      "sha256": "06d1fea65d86f8dba368906f7d8e2d540a402247b6de3ddb1c3fe46e57237a92"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v50.test.mjs",
+      "sha256": "5135199f3220f761b09b49a41ceeb855714f94dc3a5f2b08e0901116e10c95b9"
+    },
+    {
+      "path": "docs/development/p3-v50-first-registration-implementation-evidence.md",
+      "sha256": "e976de4da58a609a6814f22d96debb69993980118a6495e8b530b5faba6a014b"
+    }
+  ],
+  "source_validation": {
+    "first_seen_not_found_tested": true,
+    "dirty_active_statuses_refused": true,
+    "register_true_ambiguous_post_status_cleanup_tested": true,
+    "register_false_not_found_cannot_succeed": true,
+    "final_not_found_cannot_succeed": true,
+    "operation_counts_remain_bounded": true,
+    "normal_main_unchanged": true,
+    "package_built": false,
+    "signing_invoked": false,
+    "app_launched": false,
+    "native_module_loaded": false,
+    "service_management_invoked": false
+  },
+  "authority": {
+    "package_build": false,
+    "signing": false,
+    "stable_path_staging": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management_runtime_call": false,
+    "registration": false,
+    "unregistration": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "workflow_dispatch": false,
+    "pull_request_merge": false,
+    "default_branch_change": false,
+    "paid_activity": false,
+    "real_execution": false,
+    "production_use": false,
+    "retry": false
+  },
+  "runtime_status": "NO_GO"
+}

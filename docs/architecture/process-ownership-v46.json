@@ -1,0 +1,74 @@
+{
+  "schema_version": 46,
+  "status": "IMPLEMENTED_STANDING_AUTHORIZATION_SOURCE_ONLY",
+  "scope": "P3_SERVICE_LIFECYCLE_INJECTION_ONLY_CORE",
+  "implementation_authorization": "OWNER_STANDING_AUTHORIZATION_MINOR_SOURCE_BUILD_TEST_COMMIT_2026_09_20",
+  "accepted_source_baseline": {
+    "path": "docs/architecture/process-ownership-v45.json",
+    "sha256": "3fd999d46397a5a0b6d09e7bec06a2c0f2f1b47038a128a4f587d72b50ba0121"
+  },
+  "privacy_remediation": {
+    "personal_signing_subject_retained": false,
+    "signing_selector_retained": true,
+    "team_identifier_retained": true,
+    "certificate_fingerprint_retained": true,
+    "sanitized_evidence": [
+      {
+        "path": "docs/development/p3-v44-signed-app-status-proof-evidence.md",
+        "sha256": "67b83f6b27f2ac103592d144031f840fb7b6efa86646ba6ced971f394fc8624d"
+      },
+      {
+        "path": "docs/development/p3-v45-signed-app-status-proof-evidence.md",
+        "sha256": "f2fbee51a39b312237a7c2f7e2023312cf133c9f451c814e593c0aff50acab1d"
+      }
+    ]
+  },
+  "protocol": {
+    "single_use": true,
+    "required_initial_status": "NOT_REGISTERED",
+    "register_attempt_limit": 1,
+    "unregister_attempt_limit": 1,
+    "operation_argument_count": 0,
+    "clean_terminal_status": "NOT_REGISTERED",
+    "retry_allowed": false,
+    "unknown_status_fails_closed": true
+  },
+  "implementation_files": [
+    {
+      "path": "src/main/execution/service-management-lifecycle-core.ts",
+      "sha256": "f4baaa90c804eb1b5c1351b329b62423aeea4a29acf569f764dddae22ec75be7"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-core.test.mjs",
+      "sha256": "34a84971186e8b73cad6d51408dfb2a0c684294e198ed714ed27671017f8636f"
+    }
+  ],
+  "runtime_reachability": {
+    "electron_main_import": false,
+    "preload_import": false,
+    "renderer_import": false,
+    "package_script_import": false,
+    "native_binding_present": false,
+    "normal_build_inclusion": false,
+    "proof_package_inclusion": false
+  },
+  "authority": {
+    "package_or_signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management": false,
+    "registration": false,
+    "unregistration": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "production_use": false,
+    "physical_attempt": false
+  },
+  "runtime_status": "NO_GO"
+}

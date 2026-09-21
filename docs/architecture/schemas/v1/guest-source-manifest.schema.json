@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:guest-source-manifest:1",
+  "title": "DOSAI Unverified Guest Source Closure Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "manifest_id", "source_set_version", "scope", "status", "build_allowed", "runtime_eligible", "sources", "patches", "toolchain", "closure"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:guest-source-manifest:1" },
+    "schema_version": { "const": 1 },
+    "manifest_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "source_set_version": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "scope": { "const": "FULL_GUEST_BUILD" },
+    "status": { "const": "DECLARED_UNVERIFIED" },
+    "build_allowed": { "const": false },
+    "runtime_eligible": { "const": false },
+    "sources": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "patches": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": { "$ref": "#/$defs/patch" }
+    },
+    "toolchain": { "$ref": "#/$defs/toolchain" },
+    "closure": { "$ref": "#/$defs/closure" }
+  },
+  "$defs": {
+    "normalized_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+      "maxLength": 96
+    },
+    "safe_relative_path": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_+-]+(?:\\.[A-Za-z0-9_+-]+)*(?:/[A-Za-z0-9_+-]+(?:\\.[A-Za-z0-9_+-]+)*)*$",
+      "maxLength": 256
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "signature_url", "signer_fingerprint", "mathematical_verification", "trust_verification"],
+      "properties": {
+        "availability": { "enum": ["REQUIRED", "NOT_PUBLISHED"] },
+        "signature_url": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^(?:|https://[^\\s]+)$"
+        },
+        "signer_fingerprint": {
+          "type": "string",
+          "pattern": "^(?:|[0-9A-F]{40}|[0-9A-F]{64})$"
+        },
+        "mathematical_verification": { "const": false },
+        "trust_verification": { "const": false }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "availability": { "const": "REQUIRED" } } },
+          "then": {
+            "properties": {
+              "signature_url": { "type": "string", "pattern": "^https://[^\\s]+$", "minLength": 9 },
+              "signer_fingerprint": { "type": "string", "pattern": "^(?:[0-9A-F]{40}|[0-9A-F]{64})$" }
+            }
+          },
+          "else": {
+            "properties": {
+              "signature_url": { "const": "" },
+              "signer_fingerprint": { "const": "" }
+            }
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "role", "component", "version", "archive_name", "canonical_url", "sha256", "size_bytes", "license_expression", "license_files", "signature"],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/normalized_id" },
+        "role": { "enum": ["BUILD_SYSTEM", "TOOLCHAIN_BOOTSTRAP", "TOOLCHAIN_FINAL", "KERNEL", "ROOT_FILESYSTEM_PACKAGE", "GUEST_AGENT_DEPENDENCY"] },
+        "component": { "$ref": "#/$defs/normalized_id" },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$"
+        },
+        "archive_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}\\.(?:tar\\.(?:gz|xz|bz2)|tgz|zip)$"
+        },
+        "canonical_url": {
+          "type": "string",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 2048
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 8589934592 },
+        "license_expression": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9 .()+-]{0,127}$"
+        },
+        "license_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/safe_relative_path" }
+        },
+        "signature": { "$ref": "#/$defs/signature" }
+      }
+    },
+    "patch_application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verifier", "strip_components", "fuzz_allowed", "offsets_allowed", "backup_files_allowed", "reject_files_allowed", "verified"],
+      "properties": {
+        "verifier": { "const": "GIT_APPLY_CHECK" },
+        "strip_components": { "const": 1 },
+        "fuzz_allowed": { "const": 0 },
+        "offsets_allowed": { "const": false },
+        "backup_files_allowed": { "const": false },
+        "reject_files_allowed": { "const": false },
+        "verified": { "const": false }
+      }
+    },
+    "patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patch_id", "target_source_id", "apply_order", "kind", "repository_path", "sha256", "expected_touched_paths", "application"],
+      "properties": {
+        "patch_id": { "$ref": "#/$defs/normalized_id" },
+        "target_source_id": { "$ref": "#/$defs/normalized_id" },
+        "apply_order": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "kind": { "enum": ["DOSAI_LOCAL", "UPSTREAM_BACKPORT"] },
+        "repository_path": {
+          "type": "string",
+          "pattern": "^guest-build/patches/[A-Za-z0-9_+-]+(?:\\.[A-Za-z0-9_+-]+)*/[0-9]{4}-[a-z0-9][a-z0-9.-]{0,95}\\.patch$",
+          "maxLength": 256
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "expected_touched_paths": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/safe_relative_path" }
+        },
+        "application": { "$ref": "#/$defs/patch_application" }
+      }
+    },
+    "build_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["GOFLAGS", "GOPROXY", "GOSUMDB", "GOTOOLCHAIN", "GOWORK"],
+      "properties": {
+        "GOFLAGS": { "const": "-mod=vendor" },
+        "GOPROXY": { "const": "off" },
+        "GOSUMDB": { "const": "off" },
+        "GOTOOLCHAIN": { "const": "local" },
+        "GOWORK": { "const": "off" }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["build_system_source_id", "build_system_version", "build_system_sha256", "bootstrap_source_ids", "stage5_source_id", "stage5_version", "stage5_sha256", "final_source_id", "final_version", "final_sha256", "accepted_patch_id", "required_provider", "prebuilt_provider_allowed", "provider_configuration_verified", "target_os", "target_arch", "cgo_enabled", "build_environment"],
+      "properties": {
+        "build_system_source_id": { "const": "buildroot" },
+        "build_system_version": { "const": "2025.02.16" },
+        "build_system_sha256": { "const": "15305e3d366eeaf4a5ecaf2ed42f685fd6af7fe5dbf1f62e1de5f46ee83225e2" },
+        "bootstrap_source_ids": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "go-bootstrap-stage1" },
+            { "const": "go-bootstrap-stage2" },
+            { "const": "go-bootstrap-stage3" },
+            { "const": "go-bootstrap-stage4" },
+            { "const": "go-bootstrap-stage5" }
+          ],
+          "items": false,
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "stage5_source_id": { "const": "go-bootstrap-stage5" },
+        "stage5_version": { "const": "1.25.12" },
+        "stage5_sha256": { "const": "f90dcee4bd023fa376374ea0a5a6ebe553537b39c426ffd8c689469b45519932" },
+        "final_source_id": { "const": "go-final" },
+        "final_version": { "const": "1.26.5" },
+        "final_sha256": { "const": "495be4bc87176ac567392e5b4116abd98466d33d7b49d41e764ccc6976b2dc42" },
+        "accepted_patch_id": { "const": "buildroot-go-security-1.26.5" },
+        "required_provider": { "const": "BUILDROOT_HOST_GO_SRC" },
+        "prebuilt_provider_allowed": { "const": false },
+        "provider_configuration_verified": { "const": false },
+        "target_os": { "const": "linux" },
+        "target_arch": { "const": "arm64" },
+        "cgo_enabled": { "const": false },
+        "build_environment": { "$ref": "#/$defs/build_environment" }
+      }
+    },
+    "closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sealed_bundle_path", "sealed_bundle_sha256", "sealed_bundle_size_bytes", "canonical_inventory_sha256", "declared_source_count", "declared_patch_count", "source_digests_verified", "upstream_signatures_verified", "signer_trust_verified", "patches_verified", "provider_verified", "network_during_build", "shared_cache", "complete"],
+      "properties": {
+        "sealed_bundle_path": {
+          "type": "string",
+          "pattern": "^guest-sources/v1/[a-z0-9][a-z0-9._-]{0,127}\\.tar\\.zst$"
+        },
+        "sealed_bundle_sha256": { "$ref": "#/$defs/sha256" },
+        "sealed_bundle_size_bytes": { "type": "integer", "minimum": 1, "maximum": 17179869184 },
+        "canonical_inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "declared_source_count": { "type": "integer", "minimum": 9, "maximum": 1024 },
+        "declared_patch_count": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "source_digests_verified": { "const": false },
+        "upstream_signatures_verified": { "const": false },
+        "signer_trust_verified": { "const": false },
+        "patches_verified": { "const": false },
+        "provider_verified": { "const": false },
+        "network_during_build": { "const": false },
+        "shared_cache": { "const": false },
+        "complete": { "const": false }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "record_type": "P3_V50_FIRST_REGISTRATION_AUTHORIZATION_RECORD",
+  "record_version": 1,
+  "status": "ACCEPTED",
+  "authorized_at": "2026-09-21T11:12:00-04:00",
+  "authorization_source": "OWNER_CHAT_REPLY_AUTHORIZED_TO_EXACT_PRECEDING_SCOPE",
+  "proposal": {
+    "path": "docs/architecture/p3-v50-first-registration-successor-proposal.json",
+    "sha256": "e72339e2ef42a6ca09ec12c356cecbbf1d48ef39efe129fe4981199dcb655ace"
+  },
+  "authorized_scope": {
+    "source_only_v50_correction": true,
+    "tests": true,
+    "documentation": true,
+    "commit": true,
+    "push_to_existing_pr3_branch": true
+  },
+  "denied_scope": {
+    "package_build": true,
+    "test_signing": true,
+    "stable_path_staging": true,
+    "app_launch": true,
+    "native_module_load": true,
+    "service_management_runtime_call": true,
+    "registration": true,
+    "unregistration": true,
+    "launch_agent_bootstrap": true,
+    "workflow_dispatch": true,
+    "pull_request_merge": true,
+    "default_branch_change": true,
+    "production_use": true,
+    "real_execution": true,
+    "retry": true
+  },
+  "credit_ceiling": 120,
+  "paid_activity_authorized": false
+}

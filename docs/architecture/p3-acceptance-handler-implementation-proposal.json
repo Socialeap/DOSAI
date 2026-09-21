@@ -1,0 +1,278 @@
+{
+  "record_type": "P3_ACCEPTANCE_HANDLER_IMPLEMENTATION_PROPOSAL",
+  "record_version": 1,
+  "status": "PROPOSED_SOURCE_PLAN_NOT_AUTHORIZED",
+  "proposed_at": "2026-09-21T14:17:25-04:00",
+  "scope": "P3_ACCEPTANCE_RUNNER_0_3_HANDLER_AND_PREREQUISITE_PLAN_ONLY",
+  "inputs": [
+    {
+      "path": "docs/architecture/p3-acceptance-fixture-generation-proposal.json",
+      "sha256": "16d90624de634c836d4631c8ec1f96cd4b8ff535e5316f0703a2d8b832ed71af"
+    },
+    {
+      "path": "docs/testing/acceptance-test-catalog-v5.json",
+      "sha256": "482887c6e3d7a24d09471428a6486c9926d11a5b3e31673e3c91bf2ebf55843a"
+    },
+    {
+      "path": "tests/acceptance/manifests/p3-at-001.json",
+      "sha256": "b81beda8f50630f6d89997592c8c51f2ef5d4d783496066b0e191eaffae63800"
+    },
+    {
+      "path": "tests/acceptance/manifests/p3-at-002.json",
+      "sha256": "2d8c7aae25cab31445dc0c81cd8bee1888c2d8cc2ba5227285d94321fa8319b5"
+    },
+    {
+      "path": "tests/acceptance/manifests/p3-at-003.json",
+      "sha256": "d2074726b2c4b99fbc1b87c9c3d4cabe3c460d2be0d3200860a87390d89026be"
+    },
+    {
+      "path": "tools/dosai-acceptance/src/runner.mjs",
+      "sha256": "977582791d0a35149ef8bd2ff900bf3280e6ea882f424c61168a994a12f69d22"
+    },
+    {
+      "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate.json",
+      "sha256": "21491854a8585d8c589887e5e574dfd74d274c9a5990fedb4f7b0ae93c51ab93"
+    },
+    {
+      "path": "docs/architecture/p3-linux-builder-v2-acceptance-record.json",
+      "sha256": "4bf6bcabafad6a038fb97a365a091a2652c5c9dddcc9153fd99e187562bb8f45"
+    },
+    {
+      "path": "docs/architecture/p3-native-builder-host-workflow-preparation-result.json",
+      "sha256": "66fabc578190804316bb8608e395361f524ca0f09eb05663df90830c699bdd37"
+    }
+  ],
+  "current_assurance": {
+    "declared_suite_count": 3,
+    "declared_scenario_count": 6,
+    "declared_assertion_count": 27,
+    "acceptance_proven_assertion_count": 0,
+    "source_corpus_is_acceptance_evidence": false,
+    "physical_prerequisites_complete": false,
+    "runner_0_3_present": false,
+    "p3_handler_present": false
+  },
+  "required_prerequisites": [
+    {
+      "id": "P3_LIFECYCLE_PHYSICAL_PROOF",
+      "required_state": "PASS_REGISTERED_AND_CLEANED",
+      "current_state": "AWAITING_OWNER_AUTHORIZATION"
+    },
+    {
+      "id": "P3_NATIVE_AMD64_BUILDER_RECEIPTS",
+      "required_state": "TWO_DISTINCT_ACCEPTED_RECEIPTS",
+      "current_state": "ZERO_OF_TWO"
+    },
+    {
+      "id": "P3_GUEST_ARTIFACT_SET",
+      "required_state": "EXACT_ACCEPTED_EXECUTION_ELIGIBLE_ARTIFACTS",
+      "current_state": "ABSENT"
+    },
+    {
+      "id": "P3_SIGNED_TEST_CANDIDATE",
+      "required_state": "EXACT_DIGEST_AND_SIGNATURE_ACCEPTED",
+      "current_state": "ABSENT"
+    },
+    {
+      "id": "P3_CLEAN_SUBJECT",
+      "required_state": "CLEAN_EXACT_COMMIT",
+      "current_state": "NOT_SELECTED"
+    }
+  ],
+  "scenario_plans": [
+    {
+      "scenario_id": "P3-AT-001-S01",
+      "handler_id": "P3_TYPED_EXECUTION_CAPSULE",
+      "source_coverage": "PARTIAL",
+      "source_corpus": [
+        "tests/governance/p3-capsule-contracts.test.mjs",
+        "tests/governance/p3-isolation-contracts.test.mjs",
+        "tests/security/p3-capsule-supervisor.test.mjs"
+      ],
+      "assertions": [
+        "P3_TYPED_OPERATION_ADMISSION_VERIFIED",
+        "P3_EXACT_CAPSULE_CONFIGURATION_VERIFIED",
+        "P3_USEFUL_TEST_OPERATION_RESULT_VERIFIED",
+        "P3_PLAN_GRANT_AND_GENERATION_BINDING_VERIFIED"
+      ],
+      "acceptance_state": "UNPROVEN",
+      "missing_evidence": [
+        "ACCEPTED_GUEST_EXECUTION_RESULT",
+        "EXACT_PLAN_GRANT_GENERATION_CHAIN",
+        "SIGNED_CANDIDATE_COMMAND_AND_ENVIRONMENT_RECEIPT"
+      ]
+    },
+    {
+      "scenario_id": "P3-AT-001-S02",
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "source_coverage": "PARTIAL",
+      "source_corpus": [
+        "tests/governance/p3-capsule-contracts.test.mjs",
+        "tests/governance/p3-isolation-contracts.test.mjs",
+        "tests/architecture/p1-scaffold.test.mjs",
+        "tests/architecture/process-ownership.test.mjs"
+      ],
+      "assertions": [
+        "P3_FORBIDDEN_EXECUTION_FORMS_REJECTED",
+        "P3_MOUNT_NETWORK_ENVIRONMENT_ESCAPE_REJECTED",
+        "P3_DIRECT_SPAWN_AND_DETACH_PATHS_ABSENT",
+        "P3_ATTACK_CORPUS_CLEANUP_VERIFIED",
+        "P3_WORKTREE_REMAINS_CLEAN"
+      ],
+      "acceptance_state": "UNPROVEN",
+      "missing_evidence": [
+        "PHYSICAL_ATTACK_CORPUS_RECEIPT",
+        "GUEST_BOUNDARY_ESCAPE_NEGATIVE_RESULTS",
+        "POST_RUN_CLEANUP_AND_WORKTREE_RECEIPT"
+      ]
+    },
+    {
+      "scenario_id": "P3-AT-002-S01",
+      "handler_id": "P3_CANCELLATION_FAULT_MATRIX",
+      "source_coverage": "PARTIAL",
+      "source_corpus": [
+        "tests/security/p3-capsule-supervisor.test.mjs",
+        "tests/security/p3-capsule-state-store.test.mjs",
+        "tests/security/p3-durable-capsule-coordinator.test.mjs"
+      ],
+      "assertions": [
+        "P3_CANCELLATION_STAGE_MATRIX_VERIFIED",
+        "P3_OWNED_DESCENDANTS_AND_HANDLES_TERMINATED",
+        "P3_GRACE_AND_FORCE_DEADLINES_VERIFIED",
+        "P3_UNCERTAIN_CLEANUP_QUARANTINED"
+      ],
+      "acceptance_state": "UNPROVEN",
+      "missing_evidence": [
+        "PHYSICAL_CANCELLATION_STAGE_RECEIPTS",
+        "OWNED_DESCENDANT_AND_HANDLE_INVENTORY",
+        "SIGNED_CANDIDATE_DEADLINE_MEASUREMENTS"
+      ]
+    },
+    {
+      "scenario_id": "P3-AT-002-S02",
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "source_coverage": "PARTIAL",
+      "source_corpus": [
+        "tests/security/p3-capsule-supervisor.test.mjs",
+        "tests/security/p3-capsule-state-store.test.mjs",
+        "tests/security/p3-durable-capsule-coordinator.test.mjs"
+      ],
+      "assertions": [
+        "P3_ALL_OWNED_RESOURCE_CLASSES_TERMINATED",
+        "P3_UNRELATED_PROCESS_CANARY_SURVIVES",
+        "P3_UNRELATED_WORKSPACE_CANARY_UNCHANGED",
+        "P3_REMOTE_REQUEST_SCOPE_RECONCILED",
+        "P3_WORKTREE_REMAINS_CLEAN"
+      ],
+      "acceptance_state": "UNPROVEN",
+      "missing_evidence": [
+        "PHYSICAL_RESOURCE_INVENTORY_AND_TERMINATION_RECEIPT",
+        "UNRELATED_PROCESS_AND_WORKSPACE_CANARY_RECEIPT",
+        "REMOTE_REQUEST_RECONCILIATION_RECEIPT"
+      ]
+    },
+    {
+      "scenario_id": "P3-AT-003-S01",
+      "handler_id": "P3_WATCHDOG_SATURATION_MATRIX",
+      "source_coverage": "PARTIAL",
+      "source_corpus": [
+        "tests/security/p3-watchdog-control-client.test.mjs",
+        "tests/security/p3-watchdog-control-core.test.mjs",
+        "tests/security/p3-capsule-supervisor.test.mjs"
+      ],
+      "assertions": [
+        "P3_SATURATION_DIMENSION_MATRIX_VERIFIED",
+        "P3_INDEPENDENT_WATCHDOG_DEADLINE_VERIFIED",
+        "P3_OUTPUT_AND_QUEUE_BOUNDS_VERIFIED",
+        "P3_SATURATION_CLEANUP_VERIFIED"
+      ],
+      "acceptance_state": "UNPROVEN",
+      "missing_evidence": [
+        "PHYSICAL_MULTI_DIMENSION_SATURATION_RECEIPTS",
+        "INDEPENDENT_WATCHDOG_DEADLINE_MEASUREMENTS",
+        "POST_SATURATION_CLEANUP_RECEIPT"
+      ]
+    },
+    {
+      "scenario_id": "P3-AT-003-S02",
+      "handler_id": "P3_CRASH_RECONCILIATION_MATRIX",
+      "source_coverage": "PARTIAL",
+      "source_corpus": [
+        "tests/security/p3-capsule-state-store.test.mjs",
+        "tests/security/p3-durable-capsule-coordinator.test.mjs",
+        "tests/security/p3-watchdog-control-client.test.mjs"
+      ],
+      "assertions": [
+        "P3_COORDINATOR_AND_WORKER_CRASHES_RECONCILED",
+        "P3_ORPHANED_CAPSULES_RECONCILED_OR_QUARANTINED",
+        "P3_BLIND_RETRY_ABSENT",
+        "P3_UNKNOWN_EFFECT_OUTCOME_NOT_INVENTED",
+        "P3_WORKTREE_REMAINS_CLEAN"
+      ],
+      "acceptance_state": "UNPROVEN",
+      "missing_evidence": [
+        "PHYSICAL_CRASH_RECONCILIATION_RECEIPTS",
+        "ORPHAN_INVENTORY_AND_QUARANTINE_RECEIPT",
+        "POST_RECOVERY_WORKTREE_RECEIPT"
+      ]
+    }
+  ],
+  "future_change_set": {
+    "new_files": [
+      "docs/architecture/schema-registry-v19.json",
+      "docs/testing/acceptance-test-catalog-v6.json",
+      "tests/acceptance/manifests/p3-at-001-v4.json",
+      "tests/acceptance/manifests/p3-at-002-v4.json",
+      "tests/acceptance/manifests/p3-at-003-v4.json",
+      "tools/dosai-acceptance/src/p3-prerequisites.mjs",
+      "tools/dosai-acceptance/src/p3-suite.mjs",
+      "tests/governance/p3-acceptance-runner-activation.test.mjs"
+    ],
+    "modified_files": [
+      "tools/dosai-acceptance/src/runner.mjs"
+    ],
+    "catalog_successor_marks_only_p3_suites_implemented": true,
+    "accepted_p1_p2_fixture_bytes_unchanged": true,
+    "proposal_manifest_bytes_unchanged": true,
+    "generic_command_or_shell_authority_allowed": false
+  },
+  "handler_invariants": [
+    "DENY_BEFORE_ANY_ACTION_IF_ANY_EXACT_PREREQUISITE_IS_MISSING_OR_CHANGED",
+    "NEVER_PROMOTE_SOURCE_CORPUS_RESULTS_TO_PHYSICAL_ACCEPTANCE_EVIDENCE",
+    "RUN_ONLY_FIXED_HASH_BOUND_CORPUS_AND_EXACT_SIGNED_CANDIDATE_OPERATIONS",
+    "REQUIRE_EXACT_ARTIFACTS_FOR_EVERY_MANIFEST_ASSERTION",
+    "FAIL_THE_SUITE_ON_MISSING_DUPLICATE_MALFORMED_OR_CONTRADICTORY_RECEIPTS",
+    "REQUIRE_CLEANUP_AND_UNRELATED_RESOURCE_SURVIVAL_BEFORE_PASS",
+    "NEVER_BLIND_RETRY_UNKNOWN_EFFECT_OR_CLEANUP_OUTCOMES",
+    "PRESERVE_P1_P2_RUNNER_BEHAVIOR_AND_ACCEPTED_BYTES"
+  ],
+  "required_transition_sequence": [
+    "PASS_V50_LIFECYCLE_PHYSICAL_PROOF",
+    "PASS_TWO_DISTINCT_NATIVE_AMD64_BUILDER_OBSERVATIONS_AND_BUILDS",
+    "ACCEPT_EXECUTION_ELIGIBLE_GUEST_ARTIFACTS_AND_SIGNED_TEST_CANDIDATE",
+    "OWNER_ACCEPTS_EXACT_SCHEMA_MANIFEST_AND_HANDLER_PLAN_BYTES",
+    "IMPLEMENT_SOURCE_ONLY_PREREQUISITE_AND_HANDLER_MODULES",
+    "INDEPENDENTLY_REVIEW_AND_ACCEPT_RUNNER_0_3_ACTIVATION_GENERATION",
+    "RUN_ALL_THREE_P3_SUITES_ON_ONE_EXACT_CLEAN_CANDIDATE",
+    "OWNER_ACCEPTS_P3_GATE_EVIDENCE"
+  ],
+  "authorities": {
+    "schema_registration": false,
+    "catalog_change": false,
+    "runner_change": false,
+    "fixture_acceptance": false,
+    "p3_handler_implementation": false,
+    "package_build": false,
+    "signing": false,
+    "app_launch": false,
+    "service_management": false,
+    "builder_execution": false,
+    "capsule_execution": false,
+    "acceptance_execution": false,
+    "workflow_dispatch": false,
+    "pull_request_merge": false,
+    "paid_activity": false,
+    "production_use": false
+  },
+  "next_gate": "PHYSICAL_PREREQUISITES_THEN_EXACT_OWNER_ACCEPTANCE_BEFORE_HANDLER_IMPLEMENTATION"
+}

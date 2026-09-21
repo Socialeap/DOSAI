@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "IMPLEMENTED",
+  "source_boundary": "src/renderer",
+  "accepted_adr": "docs/decisions/0001-runtime-and-privilege-boundaries.md",
+  "enforcement": "tests/architecture/renderer-authority.test.mjs",
+  "forbid_all_node_builtins": true,
+  "categories": {
+    "raw_process": {
+      "forbidden_imports": ["child_process", "cluster", "process", "worker_threads"],
+      "forbidden_import_prefixes": [],
+      "forbidden_identifiers": ["Buffer", "Bun", "Deno", "__dirname", "__filename", "global", "module", "process", "require"],
+      "forbidden_properties": ["Buffer", "process", "require"]
+    },
+    "filesystem": {
+      "forbidden_imports": ["chokidar", "fast-glob", "fs", "fs-extra", "fs/promises", "glob", "node:fs", "node:fs/promises"],
+      "forbidden_import_prefixes": [],
+      "forbidden_identifiers": ["FileReader", "FileSystemDirectoryHandle", "FileSystemFileHandle", "FileSystemHandle", "FileSystemWritableFileStream", "showDirectoryPicker", "showOpenFilePicker", "showSaveFilePicker"],
+      "forbidden_properties": ["showDirectoryPicker", "showOpenFilePicker", "showSaveFilePicker"]
+    },
+    "database": {
+      "forbidden_imports": ["@prisma/client", "better-sqlite3", "drizzle-orm", "ioredis", "knex", "mongodb", "mysql", "mysql2", "node:sqlite", "pg", "prisma", "redis", "sql.js", "sqlite", "sqlite3"],
+      "forbidden_import_prefixes": [],
+      "forbidden_identifiers": ["IDBDatabase", "IDBObjectStore", "IDBTransaction", "caches", "indexedDB", "localStorage", "sessionStorage"],
+      "forbidden_properties": ["caches", "indexedDB", "localStorage", "sessionStorage"]
+    },
+    "credential": {
+      "forbidden_imports": ["keychain", "keytar", "node-keychain"],
+      "forbidden_import_prefixes": ["@aws-sdk/credential-"],
+      "forbidden_identifiers": ["Clipboard", "ClipboardItem", "FederatedCredential", "PasswordCredential", "PublicKeyCredential"],
+      "forbidden_properties": ["clipboard", "cookie", "credentials", "safeStorage"]
+    },
+    "arbitrary_ipc": {
+      "forbidden_imports": ["electron"],
+      "forbidden_import_prefixes": [],
+      "forbidden_identifiers": ["BroadcastChannel", "MessageChannel", "MessagePort", "ipcRenderer"],
+      "forbidden_properties": ["ipcRenderer", "onmessage", "postMessage", "sendSync", "webContents"]
+    },
+    "debugger": {
+      "forbidden_imports": ["chrome-remote-interface", "playwright", "puppeteer"],
+      "forbidden_import_prefixes": ["playwright-", "puppeteer-"],
+      "forbidden_identifiers": ["chrome"],
+      "forbidden_properties": ["debugger"]
+    }
+  },
+  "protected_computed_roots": ["document", "globalThis", "navigator", "parent", "self", "top", "window"],
+  "typed_bridge": {
+    "roots": ["globalThis.dosai", "parent.dosai", "self.dosai", "top.dosai", "window.dosai"],
+    "allowed_calls": [
+      {
+        "path": "window.dosai.runtime.getSnapshot",
+        "argument_count": 0
+      }
+    ],
+    "forbid_aliasing": true,
+    "forbid_computed_access": true
+  },
+  "invariants": [
+    "Renderer source imports no Node builtin or authority-bearing package.",
+    "Renderer source uses no process, filesystem, persistence, credential, debugger, or arbitrary messaging global.",
+    "Renderer source cannot bypass protected browser-root checks with computed property access.",
+    "The DOSAI bridge is invoked only through an exact typed path with its declared argument count and is never aliased.",
+    "File and password input elements and message-event listeners are absent from renderer source."
+  ]
+}

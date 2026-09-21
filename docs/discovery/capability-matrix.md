@@ -3,7 +3,7 @@
 **Vocabulary source:**
 [`baseline-contracts-v1.md`](../architecture/baseline-contracts-v1.md)<br>
 **Platform profile:** `MACOS_ARM64_V1`<br>
-**Last structural update:** `2026-07-31T14:14:55-04:00`
+**Last structural update:** `2026-07-31T18:23:38-04:00`
 
 ## Status Rules
 
@@ -28,7 +28,7 @@ data, integration, and operation requirements still apply.
 | `workspace.lease_enforce` | Enforce branch, worktree, and file ownership | P4 | DOSAI workspace and Git brokers | `UNVERIFIED` | Conflict, replacement, link, nested-repository, restart, and compare-and-swap tests that block writes without changing another owner's state | Manual owner checkpoint and separate worktrees |
 | `process.command_readonly` | Run an allowlisted local read-only operation | P3 | DOSAI execution broker | `UNVERIFIED` | Typed operation, exact executable and arguments, tier, capsule, exit code, bounded output, timeout, and cancellation evidence | Human runs command and supplies sanitized output |
 | `process.owned_child` | Launch and terminate an owned child process tree | P3 | DOSAI execution broker and watchdog | `UNVERIFIED` | Process-tree, generation, descendant, timeout, crash, and scoped termination proof | Manual terminal execution outside DOSAI |
-| `electron.typed_bridge` | Expose a typed Electron context bridge | P1 | DOSAI renderer, preload, and main | `UNVERIFIED` | Packaged test proving context isolation, sender validation, schema rejection, and forbidden import boundaries | No renderer execution; main-process-only test harness |
+| `electron.typed_bridge` | Expose a typed Electron context bridge | P1 | DOSAI renderer, preload, and main on the accepted current-host package | `SUPPORTED_WITH_CONSTRAINTS` | Revalidate the accepted formal P1 suites after any host, runtime, package, bridge, sender, CSP, navigation, or authority-policy change | No renderer execution; main-process-only test harness |
 | `browser.evidence_capture` | Capture read-only sanitized browser evidence | P6 | DOSAI browser and evidence brokers | `UNVERIFIED` | Dedicated ephemeral profile, exact origin and capture plan, secret canaries, navigation and teardown tests, and canonical artifact proof | User-provided sanitized screenshot and DOM excerpt |
 | `macos.app_observe` | Inspect a local macOS application read-only | P10 or later ADR | Deferred macOS adapter | `UNVERIFIED` | Exact public API, entitlement and target identity, non-mutation proof, and owner-approved ADR | User observation with a written evidence checklist |
 | `packet.assemble` | Produce authenticated structured packet output | P5 | DOSAI packet endpoints | `UNVERIFIED` | Framing, authentication, sequence, provenance, valid, malformed, forged, replayed, reordered, and oversized fixtures | Reviewed manifested Markdown handoff |
@@ -56,3 +56,9 @@ Every change records the previous state, new state, actor and platform scope,
 evidence report, reviewer, timestamp, constraints, and fallback. Ambiguous or
 partial results remain `UNVERIFIED`. Phase exit reviews include every status and
 evidence change.
+
+## Evidence History
+
+| Timestamp | Capability | Previous state | New state | Actor and platform scope | Evidence | Reviewer | Constraints | Fallback |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `2026-07-31T18:23:38-04:00` | `electron.typed_bridge` | `UNVERIFIED` | `SUPPORTED_WITH_CONSTRAINTS` | DOSAI renderer, preload, and main; `MACOS_ARM64_V1`; Mac16,10; macOS 26.5.2; Electron 43.2.0; Chromium 150.0.7871.129; Node 24.18.0 | `docs/development/p1-formal-acceptance-evidence.md`; catalog v4 formal reports on commit `80e2fc656025e38e26e7cb857b7b140b63ae8f33` | Repository owner | Read-only `runtime.getSnapshot()` bridge only; exact package and current host; invalidated by relevant source, policy, dependency, host-profile, or packaging change | Disable renderer bridge and use the main-process-only test harness |

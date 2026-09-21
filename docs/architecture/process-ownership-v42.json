@@ -1,0 +1,130 @@
+{
+  "schema_version": 42,
+  "status": "PROPOSED_FOR_OWNER_REVIEW",
+  "proposed_at": "2026-08-13T18:50:47-04:00",
+  "validated_at": "2026-08-13T18:52:05-04:00",
+  "scope": "P3_WATCHDOG_CLIENT_HISTORICAL_SUCCESSOR_GUARD_BATCH_ONLY",
+  "full_manifest_replacement": false,
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v41.json",
+    "sha256": "eab6cd2acd9b729a42760237a82a8536d897d3471a3629d70b5ed27c7abe2d42"
+  },
+  "governed_baselines": [
+    {
+      "path": "docs/architecture/process-ownership-v22.json",
+      "sha256": "cad2d39ef855511a71b081cf1d9378a69374cf37b37b62aa7648fce9dd35a8a3"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v24.json",
+      "sha256": "8c419831f4d1ee9ac8efc8fd76e1fb47fccbf9197bf21334edf0a6d412098f3e"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v26.json",
+      "sha256": "757879f93a098b52432cf853dd7ad5b89a1a3d7abe7b0509d6d3095e8f7e87fb"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v28.json",
+      "sha256": "11e2595b60f765a3368606f835a2a245f69b98ade60800df37ad409bb3f4edd9"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v30.json",
+      "sha256": "b9abc5bf0791dff5254bfbe73cbe1e09c5792c8290de5eb0866f125f7482e10a"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v36.json",
+      "sha256": "3113333bd03ede0701aa080be1cf38fdbfbe30de375272a03f352f2fb4f56d05"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v37.json",
+      "sha256": "490ed96c98f54b6d5eb6620541805cf9a0c85322274ba8fd9b66c963a773d980"
+    },
+    {
+      "path": "docs/architecture/process-ownership-v41.json",
+      "sha256": "eab6cd2acd9b729a42760237a82a8536d897d3471a3629d70b5ed27c7abe2d42"
+    }
+  ],
+  "preimplementation_files": [
+    {
+      "path": "tests/architecture/process-ownership-v22.test.mjs",
+      "sha256": "3c5fd094ea579a3a362f2a0ef7846e24f07fcf5c797613bbc585df393c4f74ef"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v24.test.mjs",
+      "sha256": "d7f59cf59b33af40f2df57fff71a8743939cd9b2b48d3aa7c3b918f2dfda1128"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v26.test.mjs",
+      "sha256": "e27492737584e2168fa42eb8c3506b1ccf791c346a6f64872a6f5a55f7b68852"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v28.test.mjs",
+      "sha256": "de5c755eea943f65d1bd3c2b34b0d0a96e0feadbecb8b2bcde1729a0242ddeb6"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v30.test.mjs",
+      "sha256": "82feafcac69eb54ade5b1db9d823aaac49e1502154d7b3e8c543b269c81f07a9"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v36.test.mjs",
+      "sha256": "91765e467f96f145989fc2e7be51ae855d6f092f8e2e0db948fb43fc1c2ec499"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v37.test.mjs",
+      "sha256": "d4a7b5def9429d5d101d8a4c5adb56fbfefb870912306217a1a277ef8bf8dbb1"
+    }
+  ],
+  "proposed_implementation_files": [
+    "tests/architecture/process-ownership-v22.test.mjs",
+    "tests/architecture/process-ownership-v24.test.mjs",
+    "tests/architecture/process-ownership-v26.test.mjs",
+    "tests/architecture/process-ownership-v28.test.mjs",
+    "tests/architecture/process-ownership-v30.test.mjs",
+    "tests/architecture/process-ownership-v36.test.mjs",
+    "tests/architecture/process-ownership-v37.test.mjs"
+  ],
+  "required_contract": {
+    "historical_guard_targets": [
+      "tests/architecture/process-ownership-v22.test.mjs",
+      "tests/architecture/process-ownership-v24.test.mjs",
+      "tests/architecture/process-ownership-v26.test.mjs",
+      "tests/architecture/process-ownership-v28.test.mjs",
+      "tests/architecture/process-ownership-v30.test.mjs",
+      "tests/architecture/process-ownership-v36.test.mjs",
+      "tests/architecture/process-ownership-v37.test.mjs"
+    ],
+    "authorized_successor_record": "docs/architecture/process-ownership-v41.json",
+    "authorized_successor_path": "tests/architecture/process-ownership-v20.test.mjs",
+    "authorized_successor_sha256": "91f4e30d01f03bd19d203341107cded4c5cccb4f0512453e58de826f6f8721f7",
+    "successor_record_status": "ACCEPTED",
+    "successor_postimage_must_match": true,
+    "non_successor_guard_files_must_remain_hash_exact": true,
+    "unrecorded_successor_digest_rejected": true
+  },
+  "required_adversarial_cases": [
+    "ALL_SEVEN_GUARDS_ACCEPT_ONLY_THE_EXACT_ACCEPTED_V41_V20_GUARD_POSTIMAGE",
+    "ALL_SEVEN_GUARDS_REJECT_A_DIFFERENT_V20_GUARD_DIGEST",
+    "ALL_SEVEN_GUARDS_RETAIN_EXACT_HASH_CHECKS_FOR_EVERY_OTHER_GUARDED_FILE",
+    "BATCH_SUCCESSOR_GUARD_SOURCE_RETAINS_NO_RUNTIME_AUTHORITY"
+  ],
+  "authority": {
+    "runtime_authority": false,
+    "xpc_connection": false,
+    "native_module_load": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "package_or_signing": false,
+    "production_use": false
+  },
+  "immutable_outside_scope": [
+    "Every process-ownership record and every historical source/test path other than the seven named architecture guards.",
+    "The accepted v41 v20-guard postimage, including its exact hash binding and all authority denials.",
+    "Every client, native fixture, package, signing, proof, Service Management, XPC, builder, execution, audit, schema, and production path."
+  ],
+  "implementation_authorization": "OWNER_ACCEPTANCE_REQUIRED"
+}

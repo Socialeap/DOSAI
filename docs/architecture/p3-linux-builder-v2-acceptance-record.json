@@ -1,0 +1,64 @@
+{
+  "record_type": "P3_LINUX_BUILDER_V2_ACCEPTANCE",
+  "record_version": 1,
+  "status": "ACCEPTED",
+  "proposed_at": "2026-08-11T18:59:17-04:00",
+  "validated_at": "2026-08-11T19:01:52-04:00",
+  "accepted_at": "2026-08-11T19:23:25-04:00",
+  "decision": {
+    "path": "docs/decisions/0018-native-linux-independent-builders.md",
+    "status": "ACCEPTED"
+  },
+  "accepted_preconditions": [
+    {
+      "path": "docs/development/p3-builder-acceptance-boundary-evidence.md",
+      "sha256": "e71203f68dbb47296fafef0ba7b8a9199ed188766587e4a02c59f45d8a63fe79"
+    }
+  ],
+  "accepted_inputs": [
+    {
+      "path": "docs/architecture/schema-registry-v15.json",
+      "sha256": "ec122a0151e109bc9f84de7eeeef9667e68cccca214d578405b48ea7190ea76c"
+    },
+    {
+      "path": "docs/architecture/schema-registry-v16.json",
+      "sha256": "5fe93957da3af2eea4e1bbdd29034ab42dbe57eac747ff3f5e366eb86368144e"
+    },
+    {
+      "path": "docs/architecture/schemas/v2/linux-builder-manifest.schema.json",
+      "sha256": "3d8a9c010cb84a62ad9668c585ba25910b2f6f64a69ea433841afa842a464da2"
+    },
+    {
+      "path": "src/contracts/p3/builder-input-v2.ts",
+      "sha256": "cba6e83e2114c793d0e266e0be98b62c767823e88e6abf417da167179b4eac6b"
+    },
+    {
+      "path": "docs/development/p3-linux-builder-snapshot-contract-remediation.md",
+      "sha256": "8b9b5937adc6ea1080f42c66132c4515cfeec13c5a298d0250eca9a8d0ffc8b5"
+    },
+    {
+      "path": "tests/governance/p3-linux-builder-snapshot-contract.test.mjs",
+      "sha256": "d2eca59dc2a92e77e0d22f06629b46e782885efc5b027535994527cbec1556cf"
+    }
+  ],
+  "declaration": {
+    "v16_status_remains": "PROPOSED_FOR_OWNER_REVIEW",
+    "v2_contract_status": "DECLARATION_ONLY",
+    "owner_acceptance_recorded": true,
+    "authority_change": "NONE"
+  },
+  "authorities": {
+    "package_index_read": false,
+    "package_download": false,
+    "signature_verification": false,
+    "image_preparation": false,
+    "image_pull": false,
+    "source_acquisition": false,
+    "guest_compilation": false,
+    "guest_execution": false,
+    "vm_operation": false,
+    "network_access": false,
+    "production_use": false
+  },
+  "follow_on_gate": "SEPARATE_OWNER_ACCEPTED_READ_ONLY_RESOLUTION_PROPOSAL_REQUIRED"
+}

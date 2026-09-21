@@ -1,0 +1,98 @@
+{
+  "record_type": "P3_V50_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_GATE",
+  "record_version": 2,
+  "status": "AWAITING_OWNER_AUTHORIZATION",
+  "proposed_at": "2026-09-21T15:36:00-04:00",
+  "scope": "ONE_ISOLATED_TEST_ONLY_SIGNED_APP_LIFECYCLE_ATTEMPT",
+  "supersedes": {
+    "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate.json",
+    "sha256": "21491854a8585d8c589887e5e574dfd74d274c9a5990fedb4f7b0ae93c51ab93",
+    "reason": "REPLACE_BUILD_OUTPUT_LAUNCHER_WITH_EXACT_STABLE_PATH_LAUNCHER"
+  },
+  "subject": {
+    "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
+    "commit": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+    "process_ownership_path": "docs/architecture/process-ownership-v50.json",
+    "process_ownership_sha256": "3fc6a98254671d98943e9df5393813c3d085d7d2496f3574fd5043c0e551d053",
+    "staged_launcher_record_path": "docs/architecture/p3-v50-stable-path-launcher-source-record.json",
+    "staged_launcher_record_sha256": "a6da46ee9bd2b400a1544a9c1642056520e2957fd858f22f4f403ccaab761d6e",
+    "staged_launcher_path": "scripts/service-management-lifecycle-staged-proof.mjs",
+    "staged_launcher_sha256": "33612edc8aa1b650f601b0fcd0ae0dfb4c0f5cd20ba7dc55897690d0c9f4812f"
+  },
+  "fixed_identities": {
+    "signing_identity_selector": "UMXN25Z493",
+    "team_identifier": "3RD3TADLRY",
+    "outer_app_identifier": "com.socialeap.dosai",
+    "lifecycle_addon_identifier": "com.socialeap.dosai.service-management-lifecycle-addon",
+    "launch_agent_identifier": "com.socialeap.dosai.execution-service-fixture",
+    "launch_agent_plist": "com.socialeap.dosai.execution-service-fixture.plist"
+  },
+  "fixed_attempt": {
+    "package_argument": "--signed-app-service-management-lifecycle-proof-fixture",
+    "preserve_v49_package": true,
+    "build_new_v50_package": true,
+    "stable_test_application_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app",
+    "stable_test_executable_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app/Contents/MacOS/DOSAI",
+    "runner_path": "scripts/service-management-lifecycle-staged-proof.mjs",
+    "verify_source_and_staged_bytes_match": true,
+    "verify_nested_and_outer_signatures_before_launch": true,
+    "app_launches": 1,
+    "app_arguments": 0,
+    "observe_attempt_limit": 3,
+    "register_attempt_limit": 1,
+    "unregister_attempt_limit": 1,
+    "timeout_ms": 15000,
+    "timeout_signal": "SIGKILL",
+    "retry_allowed": false,
+    "launch_agent_may_bootstrap_as_registration_consequence": true,
+    "xpc_client_connection_allowed": false
+  },
+  "success_receipt": {
+    "result": "REGISTERED_AND_CLEANED",
+    "before": [
+      "NOT_REGISTERED",
+      "NOT_FOUND"
+    ],
+    "after_register": [
+      "ENABLED",
+      "REQUIRES_APPROVAL"
+    ],
+    "after_unregister": "NOT_REGISTERED",
+    "observe_attempts": 3,
+    "observe_completions": 3,
+    "register_attempts": 1,
+    "register_completions": 1,
+    "unregister_attempts": 1,
+    "unregister_completions": 1,
+    "consumed": true
+  },
+  "failure_containment": {
+    "stop_on_any_non_success": true,
+    "stop_on_missing_or_malformed_receipt": true,
+    "automatic_retry": false,
+    "automatic_recovery_launch": false,
+    "preserve_signed_test_package_on_uncertainty": true,
+    "preserve_staged_test_application_on_uncertainty": true,
+    "uncertain_state_label": "RESIDUAL_BACKGROUND_ITEM_STATE_UNKNOWN",
+    "further_runtime_action_requires_new_owner_authorization": true
+  },
+  "authorities": {
+    "package_build": false,
+    "test_signing": false,
+    "stable_path_staging": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_observation": false,
+    "registration": false,
+    "unregistration": false,
+    "launch_agent_bootstrap": false,
+    "xpc_connection": false,
+    "vm_operation": false,
+    "guest_execution": false,
+    "real_execution": false,
+    "production_use": false,
+    "retry": false,
+    "automatic_recovery": false
+  },
+  "next_gate": "EXACT_OWNER_AUTHORIZATION_REQUIRED_BEFORE_ANY_PHYSICAL_ACTION"
+}

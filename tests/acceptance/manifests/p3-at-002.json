@@ -1,0 +1,68 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-fixture-manifest:4",
+  "schema_version": 4,
+  "manifest_id": "478b4668-ebda-4966-8e5f-067a5320cc5c",
+  "created_at": "2026-09-21T05:28:27.000Z",
+  "data_class": "D5",
+  "catalog_version": 5,
+  "suite_id": "P3-AT-002",
+  "fixture_version": 4,
+  "status": "PROPOSED",
+  "runner": { "id": "dosai-acceptance", "version": "0.3.0" },
+  "secret_canary_set_version": 1,
+  "platform_profiles": ["MACOS_ARM64_V1", "LINUX_AMD64_V1"],
+  "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "JOURNAL", "CLEANUP"],
+  "cases": [
+    {
+      "id": "P3-AT-002-S01-C01",
+      "scenario_id": "P3-AT-002-S01",
+      "mode": "FAULT",
+      "handler_id": "P3_CANCELLATION_FAULT_MATRIX",
+      "input_profile": "P3_CANCELLATION_FAULT_MATRIX_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "1088b98108deb564797fd9b27df993af218cd9e0ccba52690c62bf00d421f4e5" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P3_PHYSICAL_PREREQUISITES_ACCEPTED", "SIGNED_TEST_CANDIDATE_EXACT", "TWO_NATIVE_BUILD_RECEIPTS_ACCEPTED"],
+      "setup_operations": ["CREATE_DEDICATED_TEST_WORKSPACE", "CREATE_BOUNDED_FAULT_FIXTURES"],
+      "action_deadline_ms": 1200000,
+      "assertions": [
+        { "id": "P3_CANCELLATION_STAGE_MATRIX_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND", "JOURNAL"] },
+        { "id": "P3_OWNED_DESCENDANTS_AND_HANDLES_TERMINATED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "CLEANUP"] },
+        { "id": "P3_GRACE_AND_FORCE_DEADLINES_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND"] },
+        { "id": "P3_UNCERTAIN_CLEANUP_QUARANTINED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "OWNED_SCOPE_STOPPED_OR_QUARANTINED",
+      "teardown_postconditions": ["OWNED_RESOURCES_REMOVED_OR_QUARANTINED", "UNRELATED_RESOURCES_UNCHANGED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P3.2", "P3.3", "I06", "I07"],
+      "limitations": ["TEST_RESOURCES_ONLY", "NO_PRODUCTION_CLAIM"]
+    },
+    {
+      "id": "P3-AT-002-S02-C01",
+      "scenario_id": "P3-AT-002-S02",
+      "mode": "SECURITY",
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "input_profile": "P3_SCOPED_CLEANUP_SECURITY_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "336bfd6b58f1bdad7e4d2ea4700f57da830f9b6b5fd2f76c42aef1800b080596" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P3_PHYSICAL_PREREQUISITES_ACCEPTED", "SIGNED_TEST_CANDIDATE_EXACT", "TWO_NATIVE_BUILD_RECEIPTS_ACCEPTED"],
+      "setup_operations": ["CREATE_DEDICATED_TEST_WORKSPACE", "CREATE_UNRELATED_CANARY_RESOURCES"],
+      "action_deadline_ms": 1200000,
+      "assertions": [
+        { "id": "P3_ALL_OWNED_RESOURCE_CLASSES_TERMINATED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND", "CLEANUP"] },
+        { "id": "P3_UNRELATED_PROCESS_CANARY_SURVIVES", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "CLEANUP"] },
+        { "id": "P3_UNRELATED_WORKSPACE_CANARY_UNCHANGED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "CLEANUP"] },
+        { "id": "P3_REMOTE_REQUEST_SCOPE_RECONCILED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] },
+        { "id": "P3_WORKTREE_REMAINS_CLEAN", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "ONLY_OWNED_SCOPE_TERMINATED",
+      "teardown_postconditions": ["OWNED_RESOURCES_REMOVED", "UNRELATED_RESOURCES_UNCHANGED", "WORKTREE_UNCHANGED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P3.2", "P3.3", "I06", "I07"],
+      "limitations": ["TEST_RESOURCES_ONLY", "NO_PRODUCTION_CLAIM"]
+    }
+  ]
+}

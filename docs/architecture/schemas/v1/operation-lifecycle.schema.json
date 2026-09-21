@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:operation-lifecycle:1",
+  "title": "DOSAI Operation Lifecycle Transition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "message_id", "created_at", "producer", "producer_generation", "trace_id", "data_class", "transition_id", "operation_id", "transition_sequence", "previous_state", "current_state", "trigger", "effect_state"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:operation-lifecycle:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "$ref": "urn:dosai:schema:common:1#/$defs/producer_id" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D5" },
+    "transition_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "operation_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "transition_sequence": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "previous_state": {
+      "type": ["string", "null"],
+      "enum": [null, "REQUESTED", "PLANNED", "REJECTED", "AWAITING_APPROVAL", "AUTHORIZED", "DENIED", "GRANT_ISSUED", "EXECUTING", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED", "UNKNOWN"]
+    },
+    "current_state": {
+      "type": "string",
+      "enum": ["REQUESTED", "PLANNED", "REJECTED", "AWAITING_APPROVAL", "AUTHORIZED", "DENIED", "GRANT_ISSUED", "EXECUTING", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED", "UNKNOWN"]
+    },
+    "trigger": { "type": "string", "enum": ["REQUEST_ADMITTED", "PLAN_CREATED", "SCHEMA_REJECTED", "POLICY_ALLOWED", "POLICY_DENIED", "APPROVAL_REQUIRED", "APPROVAL_GRANTED", "APPROVAL_DENIED", "GRANT_CREATED", "EFFECT_STARTED", "EFFECT_SUCCEEDED", "EFFECT_FAILED", "OWNER_CANCELLED", "DEADLINE_EXPIRED", "OUTCOME_UNKNOWN"] },
+    "effect_state": { "type": "string", "enum": ["NO_EFFECT", "COMMITTED", "PARTIAL", "UNKNOWN"] },
+    "plan_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "grant_digest": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" }
+  },
+  "anyOf": [
+    { "type": "object", "properties": { "previous_state": { "const": null }, "current_state": { "const": "REQUESTED" } }, "required": ["previous_state", "current_state"] },
+    { "type": "object", "properties": { "previous_state": { "const": "REQUESTED" }, "current_state": { "enum": ["PLANNED", "REJECTED", "CANCELLED"] } }, "required": ["previous_state", "current_state"] },
+    { "type": "object", "properties": { "previous_state": { "const": "PLANNED" }, "current_state": { "enum": ["AWAITING_APPROVAL", "AUTHORIZED", "DENIED", "CANCELLED", "EXPIRED"] } }, "required": ["previous_state", "current_state"] },
+    { "type": "object", "properties": { "previous_state": { "const": "AWAITING_APPROVAL" }, "current_state": { "enum": ["AUTHORIZED", "DENIED", "CANCELLED", "EXPIRED"] } }, "required": ["previous_state", "current_state"] },
+    { "type": "object", "properties": { "previous_state": { "const": "AUTHORIZED" }, "current_state": { "enum": ["GRANT_ISSUED", "CANCELLED", "EXPIRED"] } }, "required": ["previous_state", "current_state"] },
+    { "type": "object", "properties": { "previous_state": { "const": "GRANT_ISSUED" }, "current_state": { "enum": ["EXECUTING", "CANCELLED", "EXPIRED"] } }, "required": ["previous_state", "current_state"] },
+    { "type": "object", "properties": { "previous_state": { "const": "EXECUTING" }, "current_state": { "enum": ["SUCCEEDED", "FAILED", "CANCELLED", "UNKNOWN"] } }, "required": ["previous_state", "current_state"] }
+  ],
+  "allOf": [
+    { "if": { "type": "object", "properties": { "current_state": { "const": "REQUESTED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "REQUEST_ADMITTED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "PLANNED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "PLAN_CREATED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "REJECTED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "SCHEMA_REJECTED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "AWAITING_APPROVAL" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "APPROVAL_REQUIRED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "AUTHORIZED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "enum": ["POLICY_ALLOWED", "APPROVAL_GRANTED"] } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "DENIED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "enum": ["POLICY_DENIED", "APPROVAL_DENIED"] } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "GRANT_ISSUED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "GRANT_CREATED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "EXECUTING" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "EFFECT_STARTED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "SUCCEEDED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "EFFECT_SUCCEEDED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "FAILED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "EFFECT_FAILED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "CANCELLED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "OWNER_CANCELLED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "EXPIRED" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "DEADLINE_EXPIRED" } } } },
+    { "if": { "type": "object", "properties": { "current_state": { "const": "UNKNOWN" } }, "required": ["current_state"] }, "then": { "type": "object", "properties": { "trigger": { "const": "OUTCOME_UNKNOWN" } } } }
+  ]
+}

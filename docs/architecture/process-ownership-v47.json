@@ -1,0 +1,81 @@
+{
+  "schema_version": 47,
+  "status": "IMPLEMENTED_OWNER_AUTHORIZED_SOURCE_ONLY",
+  "scope": "P3_NATIVE_SERVICE_MANAGEMENT_LIFECYCLE_ADAPTER_SOURCE_ONLY",
+  "implementation_authorization": "OWNER_AUTHORIZED_BOUNDED_SOURCE_ONLY_NATIVE_LIFECYCLE_ADAPTER_2026_09_20",
+  "accepted_source_baseline": {
+    "path": "docs/architecture/process-ownership-v46.json",
+    "sha256": "91266548de2d85e8610e74c4837686691283ef2b2972d2ad84c48201156d06dc"
+  },
+  "native_adapter": {
+    "owner_root": "src/main/execution",
+    "fixed_plist_name": "com.socialeap.dosai.execution-service-fixture.plist",
+    "exports": [
+      "observe",
+      "register",
+      "unregister"
+    ],
+    "operation_argument_count": 0,
+    "register_call_site_limit": 1,
+    "unregister_call_site_limit": 1,
+    "retry_allowed": false,
+    "error_details_exported": false,
+    "unknown_status_fails_closed": true
+  },
+  "implementation_files": [
+    {
+      "path": "src/main/execution/service-management-lifecycle-adapter.mm",
+      "sha256": "b3a47d3439b481e8dc62cdab6d6e283f3bdae2569b6ab51c59d633a4555310e9"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-adapter.test.mjs",
+      "sha256": "68a5d6e6bfc03c5b15bd53e4a76e515fc6d683059c46c3faf0852dfe371e2ce5"
+    }
+  ],
+  "source_only_validation": {
+    "header_contract": {
+      "path": "docs/architecture/process-ownership-v33.json",
+      "sha256": "33163e6dac6729534aeac63b2b7ddc565c646093d4e271751ba4a98a1d8d46ae"
+    },
+    "node_version": "v24.18.0",
+    "node_api_version": 8,
+    "target": "arm64-apple-macos15.0",
+    "compiler_mode": "SYNTAX_ONLY",
+    "linked_output": false,
+    "executable_output": false,
+    "native_module_loaded": false,
+    "service_management_invoked": false
+  },
+  "runtime_reachability": {
+    "native_binding_source_present": true,
+    "native_binding_output_present": false,
+    "electron_main_import": false,
+    "preload_import": false,
+    "renderer_import": false,
+    "build_script_import": false,
+    "package_script_import": false,
+    "normal_build_inclusion": false,
+    "proof_package_inclusion": false
+  },
+  "authority": {
+    "package_build": false,
+    "signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management_runtime_call": false,
+    "registration": false,
+    "unregistration": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "production_use": false,
+    "physical_attempt": false,
+    "external_builder_provisioning": false
+  },
+  "runtime_status": "NO_GO"
+}

@@ -1,0 +1,68 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-fixture-manifest:3",
+  "schema_version": 3,
+  "manifest_id": "620a7628-2aab-45be-8a7b-b3f5d66c9f19",
+  "created_at": "2026-08-01T01:55:00.000Z",
+  "data_class": "D5",
+  "catalog_version": 5,
+  "suite_id": "P2-AT-002",
+  "fixture_version": 3,
+  "status": "ACCEPTED",
+  "runner": { "id": "dosai-acceptance", "version": "0.2.0" },
+  "secret_canary_set_version": 1,
+  "platform_profiles": ["MACOS_ARM64_V1"],
+  "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "JOURNAL", "MANIFEST", "CLEANUP"],
+  "cases": [
+    {
+      "id": "P2-AT-002-S01-C01",
+      "scenario_id": "P2-AT-002-S01",
+      "mode": "POSITIVE",
+      "handler_id": "P2_AUTHORIZATION_BINDING",
+      "input_profile": "P2_RED_AUTHORIZATION_BINDING_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "cb52325947f9e4f228ab38ee8b237012a06995eca9c2048330fcb758f8e2c565" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P2_SCHEMAS_ACCEPTED"],
+      "setup_operations": ["CREATE_OWNER_ONLY_TEMP_STORE"],
+      "action_deadline_ms": 180000,
+      "assertions": [
+        { "id": "P2_APPROVAL_PLAN_BINDING_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "MANIFEST", "JOURNAL"] },
+        { "id": "P2_GRANT_SINGLE_USE_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] },
+        { "id": "P2_NO_EFFECT_AUTHORITY_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND"] },
+        { "id": "P2_LOCAL_JOURNAL_PROBE_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "NO_EFFECT_AUTHORITY_PRESENT",
+      "teardown_postconditions": ["TEMP_STORAGE_REMOVED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P2.1", "P2.5", "I08"],
+      "limitations": ["SECURE_ENCLAVE_RUNTIME_PROOF_DEFERRED_EXTERNAL", "REKOR_V2_PUBLICATION_PROOF_DEFERRED_EXTERNAL", "SYNTHETIC_NO_EFFECT_SCOPE"]
+    },
+    {
+      "id": "P2-AT-002-S02-C01",
+      "scenario_id": "P2-AT-002-S02",
+      "mode": "NEGATIVE",
+      "handler_id": "P2_AUTHORIZATION_ATTACK_CORPUS",
+      "input_profile": "P2_AUTHORIZATION_ATTACKS_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "afb41ae72d4456b49b423fb80cfeba28581707a97629ae4fe124f9cb95028b7b" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P2_SCHEMAS_ACCEPTED"],
+      "setup_operations": ["CREATE_OWNER_ONLY_TEMP_STORE"],
+      "action_deadline_ms": 180000,
+      "assertions": [
+        { "id": "P2_AUTHORIZATION_NEGATIVE_CORPUS_REJECTED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND"] },
+        { "id": "P2_BLACK_TIER_DENIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS"] },
+        { "id": "P2_EMERGENCY_STOP_INDEPENDENT_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS"] },
+        { "id": "P2_CLEANUP_TEMP_STORAGE", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] },
+        { "id": "P2_WORKTREE_REMAINS_CLEAN", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "EMERGENCY_STOP_REMAINS_AVAILABLE",
+      "teardown_postconditions": ["TEMP_STORAGE_REMOVED", "WORKTREE_UNCHANGED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P2.1", "P2.5", "I08"],
+      "limitations": ["SECURE_ENCLAVE_RUNTIME_PROOF_DEFERRED_EXTERNAL", "REKOR_V2_PUBLICATION_PROOF_DEFERRED_EXTERNAL", "SYNTHETIC_NO_EFFECT_SCOPE"]
+    }
+  ]
+}

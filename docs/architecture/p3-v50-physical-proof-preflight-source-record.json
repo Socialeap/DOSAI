@@ -1,0 +1,88 @@
+{
+  "record_type": "P3_V50_PHYSICAL_PROOF_PREFLIGHT_SOURCE_RECORD",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T16:28:00-04:00",
+  "status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
+  "scope": "READ_ONLY_FIXED_INPUT_V50_PHYSICAL_PROOF_PREFLIGHT",
+  "implementation_authorization": "OWNER_STANDING_AUTHORIZATION_FOR_MINOR_SOURCE_TEST_DOCUMENTATION_AND_COMMIT_ADJUSTMENTS",
+  "implementation_commit": "9401876829d0854f14aa22fb1963661436d0dcad",
+  "failed_attempt": {
+    "gate_path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate-v2.json",
+    "gate_sha256": "55fa96404e04349fdf77bd80aabbdaa4a533713dab810f11a72fafb92d0ad80f",
+    "result_path": "docs/architecture/p3-v50-gate-v2-physical-proof-result.json",
+    "result_sha256": "53ff62ccac4015ce3604da54fd0c8f25e68cbaa34192f11a8df9b0e681848e22",
+    "failure_code": "PREFLIGHT_EXECUTABLE_NOT_FOUND",
+    "missing_executable": "/usr/bin/test",
+    "attempt_consumed": true,
+    "retry_performed": false
+  },
+  "source_files": [
+    {
+      "path": "scripts/verify-p3-v50-physical-proof-preflight.mjs",
+      "sha256": "f1f070e63ec71d7d83f90d61c057d4d3fa97d56baff682743f7a8346a70cd693"
+    },
+    {
+      "path": "tests/governance/p3-v50-gate-v2-physical-proof-result.test.mjs",
+      "sha256": "549b504bfa5272cf482b9e2ab8926317a375deb3b1537f398b664fd709579c70"
+    },
+    {
+      "path": "tests/governance/p3-v50-physical-proof-preflight.test.mjs",
+      "sha256": "6178b957f6460ce82523bf067a824c386c6efaf9922485e61e85d3d6a2e4f334"
+    },
+    {
+      "path": "docs/development/p3-v50-gate-v2-preflight-repair-evidence.md",
+      "sha256": "3c772cee48da0df73cbd0ef9537067c18f16345e3f3b078d29d3e3e0e18add70"
+    }
+  ],
+  "contract": {
+    "arguments_allowed": false,
+    "subject_commit": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+    "preserved_v49_application": "/private/tmp/dosai-v49-proof/out/DOSAI-darwin-arm64/DOSAI.app",
+    "required_absent_v50_application": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app",
+    "fixed_command": "/usr/bin/git cat-file -e bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc^{commit}",
+    "root_dependencies_required": true,
+    "acceptance_dependencies_required": true,
+    "cached_electron_archive_sha256_required": true,
+    "network_allowed": false,
+    "write_allowed": false,
+    "build_allowed": false,
+    "signing_allowed": false,
+    "staging_allowed": false,
+    "application_launch_allowed": false,
+    "service_management_allowed": false
+  },
+  "observed_effects": {
+    "preflight_executions": 0,
+    "package_builds": 0,
+    "signing_operations": 0,
+    "staged_applications": 0,
+    "application_launches": 0,
+    "native_module_loads": 0,
+    "service_management_calls": 0,
+    "registration_attempts": 0,
+    "unregistration_attempts": 0
+  },
+  "authorities": {
+    "preflight_execution": false,
+    "package_build": false,
+    "test_signing": false,
+    "stable_path_staging": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_observation": false,
+    "registration": false,
+    "unregistration": false,
+    "launch_agent_bootstrap": false,
+    "xpc_connection": false,
+    "vm_operation": false,
+    "guest_execution": false,
+    "real_execution": false,
+    "workflow_dispatch": false,
+    "pull_request_merge": false,
+    "paid_activity": false,
+    "production_use": false,
+    "retry": false,
+    "automatic_recovery": false
+  },
+  "next_gate": "REBIND_ONE_NEW_EXACT_PHYSICAL_PROOF_PACKET_BEFORE_OWNER_REAUTHORIZATION"
+}

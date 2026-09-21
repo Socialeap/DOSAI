@@ -1,0 +1,85 @@
+{
+  "record_type": "P3_V50_STABLE_PATH_LAUNCHER_SOURCE_RECORD",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T15:28:00-04:00",
+  "status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
+  "scope": "FIXED_STAGED_APPLICATION_LIFECYCLE_PROOF_LAUNCHER",
+  "implementation_authorization": "OWNER_STANDING_AUTHORIZATION_FOR_MINOR_SOURCE_TEST_DOCUMENTATION_AND_COMMIT_ADJUSTMENTS",
+  "diagnosis": {
+    "required_application_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app",
+    "historical_runner_application_path": "out/DOSAI-darwin-arm64/DOSAI.app",
+    "mismatch": "HISTORICAL_RUNNER_DID_NOT_LAUNCH_THE_GATE_REQUIRED_STABLE_PATH"
+  },
+  "bound_inputs": [
+    {
+      "path": "docs/architecture/process-ownership-v50.json",
+      "sha256": "3fc6a98254671d98943e9df5393813c3d085d7d2496f3574fd5043c0e551d053"
+    },
+    {
+      "path": "scripts/service-management-lifecycle-proof.mjs",
+      "sha256": "32be03d438a8c140475ff04808997271fd4ce50f7c2124c8a2e81d20086c68fd"
+    },
+    {
+      "path": "docs/architecture/p3-v50-service-management-lifecycle-physical-proof-gate.json",
+      "sha256": "21491854a8585d8c589887e5e574dfd74d274c9a5990fedb4f7b0ae93c51ab93"
+    }
+  ],
+  "source_files": [
+    {
+      "path": "scripts/service-management-lifecycle-staged-proof.mjs",
+      "sha256": "33612edc8aa1b650f601b0fcd0ae0dfb4c0f5cd20ba7dc55897690d0c9f4812f"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-staged-proof.test.mjs",
+      "sha256": "31882653c19582964b31dadfb1ad9fb2039f56bd57be6e13a44105da78718c0a"
+    },
+    {
+      "path": "docs/development/p3-v50-stable-path-launcher-repair-evidence.md",
+      "sha256": "b160cfc7cad0f32d644a3de5c6b6df0773757492d8fa17a893c803f621e1fd41"
+    }
+  ],
+  "contract": {
+    "stable_application_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app",
+    "stable_executable_path": "/Users/shakoure/Library/Application Support/DOSAI/TestProofs/v50/DOSAI.app/Contents/MacOS/DOSAI",
+    "caller_selected_path_allowed": false,
+    "application_argument_count": 0,
+    "launch_attempt_limit": 1,
+    "timeout_ms": 15000,
+    "timeout_signal": "SIGKILL",
+    "retry_allowed": false,
+    "receipt_admission_reused_from_v50": true,
+    "staging_performed_by_runner": false,
+    "signature_verification_performed_by_runner": false
+  },
+  "observed_effects": {
+    "package_builds": 0,
+    "staged_applications": 0,
+    "signing_operations": 0,
+    "application_launches": 0,
+    "native_module_loads": 0,
+    "service_management_calls": 0,
+    "registration_attempts": 0,
+    "unregistration_attempts": 0
+  },
+  "authorities": {
+    "package_build": false,
+    "test_signing": false,
+    "stable_path_staging": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_observation": false,
+    "registration": false,
+    "unregistration": false,
+    "launch_agent_bootstrap": false,
+    "xpc_connection": false,
+    "vm_operation": false,
+    "guest_execution": false,
+    "real_execution": false,
+    "workflow_dispatch": false,
+    "pull_request_merge": false,
+    "paid_activity": false,
+    "production_use": false,
+    "retry": false
+  },
+  "next_gate": "REBIND_EXACT_PHYSICAL_PROOF_PACKET_TO_THIS_SOURCE_COMMIT_BEFORE_OWNER_AUTHORIZATION"
+}

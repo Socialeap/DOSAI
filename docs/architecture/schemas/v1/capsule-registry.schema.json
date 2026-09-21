@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:capsule-registry:1",
+  "title": "DOSAI Durable Capsule Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "supervisor_generation", "revision", "updated_at_ms", "records"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:capsule-registry:1" },
+    "schema_version": { "const": 1 },
+    "supervisor_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "revision": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "updated_at_ms": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "records": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["request", "state", "registered_at_ms", "deadline_at_ms", "output_bytes", "process_attached"],
+        "properties": {
+          "request": { "$ref": "urn:dosai:schema:capsule-request:1" },
+          "state": { "enum": ["REGISTERED", "STARTING", "RUNNING", "STOPPING", "STOPPED", "FAILED", "QUARANTINED"] },
+          "registered_at_ms": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "deadline_at_ms": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+          "output_bytes": { "type": "integer", "minimum": 0, "maximum": 65537 },
+          "process_attached": { "type": "boolean" },
+          "last_cancellation_reason": { "enum": ["OWNER_REQUEST", "WATCHDOG_TIMEOUT", "SUPERVISOR_CRASH", "EMERGENCY_STOP", "OUTPUT_LIMIT"] }
+        }
+      }
+    }
+  }
+}

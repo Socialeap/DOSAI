@@ -96,6 +96,7 @@
     "Preload code exposes typed contract methods and never generic IPC authority.",
     "Main coordinates application lifecycle and holds no execution, signing, credential, or database authority.",
     "Workers accept bounded validated data and hold no effect authority.",
-    "Reserved native-helper roots contain no executable code before their owner phase."
+    "Reserved native-helper roots contain no executable code before their owner phase.",
+    "Renderer source satisfies docs/architecture/renderer-authority-policy-v1.json with no authority finding."
   ]
 }

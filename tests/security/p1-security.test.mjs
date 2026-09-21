@@ -138,6 +138,8 @@ test('preload and main expose one typed no-argument IPC operation', async () => 
 
   assert.equal(preload.match(/ipcRenderer\.invoke\(/g)?.length, 1);
   assert.doesNotMatch(preload, /ipcRenderer\.(?:send|sendSync|on|once|postMessage)\(/);
+  assert.match(preload, /arguments_\.length !== 0/);
+  assert.match(preload, /Promise\.reject\(new TypeError/);
   assert.match(registration, /ipcMain\.handle\(APPLICATION_IPC\.getRuntimeSnapshot/);
   assert.match(registration, /arguments_\.length !== 0/);
   assert.match(registration, /isTrustedIpcSender/);
@@ -164,6 +166,8 @@ test('BrowserWindow and package settings retain renderer isolation', async () =>
     assert.match(windowSource, setting);
   }
   assert.match(windowSource, /loadURL\(PRODUCTION_RENDERER_URL\)/);
+  assert.match(windowSource, /render-process-gone/);
+  assert.match(windowSource, /rendererRecovery\.tryAcquire\(details\.reason\)/);
   assert.doesNotMatch(windowSource, /loadFile\(/);
   assert.match(protocolSource, /standard:\s*true/);
   assert.match(protocolSource, /secure:\s*true/);

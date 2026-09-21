@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:capsule-request:1",
+  "title": "DOSAI No-Effect Test Capsule Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "capsule_id", "operation_id", "generation", "operation_kind", "executable", "arguments", "environment", "limits", "authorization"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:capsule-request:1" },
+    "schema_version": { "const": 1 },
+    "capsule_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "operation_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "operation_kind": { "const": "SAFE_TEST" },
+    "executable": { "enum": ["/usr/bin/printf", "/usr/bin/sleep"] },
+    "arguments": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "type": "string", "maxLength": 128, "pattern": "^[ -~]*$" }
+    },
+    "environment": {
+      "type": "object",
+      "maxProperties": 8,
+      "propertyNames": {
+        "allOf": [
+          { "pattern": "^[A-Z][A-Z0-9_]{0,31}$" },
+          { "not": { "enum": ["PATH", "HOME", "SHELL", "NODE_OPTIONS", "ELECTRON_RUN_AS_NODE"] } }
+        ]
+      },
+      "additionalProperties": { "type": "string", "maxLength": 128, "pattern": "^[ -~]*$" }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wall_time_ms", "max_output_bytes"],
+      "properties": {
+        "wall_time_ms": { "type": "integer", "minimum": 1, "maximum": 60000 },
+        "max_output_bytes": { "type": "integer", "minimum": 0, "maximum": 65536 }
+      }
+    },
+    "authorization": { "const": "NO_EFFECT_TEST_ONLY" }
+  }
+}

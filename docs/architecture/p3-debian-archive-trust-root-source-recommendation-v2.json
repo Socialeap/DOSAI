@@ -1,0 +1,88 @@
+{
+  "record_type": "P3_DEBIAN_ARCHIVE_TRUST_ROOT_SOURCE_RECOMMENDATION_V2",
+  "record_version": 2,
+  "status": "OWNER_AUTHORIZED_OBSERVATION_PENDING",
+  "recorded_at": "2026-09-21T02:51:55-04:00",
+  "scope": "CORRECTED_PUBLIC_KEY_SOURCE_SELECTION_ONLY",
+  "supersedes": {
+    "path": "docs/architecture/p3-debian-archive-trust-root-source-recommendation.json",
+    "sha256": "006b60c83a6404b18ff4c5463d26f9d126d28efd74b97add9f2e5be40b82a266"
+  },
+  "key_material_sources": [
+    {
+      "purpose": "DEBIAN_13_ARCHIVE_AUTOMATIC",
+      "url": "https://ftp-master.debian.org/keys/archive-key-13.asc",
+      "expected_primary_fingerprint": "04B54C3CDCA79751B16BC6B5225629DF75B188BD",
+      "expected_sha256": "6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7"
+    },
+    {
+      "purpose": "DEBIAN_13_SECURITY_ARCHIVE_AUTOMATIC",
+      "url": "https://ftp-master.debian.org/keys/archive-key-13-security.asc",
+      "expected_primary_fingerprint": "5E04A1E3223A19A20706E20F9904613D4CCE68C6",
+      "expected_sha256": "844c07d242db37f283afab9d5531270a0550841e90f9f1a9c3bd599722b808b7"
+    },
+    {
+      "purpose": "DEBIAN_13_STABLE_RELEASE",
+      "url": "https://ftp-master.debian.org/keys/release-13.asc",
+      "expected_primary_fingerprint": "41587F7DB8C774BCCF131416762F67A0B2C39DE4",
+      "expected_sha256": "4d097bb93f83d731f475c5b92a0c2fcf108cfce1d4932792fca72d00b48d198b"
+    }
+  ],
+  "independent_references": [
+    {
+      "url": "https://lists.debian.org/debian-devel-announce/2025/04/msg00001.html",
+      "relationship": "SEPARATE_OFFICIAL_DEBIAN_ANNOUNCEMENT",
+      "covers_purposes": [
+        "DEBIAN_13_ARCHIVE_AUTOMATIC",
+        "DEBIAN_13_SECURITY_ARCHIVE_AUTOMATIC"
+      ],
+      "required_values": [
+        "04B54C3CDCA79751B16BC6B5225629DF75B188BD",
+        "5E04A1E3223A19A20706E20F9904613D4CCE68C6",
+        "6f1d277429dd7ffedcc6f8688a7ad9a458859b1139ffa026d1eeaadcbffb0da7",
+        "844c07d242db37f283afab9d5531270a0550841e90f9f1a9c3bd599722b808b7"
+      ]
+    },
+    {
+      "url": "https://sources.debian.org/data/main/d/debian-archive-keyring/2025.1/active-keys/add-trixie-stable",
+      "relationship": "INDEPENDENT_OFFICIAL_DEBIAN_SOURCE_PACKAGE_COPY",
+      "covers_purposes": [
+        "DEBIAN_13_STABLE_RELEASE"
+      ],
+      "required_primary_fingerprint": "41587F7DB8C774BCCF131416762F67A0B2C39DE4",
+      "source_package": "debian-archive-keyring",
+      "source_package_version": "2025.1"
+    }
+  ],
+  "observation_contract": {
+    "temporary_storage": "MKTEMP_DIRECTORY_ONLY",
+    "https_only": true,
+    "maximum_bytes_per_key": 65536,
+    "maximum_total_key_bytes": 196608,
+    "maximum_announcement_bytes": 262144,
+    "maximum_stable_source_bytes": 16384,
+    "record_sha256": true,
+    "record_size_bytes": true,
+    "record_primary_fingerprints": true,
+    "compare_every_key_to_its_declared_independent_reference": true,
+    "delete_temporary_bytes_on_success_or_failure": true,
+    "stop_on_redirect_to_non_https": true,
+    "stop_on_any_mismatch": true,
+    "retry_allowed": false
+  },
+  "authorities": {
+    "keyring_import": false,
+    "host_trust_store_use": false,
+    "signature_verification": false,
+    "snapshot_metadata_retrieval": false,
+    "package_index_retrieval": false,
+    "package_download": false,
+    "image_preparation": false,
+    "builder_provisioning": false,
+    "guest_compilation": false,
+    "guest_execution": false,
+    "vm_operation": false,
+    "production_use": false
+  },
+  "next_gate": "ONE_OWNER_AUTHORIZED_READ_ONLY_OBSERVATION_NO_RETRY"
+}

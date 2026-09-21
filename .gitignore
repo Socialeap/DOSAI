@@ -48,3 +48,6 @@ pnpm-debug.log*
 .AppleDouble
 .LSOverride
 ._*
+
+# Owner-retained conceptual guide (not part of the governed repository)
+/AACP.md

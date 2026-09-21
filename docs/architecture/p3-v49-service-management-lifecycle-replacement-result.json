@@ -1,0 +1,33 @@
+{
+  "record_type": "P3_V49_SERVICE_MANAGEMENT_LIFECYCLE_REPLACEMENT_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T02:51:55-04:00",
+  "status": "FAILED_CLOSED_PRECONDITION_NOT_FOUND",
+  "subject_commit": "ec470119051e227409c4e994dc74743c7fe9e0bc",
+  "package_reused": true,
+  "package_rebuilt": false,
+  "app_launches": 1,
+  "receipt": {
+    "result": "PRECONDITION_FAILED",
+    "before": "NOT_FOUND",
+    "after_register": "NOT_FOUND",
+    "after_unregister": "NOT_FOUND",
+    "observe_attempts": 1,
+    "observe_completions": 1,
+    "register_attempts": 0,
+    "register_completions": 0,
+    "unregister_attempts": 0,
+    "unregister_completions": 0,
+    "consumed": true
+  },
+  "containment": {
+    "retry_performed": false,
+    "registration_attempted": false,
+    "unregistration_attempted": false,
+    "service_launch_observed": false,
+    "xpc_connection_attempted": false,
+    "real_execution_performed": false,
+    "further_runtime_action_requires_new_owner_authorization": true
+  },
+  "next_gate": "SOURCE_ONLY_DIAGNOSIS_OF_NOT_FOUND_PRECONDITION"
+}

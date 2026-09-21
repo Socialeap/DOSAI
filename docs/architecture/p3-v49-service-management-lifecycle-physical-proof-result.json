@@ -1,0 +1,33 @@
+{
+  "record_type": "P3_V49_SERVICE_MANAGEMENT_LIFECYCLE_PHYSICAL_PROOF_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T02:22:24-04:00",
+  "status": "FAILED_CLOSED_REAUTHORIZATION_REQUIRED",
+  "subject_commit": "ec470119051e227409c4e994dc74743c7fe9e0bc",
+  "authorization_path": "docs/architecture/private-beta-bounded-action-authorization.json",
+  "package_result": {
+    "built": true,
+    "test_signed": true,
+    "signature_and_layout_checks_passed": true,
+    "signed_test_package_preserved": true,
+    "local_artifact_path": "/private/tmp/dosai-v49-proof/out/DOSAI-darwin-arm64/DOSAI.app"
+  },
+  "runner_result": {
+    "attempts": 1,
+    "exit_code": 1,
+    "failure_stage": "RUNNER_MODULE_INITIALIZATION",
+    "failure_code": "MODULE_NOT_FOUND",
+    "missing_module": "json-dup-key-validator",
+    "lifecycle_receipt_produced": false,
+    "app_launches": 0,
+    "registration_attempts": 0,
+    "unregistration_attempts": 0,
+    "retry_performed": false
+  },
+  "containment": {
+    "stopped_immediately": true,
+    "residual_background_item_state": "UNCHANGED_BY_ATTEMPT",
+    "automatic_recovery_performed": false,
+    "further_runtime_action_requires_new_owner_authorization": true
+  }
+}

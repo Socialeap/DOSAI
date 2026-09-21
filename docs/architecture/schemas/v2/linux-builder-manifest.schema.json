@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:linux-builder-manifest:2",
+  "title": "DOSAI Corrected Unverified Native Linux Builder Manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "manifest_id", "builder_set_version", "scope", "status", "image_preparation_allowed", "guest_build_allowed", "release_evidence_eligible", "platform", "base_image", "package_snapshot", "recipe", "output", "execution_policy", "verification"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:linux-builder-manifest:2" },
+    "schema_version": { "const": 2 },
+    "manifest_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "builder_set_version": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "scope": { "const": "GUEST_BUILD_PREPARATION" },
+    "status": { "const": "DECLARED_UNVERIFIED" },
+    "image_preparation_allowed": { "const": false },
+    "guest_build_allowed": { "const": false },
+    "release_evidence_eligible": { "const": false },
+    "platform": { "$ref": "#/$defs/platform" },
+    "base_image": { "$ref": "#/$defs/base_image" },
+    "package_snapshot": { "$ref": "#/$defs/package_snapshot" },
+    "recipe": { "$ref": "#/$defs/recipe" },
+    "output": { "$ref": "#/$defs/output" },
+    "execution_policy": { "$ref": "#/$defs/execution_policy" },
+    "verification": { "$ref": "#/$defs/verification" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "oci_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "snapshot_timestamp": { "type": "string", "pattern": "^[0-9]{4}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])T(?:[01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]Z$" },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "architecture", "native_execution_required", "emulation_allowed"],
+      "properties": {
+        "os": { "const": "linux" },
+        "architecture": { "const": "amd64" },
+        "native_execution_required": { "const": true },
+        "emulation_allowed": { "const": false }
+      }
+    },
+    "base_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["distribution", "release", "major_version", "registry", "repository", "index_digest", "amd64_manifest_digest", "config_digest", "pinned_reference", "tag_reference_allowed"],
+      "properties": {
+        "distribution": { "const": "debian" },
+        "release": { "const": "trixie" },
+        "major_version": { "const": 13 },
+        "registry": { "const": "docker.io" },
+        "repository": { "const": "library/debian" },
+        "index_digest": { "$ref": "#/$defs/oci_digest" },
+        "amd64_manifest_digest": { "$ref": "#/$defs/oci_digest" },
+        "config_digest": { "$ref": "#/$defs/oci_digest" },
+        "pinned_reference": { "type": "string", "pattern": "^docker\\.io/library/debian@sha256:[0-9a-f]{64}$", "maxLength": 128 },
+        "tag_reference_allowed": { "const": false }
+      }
+    },
+    "release_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archive", "suite", "path", "snapshot_uri", "sha256", "size_bytes"],
+      "properties": {
+        "archive": { "enum": ["debian", "debian-security"] },
+        "suite": { "enum": ["trixie", "trixie-updates", "trixie-security"] },
+        "path": { "type": "string", "pattern": "^dists/(?:trixie|trixie-updates|trixie-security)/InRelease$", "maxLength": 64 },
+        "snapshot_uri": { "type": "string", "pattern": "^https://snapshot\\.debian\\.org/archive/(?:debian|debian-security)/[0-9]{8}T[0-9]{6}Z/dists/(?:trixie|trixie-updates|trixie-security)/InRelease$", "maxLength": 192 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 16777216 }
+      }
+    },
+    "package_index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archive", "suite", "component", "architecture", "path", "snapshot_uri", "sha256", "size_bytes", "release_file_sha256"],
+      "properties": {
+        "archive": { "enum": ["debian", "debian-security"] },
+        "suite": { "enum": ["trixie", "trixie-updates", "trixie-security"] },
+        "component": { "const": "main" },
+        "architecture": { "const": "amd64" },
+        "path": { "type": "string", "pattern": "^dists/(?:trixie|trixie-updates|trixie-security)/main/binary-amd64/Packages\\.xz$", "maxLength": 96 },
+        "snapshot_uri": { "type": "string", "pattern": "^https://snapshot\\.debian\\.org/archive/(?:debian|debian-security)/[0-9]{8}T[0-9]{6}Z/dists/(?:trixie|trixie-updates|trixie-security)/main/binary-amd64/Packages\\.xz$", "maxLength": 224 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 268435456 },
+        "release_file_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "architecture", "archive", "pool_path", "size_bytes", "deb_sha256", "source_name", "source_version"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9+.-]{0,95}$" },
+        "version": { "type": "string", "pattern": "^[0-9A-Za-z][0-9A-Za-z.+:~_-]{0,127}$" },
+        "architecture": { "enum": ["amd64", "all"] },
+        "archive": { "enum": ["debian", "debian-security"] },
+        "pool_path": { "type": "string", "pattern": "^pool/(?:updates/)?main/[a-z0-9+.-]+/[a-z0-9+.-]+/[0-9A-Za-z+._%~:-]+_(?:amd64|all)\\.deb$", "maxLength": 512 },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "deb_sha256": { "$ref": "#/$defs/sha256" },
+        "source_name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9+.-]{0,95}$" },
+        "source_version": { "type": "string", "pattern": "^[0-9A-Za-z][0-9A-Za-z.+:~_-]{0,127}$" }
+      }
+    },
+    "package_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["service", "timestamp", "sources_list_sha256", "archive_keyring_sha256", "base_package_manifest_sha256", "direct_package_intent_sha256", "release_files", "package_indexes", "packages", "resolution_report_sha256", "installed_inventory_sha256", "output_package_manager_network_configured", "release_signatures_verified", "indexes_verified", "closure_complete"],
+      "properties": {
+        "service": { "const": "snapshot.debian.org" },
+        "timestamp": { "$ref": "#/$defs/snapshot_timestamp" },
+        "sources_list_sha256": { "$ref": "#/$defs/sha256" },
+        "archive_keyring_sha256": { "$ref": "#/$defs/sha256" },
+        "base_package_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "direct_package_intent_sha256": { "$ref": "#/$defs/sha256" },
+        "release_files": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/release_file" }
+        },
+        "package_indexes": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/package_index" }
+        },
+        "packages": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/package" } },
+        "resolution_report_sha256": { "$ref": "#/$defs/sha256" },
+        "installed_inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "output_package_manager_network_configured": { "const": false },
+        "release_signatures_verified": { "const": false },
+        "indexes_verified": { "const": false },
+        "closure_complete": { "const": false }
+      }
+    },
+    "recipe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dockerfile_path", "dockerfile_sha256", "build_policy_path", "build_policy_sha256", "build_context_inventory_sha256", "source_manifest_schema_id", "source_manifest_sha256"],
+      "properties": {
+        "dockerfile_path": { "const": "guest-build/builder/Dockerfile" },
+        "dockerfile_sha256": { "$ref": "#/$defs/sha256" },
+        "build_policy_path": { "const": "guest-build/builder/build-policy.json" },
+        "build_policy_sha256": { "$ref": "#/$defs/sha256" },
+        "build_context_inventory_sha256": { "$ref": "#/$defs/sha256" },
+        "source_manifest_schema_id": { "const": "urn:dosai:schema:guest-source-manifest:1" },
+        "source_manifest_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oci_archive_path", "oci_archive_sha256", "oci_manifest_digest", "sbom_sha256", "sbom_format", "provenance_sha256", "signatures_verified", "vulnerability_review"],
+      "properties": {
+        "oci_archive_path": { "const": "builder-artifacts/v1/dosai-linux-builder-amd64.oci.tar" },
+        "oci_archive_sha256": { "$ref": "#/$defs/sha256" },
+        "oci_manifest_digest": { "$ref": "#/$defs/oci_digest" },
+        "sbom_sha256": { "$ref": "#/$defs/sha256" },
+        "sbom_format": { "const": "SPDX_2_3_JSON" },
+        "provenance_sha256": { "$ref": "#/$defs/sha256" },
+        "signatures_verified": { "const": false },
+        "vulnerability_review": { "const": "NOT_PERFORMED" }
+      }
+    },
+    "execution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pull_policy", "network_mode", "loopback_only", "read_only_root", "all_capabilities_dropped", "no_new_privileges", "host_namespaces", "devices", "docker_socket", "run_as_uid", "run_as_gid", "input_mount", "work_mount", "output_mount", "shared_cache", "secrets", "cleanup_required", "minimum_independent_runs", "distinct_native_hosts", "exact_output_comparison_required", "policy_verified"],
+      "properties": {
+        "pull_policy": { "const": "NEVER" },
+        "network_mode": { "const": "NONE" },
+        "loopback_only": { "const": true },
+        "read_only_root": { "const": true },
+        "all_capabilities_dropped": { "const": true },
+        "no_new_privileges": { "const": true },
+        "host_namespaces": { "const": false },
+        "devices": { "type": "array", "maxItems": 0 },
+        "docker_socket": { "const": false },
+        "run_as_uid": { "const": 1000 },
+        "run_as_gid": { "const": 1000 },
+        "input_mount": { "const": "READ_ONLY_RECURSIVE" },
+        "work_mount": { "const": "FRESH_EMPTY" },
+        "output_mount": { "const": "FRESH_EMPTY" },
+        "shared_cache": { "const": false },
+        "secrets": { "const": false },
+        "cleanup_required": { "const": true },
+        "minimum_independent_runs": { "const": 2 },
+        "distinct_native_hosts": { "const": true },
+        "exact_output_comparison_required": { "const": true },
+        "policy_verified": { "const": false }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_image_verified", "snapshot_verified", "packages_verified", "recipe_verified", "oci_archive_verified", "sbom_verified", "provenance_verified", "native_runs_verified", "independence_verified", "outputs_reproducible", "complete"],
+      "properties": {
+        "base_image_verified": { "const": false },
+        "snapshot_verified": { "const": false },
+        "packages_verified": { "const": false },
+        "recipe_verified": { "const": false },
+        "oci_archive_verified": { "const": false },
+        "sbom_verified": { "const": false },
+        "provenance_verified": { "const": false },
+        "native_runs_verified": { "const": false },
+        "independence_verified": { "const": false },
+        "outputs_reproducible": { "const": false },
+        "complete": { "const": false }
+      }
+    }
+  }
+}

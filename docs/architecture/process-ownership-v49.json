@@ -1,0 +1,231 @@
+{
+  "schema_version": 49,
+  "status": "IMPLEMENTED_STANDING_AUTHORIZATION_SOURCE_ONLY",
+  "scope": "P3_SERVICE_MANAGEMENT_LIFECYCLE_SIGNED_COMPOSITION_SOURCE_ONLY",
+  "implementation_authorization": "OWNER_STANDING_AUTHORIZATION_MINOR_SOURCE_BUILD_TEST_COMMIT_2026_09_20",
+  "accepted_source_baseline": {
+    "path": "docs/architecture/process-ownership-v48.json",
+    "sha256": "43d31b5edf47dde71bfde3ff791ecac8080f6b7263c50c592698c61f4d911b1a"
+  },
+  "composition": {
+    "build_mode": "service-management-lifecycle-proof",
+    "package_argument": "--signed-app-service-management-lifecycle-proof-fixture",
+    "addon_name": "dosai-service-management-lifecycle.node",
+    "addon_identifier": "com.socialeap.dosai.service-management-lifecycle-addon",
+    "result_prefix": "DOSAI_SERVICE_MANAGEMENT_LIFECYCLE_PROOF_V1:",
+    "proof_executable": "out/DOSAI-darwin-arm64/DOSAI.app/Contents/MacOS/DOSAI",
+    "child_argument_count": 0,
+    "timeout_ms": 15000,
+    "retry_allowed": false
+  },
+  "failure_containment": {
+    "initial_status_required": "NOT_REGISTERED",
+    "in_process_cleanup_attempt_limit": 1,
+    "clean_terminal_status": "NOT_REGISTERED",
+    "missing_receipt_action": "STOP_NO_RETRY_OWNER_RECOVERY_REQUIRED",
+    "uncertain_receipt_action": "STOP_NO_RETRY_OWNER_RECOVERY_REQUIRED",
+    "automatic_recovery_launch": false
+  },
+  "modified_files": [
+    {
+      "path": "src/main/execution/service-management-lifecycle-proof-entry.ts",
+      "pre_sha256": "e949182e44e03fa4800f1ca27f1f8e0ab0cc4eedc8e93fbb0728405560e9383f",
+      "post_sha256": "79356e769d3b066638f4cafa7388f3fe67ed230004d3c998546ceb61f34f1567"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-proof-entry.test.mjs",
+      "pre_sha256": "7f5243bcce24df8e1b49c981c9072c88353ba2f549844bfd55354cb484bd6ee0",
+      "post_sha256": "40f298f53e839e9f216de7f365aea100ee159e3deffe0b2b494a3d9b9a7ee63f"
+    },
+    {
+      "path": "scripts/build.mjs",
+      "pre_sha256": "682b925be2e9c03c77c2f270fdf4ef8ce7145b9734e02b03102414d465226628",
+      "post_sha256": "e218b301d7715070ea6967a6398f785ca79cc06add11fbfe5c8fd6f9e7c894dc"
+    },
+    {
+      "path": "scripts/package.mjs",
+      "pre_sha256": "9af144804737d0704b8613d2343eb4c1418ab99cb973cde141193d7fe44bdf38",
+      "post_sha256": "d7d20be803594c1310b77701ad54dbb61ff37c01dd092558eb67757c33868317"
+    },
+    {
+      "path": "vite.main.config.ts",
+      "pre_sha256": "90e923d007be8eb989d757fbcc4bfa01767abe7817af8e6bcaf4ce16cc3f7199",
+      "post_sha256": "00d2ea109cf273e9c1b8744eef7f1413e026e4a723247c70e9a16223f8210722"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v48.test.mjs",
+      "pre_sha256": "5186e2dc5f7e3e0dcc1c7ec5e630c73900c933cd37d89f1f27dad53394239ff0",
+      "post_sha256": "b9dff6d5c74ae3fb1fa03de0ffd7f028da33d601ee842de52c6378443434ab90"
+    },
+    {
+      "path": "tests/architecture/p3-proof-observability-successor.mjs",
+      "pre_sha256": "6b2b6ee032eb912e0f2908242a472e25b937c01a0ca9b7f7d7252d09f18e35cb",
+      "post_sha256": "a6529bbf3828a31e84b8f3b6cc7f0926e46c0da4feb12c20052aa67ac6a20fe3"
+    },
+    {
+      "path": "tests/architecture/p3-status-proof-successor.mjs",
+      "pre_sha256": "61bd904998b9f33811c6d776d1b1d472a1dfe7fcd3f21c5c1522f9f734161631",
+      "post_sha256": "bfde7c7b0fee97336b281ba2303b9316c102fca552d67430151b9612ecc4288b"
+    },
+    {
+      "path": "tests/architecture/p3-guard-successor.mjs",
+      "pre_sha256": "363c9fa0f727fc7831955b4ec8956e1bb46a3d37b2169b322e165f1dbc646a5b",
+      "post_sha256": "b1779c3e344e173ae377c234d37e5c28b05c49c9403ce866231c695220334aca"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v16.test.mjs",
+      "pre_sha256": "3271feaf1c0e62838b6f8acd864d4e98a2e84081d4afd8cc88019311ca644b7e",
+      "post_sha256": "cf0ab113da3a94e4f3b4f6c30321ab9545bdaee236beabe0eed696dcc4620fb6"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v17.test.mjs",
+      "pre_sha256": "104ed096d34401e8c0bfa77c82668ee19aa8302363da778fc44d84aeb467c2d0",
+      "post_sha256": "3e986665ccde7c4276137520afec94d6f3fb60a4bd2e1d3a5a95f9d9b926a1b8"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v19.test.mjs",
+      "pre_sha256": "e4b7f6a97f526e3a3c48cf83904de0dab31ae490baf541a5619d23268add2eb0",
+      "post_sha256": "c2d52b6cfe450a470b5dfd3a4a79a204391e57265cc61b41d9291b5e2e2ec09d"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v20.test.mjs",
+      "pre_sha256": "91f4e30d01f03bd19d203341107cded4c5cccb4f0512453e58de826f6f8721f7",
+      "post_sha256": "94ffdef356284ec2cdfea14f17e2c4d294b6e10eb21a6bfe3171be542a5f08f0"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v21.test.mjs",
+      "pre_sha256": "bd46b60ad61c1bcf5958845b73efd00eb2cb0d268062fe6f1712944741634dfc",
+      "post_sha256": "289e3296b5ecbc790d86e65c4de91aba1e68c5a3247639d4f900a9bda93f80ac"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v23.test.mjs",
+      "pre_sha256": "50039e74d4c782f02d677481d0c88e55cc380995338947e33061d08b62e93016",
+      "post_sha256": "b8b6f8aada51a2ce6e5ef2a29c408470f514373a71ad4a80e3f5ff9964ea7645"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v25.test.mjs",
+      "pre_sha256": "ac493eb902d7202464525978c1b71f4d4f8c6fb6d0db30c444af1c1c734deb76",
+      "post_sha256": "09625703fd0491ea010b937a943fb55b709bfc9f553421cc2eadab1b7e4e547a"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v26.test.mjs",
+      "pre_sha256": "5b88216db24193672e948df364e777b398fde77a3bf467c7926e6105c7d83b17",
+      "post_sha256": "5bfdb7430da1d9f5a7b2e375349d913133b4697b127c72b920d21ddbe4c35835"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v27.test.mjs",
+      "pre_sha256": "01eaffaf1c8ae9df19e2cf1275cd51623e85c888d9d3f3b8b72586b4e2be6089",
+      "post_sha256": "122bb0339cc031f5d8aa172805dc59640654a6943fa3066885ec507aea39d2bd"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v31.test.mjs",
+      "pre_sha256": "ab32cf8f37145339c4e1d6ad549b669b03c2bf2853355020be415e3b1cab3a1e",
+      "post_sha256": "ad5209b65fcb8a2fd5fe1ecd6a4babdf70bcafbcc6822b45db861e4aaa228b3b"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v32.test.mjs",
+      "pre_sha256": "f5c120731c6e90826fad95b2c1932488ba6fdc9c9255ae28c06dd0beb297d27a",
+      "post_sha256": "98962dcb1747ec6592926098e1bf4e1eff4d41f367d8f89e56a484b6ba36fab1"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v34.test.mjs",
+      "pre_sha256": "519328d418f238f203783cc0c8e86e81e866df3d8d289d5293bc23debd037bde",
+      "post_sha256": "9fc75406e163299a869c312a167efcfe4fabc36c42ea9bef2c2abf6b71dfc535"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v35.test.mjs",
+      "pre_sha256": "ea78db69834086ee68841b0cc37ef53748c842c450b70b7a4771980656db198e",
+      "post_sha256": "6b0c7922f7192db2dd1004398672d5e8b646a3d5a94308c15605897407bfc76e"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v36.test.mjs",
+      "pre_sha256": "23780cd1ba5f0ae805b8e3d46f2c9b4c4ed4d7948e3574479404d5004e1c87bb",
+      "post_sha256": "79856d73343fc2eb37155930361b4c8b9ecfa6dd65babc1c3a03f986505bc34e"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v41.test.mjs",
+      "pre_sha256": "470ce6217c3fc988b550ceeb7e61b898c8cbd1a072a4b58030a74efc91f40b12",
+      "post_sha256": "055e6e9865a9a517bbf857183c5165afbefc4da317ce4eb321fbdb85d838b102"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v43.test.mjs",
+      "pre_sha256": "529b9331fb5301452dd0b062fb7f3e8f845c5a8ec073d015ee429eba3bf693ee",
+      "post_sha256": "73cf54631aa135dd5abe208bceadd592a6fd8eb9b77e707ad56a078c1dd7f4fe"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v45.test.mjs",
+      "pre_sha256": "cc01dcdb5e19e22980d1d7968cfd6f865bf3a95a584498ca69551bfe5cc22941",
+      "post_sha256": "b70d6fb06202128cc5f8133767eb1bec8098233b5635dea96d0c972bd244ad0a"
+    },
+    {
+      "path": "tests/architecture/process-ownership.test.mjs",
+      "pre_sha256": "f2df98e7ce2eed25eac46ba3bd95b0c1bcd2918b3fcb1eb0f9240fb54aa30f38",
+      "post_sha256": "efd09dbd2ac1f41dd3179b625a6046e678b42068de105dfcb29ff34dbf5fb7d0"
+    },
+    {
+      "path": "tests/security/p3-watchdog-launch-agent-plist-candidate.test.mjs",
+      "pre_sha256": "5c1ae08c3f3651024a089965af8e4c8505c6df5ff3f19c6619c33c7b7431bf64",
+      "post_sha256": "31ad93e128ecf8193379df09c8b0a67a001c37c9abb881d08930a00ef3e2cf9b"
+    }
+  ],
+  "new_files": [
+    {
+      "path": "scripts/service-management-lifecycle-addon.mjs",
+      "sha256": "d867e6da410067a0aedec769f6e2b2d6fca1581ad0fcce486ecc356723ab5cc4"
+    },
+    {
+      "path": "scripts/service-management-lifecycle-proof.mjs",
+      "sha256": "e86755efd3ef6286573b199792fcb9e7ea7a1d139edd750b8ab9be4f704f4278"
+    },
+    {
+      "path": "tests/security/p3-service-management-lifecycle-composition.test.mjs",
+      "sha256": "ee12e0c1d68c35438baf8fdec23c7ddbacdb04279c3fc4b9b58a0f9ea7837193"
+    },
+    {
+      "path": "tests/architecture/p3-lifecycle-composition-successor.mjs",
+      "sha256": "de6c527daf24700af047b47d66a549561912bd14f178c3d2189760b84ad7e491"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v49.test.mjs",
+      "sha256": "683eedd32bd818d83652d12cb0da9f190fd2980f73e3c4789dac50e96b469414"
+    },
+    {
+      "path": "docs/development/p3-service-management-lifecycle-composition-evidence.md",
+      "sha256": "91aaa2d147388c45171481f3df04a00339e73095f5aaa4f2019b73e74176a629"
+    }
+  ],
+  "source_validation": {
+    "dedicated_commonjs_build": true,
+    "strict_receipt_admission": true,
+    "duplicate_json_keys_rejected": true,
+    "expanded_counts_rejected": true,
+    "normal_main_unchanged": true,
+    "native_linked_output": false,
+    "package_built": false,
+    "signing_invoked": false,
+    "app_launched": false,
+    "native_module_loaded": false,
+    "service_management_invoked": false
+  },
+  "authority": {
+    "package_build": false,
+    "signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management_runtime_call": false,
+    "registration": false,
+    "unregistration": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "production_use": false,
+    "physical_attempt": false,
+    "external_builder_provisioning": false
+  },
+  "runtime_status": "NO_GO"
+}

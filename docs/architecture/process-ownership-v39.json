@@ -1,0 +1,92 @@
+{
+  "schema_version": 39,
+  "status": "ACCEPTED",
+  "proposed_at": "2026-08-13T17:05:00-04:00",
+  "validated_at": "2026-08-13T17:07:42-04:00",
+  "accepted_at": "2026-08-13T17:47:01-04:00",
+  "implemented_at": "2026-08-13T17:47:01-04:00",
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v38.json",
+    "sha256": "153c40cdf9ce3f8ac1448af6036719c119f79c23721430207ef183d569d8f6aa"
+  },
+  "scope": "P3_WATCHDOG_CLIENT_PRIORITY_AWARE_INJECTION_ONLY_DISPATCH",
+  "full_manifest_replacement": false,
+  "governed_baselines": [
+    {
+      "path": "docs/architecture/process-ownership-v37.json",
+      "sha256": "490ed96c98f54b6d5eb6620541805cf9a0c85322274ba8fd9b66c963a773d980"
+    },
+    {
+      "path": "docs/decisions/0020-per-user-execution-service-watchdog-control-lane.md",
+      "sha256": "2d34f0af578052a2512dcabed803825b9833a7483d521ab69e3dca6f8d413559"
+    },
+    {
+      "path": "docs/development/p3-watchdog-client-sequence-integrity-evaluation.md",
+      "sha256": "8a52df1a31a77d6575a1027a5d3987b21a26236ce402245f3513397f3bbddae0"
+    }
+  ],
+  "preimplementation_files": [
+    {
+      "path": "src/main/execution/watchdog-control-client.ts",
+      "sha256": "bcbc9f508398a8df67812401d82d3686d6fe4cbaf8fca70427755535f2943007"
+    },
+    {
+      "path": "tests/security/p3-watchdog-control-client.test.mjs",
+      "sha256": "8436f52c05a64b219e244063b28db1ea40b3e8d0e305c92ec9ea0cbffae38942"
+    }
+  ],
+  "proposed_implementation_files": [
+    "src/main/execution/watchdog-control-client.ts",
+    "tests/security/p3-watchdog-control-client.test.mjs"
+  ],
+  "implemented_files": [
+    {
+      "path": "src/main/execution/watchdog-control-client.ts",
+      "sha256": "40c961fc8e8fccde77488b38b430fa237cd99c10a47f035684c8de36b0fc49aa"
+    },
+    {
+      "path": "tests/security/p3-watchdog-control-client.test.mjs",
+      "sha256": "c9bae6fb280c8f7b293774fe704563e1b6cd2305dde6419c99b584acf968bd8e"
+    }
+  ],
+  "required_contract": {
+    "ordinary_in_flight_limit": 1,
+    "request_identity_assignment": "DISPATCH_TIME_ONLY",
+    "sequence_assignment": "DISPATCH_TIME_ONLY",
+    "emergency_stop_all_priority": "BEFORE_UNISSUED_ORDINARY_ONLY",
+    "dispatched_request_preemption": false,
+    "response_timeout_ms": 1000,
+    "timeout_or_invalid_response_closes_client": true,
+    "closed_client_dispatches_no_queued_request": true,
+    "queued_intent_limit": 64
+  },
+  "required_adversarial_cases": [
+    "CONCURRENT_ORDINARY_CALLS_NEVER_OVERLAP_TRANSPORT_DISPATCH",
+    "EMERGENCY_STOP_ALL_PRECEDES_UNISSUED_ORDINARY_AND_RECEIVES_NEXT_SEQUENCE",
+    "TIMEOUT_OR_INVALID_RESPONSE_CLOSES_CLIENT_AND_REJECTS_QUEUED_WORK_WITHOUT_DISPATCH",
+    "QUEUED_CAPACITY_IS_BOUNDED_AND_REJECTED_INTENTS_CONSUME_NO_TRANSPORT_ID_OR_SEQUENCE",
+    "REQUEST_AND_RESPONSE_BINDING_REMAINS_STRICT_AFTER_QUEUEING",
+    "SOURCE_RETAINS_INJECTION_ONLY_NO_AUTHORITY_BOUNDARY"
+  ],
+  "authority": {
+    "xpc_connection": false,
+    "native_module_load": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "package_or_signing": false,
+    "production_use": false
+  },
+  "immutable_outside_scope": [
+    "The accepted v38 cancellation postimages and every P3.2 coordinator, state-store, audit-binding, and schema path.",
+    "The accepted P3.4 native core, anonymous fixture, named-listener, named-service, plist, package, status-adapter, and signed-app proof paths.",
+    "Every P3.3 builder input, trust-root gate, source, package, image, guest, VM, and execution boundary."
+  ],
+  "implementation_authorization": "OWNER_ACCEPTED_INJECTION_ONLY_CLIENT_TEST_ONLY",
+  "implementation_outcome": "IMPLEMENTED_NO_RUNTIME_AUTHORITY"
+}

@@ -9,7 +9,7 @@ import { collectSourceFiles, importedModules } from './source-graph.mjs';
 const root = resolve(import.meta.dirname, '../..');
 const sourceRoot = join(root, 'src');
 
-test('toolchain and direct dependencies use exact accepted pins', async () => {
+test('toolchain and direct dependencies use exact governed pins', async () => {
   const packageJson = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   const nodeVersion = (await readFile(join(root, '.node-version'), 'utf8')).trim();
 
@@ -22,8 +22,12 @@ test('toolchain and direct dependencies use exact accepted pins', async () => {
   assert.equal(packageJson.devDependencies.react, '19.2.8');
   assert.equal(packageJson.devDependencies.typescript, '7.0.2');
 
-  for (const version of Object.values(packageJson.devDependencies)) {
-    assert.match(version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
+  for (const [name, version] of Object.entries(packageJson.devDependencies)) {
+    if (name === 'dosai-acceptance') {
+      assert.equal(version, 'workspace:0.2.0');
+    } else {
+      assert.match(version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
+    }
   }
 });
 
@@ -59,6 +63,9 @@ test('packaging enables ASAR integrity and authority-reducing fuses', async () =
 
   assert.match(config, /asar:\s*true/);
   assert.match(config, /electronVersion:\s*'43\.2\.0'/);
+  assert.match(config, /node_modules\/electron\/checksums\.json/);
+  assert.match(config, /sha256\(candidate\) === expected/);
+  assert.match(config, /electronZipDir === undefined/);
   assert.match(config, /RunAsNode\]:\s*false/);
   assert.match(config, /EnableNodeOptionsEnvironmentVariable\]:\s*false/);
   assert.match(config, /EnableNodeCliInspectArguments\]:\s*false/);
@@ -71,6 +78,8 @@ test('packaging enables ASAR integrity and authority-reducing fuses', async () =
   assert.match(config, /unusedPermissionKeys/);
   assert.match(config, /delete infoPlist\[key\]/);
   assert.match(config, /LSMinimumSystemVersion:\s*'15\.0'/);
+  assert.match(config, /extraResource:\s*\[builtSecureEnclaveHelper\]/);
+  assert.match(config, /describeSecureEnclaveProofHelper\(packagedSecureEnclaveHelper\)/);
 });
 
 test('development starts through the Electron CLI for on-demand binary installation', async () => {

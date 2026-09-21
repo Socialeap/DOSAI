@@ -1,0 +1,92 @@
+{
+  "schema_version": 45,
+  "status": "IMPLEMENTED_OWNER_AUTHORIZED_SOURCE_REPAIR",
+  "scope": "P3_STATUS_PROOF_FAILURE_ATTRIBUTION_ONLY",
+  "implementation_authorization": "OWNER_AUTHORIZED_BOUNDED_SOURCE_ONLY_V45_OBSERVABILITY_REPAIR_2026_09_20",
+  "accepted_source_baseline": {
+    "path": "docs/architecture/process-ownership-v44.json",
+    "sha256": "fe7c11bd51cc204df50ada2e6dfcabff7de6e45cf2a9ac8d383aacd8b8f539fa"
+  },
+  "physical_evidence": {
+    "path": "docs/development/p3-v44-signed-app-status-proof-evidence.md",
+    "sha256": "67b83f6b27f2ac103592d144031f840fb7b6efa86646ba6ced971f394fc8624d"
+  },
+  "observed_attempt": {
+    "source_commit": "86ff4281094bb7cd35b89a479e2bb7a8e3276919",
+    "result": "NOT_FOUND",
+    "runner_exit_code": 0,
+    "attempt_count": 1,
+    "authorization_exhausted": true
+  },
+  "protocol": {
+    "result_prefix": "DOSAI_SERVICE_MANAGEMENT_STATUS_PROOF_V1:",
+    "preserved_status_outputs": [
+      "NOT_REGISTERED",
+      "ENABLED",
+      "REQUIRES_APPROVAL",
+      "NOT_FOUND"
+    ],
+    "distinct_failure_outputs": [
+      "NATIVE_ADDON_LOAD_FAILED",
+      "NATIVE_STATUS_CALL_FAILED",
+      "ELECTRON_READINESS_FAILED"
+    ],
+    "fixed_addon_load_attempt_limit": 1,
+    "zero_argument_native_call_limit": 1
+  },
+  "modified_files": [
+    {
+      "path": "src/main/execution/service-management-status-proof-entry.ts",
+      "pre_sha256": "0a6bf35a6d80e495b3c6a3d1799788dcacfe40425d8340208c60d19644dbb389",
+      "post_sha256": "b97ff67fe1e2d452558dd541ddc4600a1fe03890286e520896b8b3006df9ca8d"
+    },
+    {
+      "path": "scripts/service-management-status-proof.mjs",
+      "pre_sha256": "53a4669c945122e98abdd44228af25e5cdf6b8db1b472aaff308d65b5d04fdc6",
+      "post_sha256": "4cc6dbd4992ea2c40c812b2067d34c89a237ce67503ba2d3fe8929dd9a2153b6"
+    },
+    {
+      "path": "tests/security/p3-service-management-status-addon-physical-proof-candidate.test.mjs",
+      "pre_sha256": "3822b844a4275552f6b0ed1fa359125f8ac6bbfe01d04edb7f99b6b5ed68fb37",
+      "post_sha256": "0b8ea96c50fedbfa22a72934a9124b29404a95b2bab611183cebc6f560d4d809"
+    },
+    {
+      "path": "tests/architecture/p3-status-proof-successor.mjs",
+      "pre_sha256": "f601c1afbdc8a00cd41a0dac535036c789967d0841fe4d948d5ef1da20e843be",
+      "post_sha256": "61bd904998b9f33811c6d776d1b1d472a1dfe7fcd3f21c5c1522f9f734161631"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v44.test.mjs",
+      "pre_sha256": "367d5e9a4ed57a8e67a67c8d523a95d34f17ccb433a2dc8e459f055699f69f5c",
+      "post_sha256": "fa58d06ef0a12b234e5171d1503684a9d33ee3db934ac384e910bc2832a3ef51"
+    }
+  ],
+  "support_files": [
+    {
+      "path": "tests/architecture/p3-proof-observability-successor.mjs",
+      "sha256": "6b2b6ee032eb912e0f2908242a472e25b937c01a0ca9b7f7d7252d09f18e35cb"
+    },
+    {
+      "path": "tests/architecture/process-ownership-v45.test.mjs",
+      "sha256": "cc01dcdb5e19e22980d1d7968cfd6f865bf3a95a584498ca69551bfe5cc22941"
+    }
+  ],
+  "authority": {
+    "package_or_signing": false,
+    "app_launch": false,
+    "native_module_load": false,
+    "status_call": false,
+    "service_management": false,
+    "registration_or_launch": false,
+    "service_launch": false,
+    "xpc_connection": false,
+    "process_control": false,
+    "vm_control": false,
+    "filesystem_access": false,
+    "network_access": false,
+    "journal_change": false,
+    "production_use": false,
+    "physical_retry": false
+  },
+  "runtime_status": "NO_GO"
+}

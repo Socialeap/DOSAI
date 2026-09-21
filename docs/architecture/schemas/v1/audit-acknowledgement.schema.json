@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dosai:schema:audit-acknowledgement:1",
+  "title": "DOSAI Durable Audit Acknowledgement v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_id", "schema_version", "message_id", "created_at", "producer", "producer_generation", "trace_id", "data_class", "request_message_id", "journal_id", "journal_epoch_id", "sequence", "event_hash", "durability", "assurance"],
+  "properties": {
+    "schema_id": { "const": "urn:dosai:schema:audit-acknowledgement:1" },
+    "schema_version": { "const": 1 },
+    "message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "created_at": { "$ref": "urn:dosai:schema:common:1#/$defs/utc_timestamp" },
+    "producer": { "const": "dosai.audit-writer" },
+    "producer_generation": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "trace_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "data_class": { "const": "D1" },
+    "request_message_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "journal_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "journal_epoch_id": { "$ref": "urn:dosai:schema:common:1#/$defs/uuid_v4" },
+    "sequence": { "$ref": "urn:dosai:schema:common:1#/$defs/decimal_sequence" },
+    "event_hash": { "$ref": "urn:dosai:schema:common:1#/$defs/digest" },
+    "durability": { "const": "SQLITE_DELETE_EXTRA_FULLFSYNC" },
+    "assurance": { "const": "LOCAL_DURABLE" }
+  }
+}

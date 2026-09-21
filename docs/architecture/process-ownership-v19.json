@@ -1,0 +1,448 @@
+{
+  "schema_version": 19,
+  "status": "ACCEPTED",
+  "updated_at": "2026-08-03T03:49:06-04:00",
+  "supersedes": {
+    "path": "docs/architecture/process-ownership-v18.json",
+    "sha256": "7e11bd65875092c2d33800442f406757404d8bafdd4b4bdbaacb82a2ccdaf2ef"
+  },
+  "accepted_adrs": [
+    "docs/decisions/0001-runtime-and-privilege-boundaries.md",
+    "docs/decisions/0002-typed-operations-policy-and-grants.md",
+    "docs/decisions/0003-execution-isolation-cancellation-and-watchdog.md",
+    "docs/decisions/0004-audit-journal-keys-and-anchoring.md",
+    "docs/decisions/0012-secure-enclave-checkpoints-and-rekor-v2-anchoring.md",
+    "docs/decisions/0014-linux-microvm-isolation-backend.md",
+    "docs/decisions/0019-capsule-registry-audit-journal-binding.md",
+    "docs/decisions/0020-per-user-execution-service-watchdog-control-lane.md"
+  ],
+  "source_boundaries": [
+    {
+      "id": "contracts",
+      "path": "src/contracts",
+      "trust_zone": "CROSS_BOUNDARY_CONTRACTS",
+      "runtime": "NONE",
+      "component_owner": "architecture-contracts",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "proposed_watchdog_implementation_files": [
+        {
+          "path": "src/contracts/p3/watchdog-control.ts",
+          "sha256": "5a191b8f95fc6a41e4725644e1b2fe689a6318e39ced1b050a26733cc29b261c"
+        }
+      ],
+      "allowed_first_party_imports": ["contracts"],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "policy",
+      "path": "src/policy",
+      "trust_zone": "Z4",
+      "runtime": "PURE_TESTED_LIBRARY",
+      "component_owner": "policy-kernel",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "policy"],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "renderer",
+      "path": "src/renderer",
+      "trust_zone": "Z1",
+      "runtime": "CHROMIUM_SANDBOX",
+      "component_owner": "presentation",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "renderer"],
+      "allowed_external_imports": ["react", "react-dom/client"]
+    },
+    {
+      "id": "preload",
+      "path": "src/preload",
+      "trust_zone": "Z2",
+      "runtime": "ELECTRON_SANDBOXED_PRELOAD",
+      "component_owner": "bridge-adapters",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "preload"],
+      "allowed_external_imports": ["electron"]
+    },
+    {
+      "id": "main",
+      "path": "src/main",
+      "trust_zone": "Z3",
+      "runtime": "ELECTRON_MAIN",
+      "component_owner": "application-coordinator",
+      "implementation_state": "ACTIVE",
+      "may_hold_authority": false,
+      "watchdog_client_contract": "TYPED_UNCOMPOSED_INJECTED_XPC_TEST_FIXTURE_ONLY",
+      "watchdog_service_configuration_authority": false,
+      "watchdog_peer_requirement_authority": false,
+      "watchdog_control_operations": ["INSPECT", "STOP_ONE", "STOP_ALL"],
+      "proposed_watchdog_implementation_files": [
+        {
+          "path": "src/main/execution/watchdog-control-client.ts",
+          "sha256": "bcbc9f508398a8df67812401d82d3686d6fe4cbaf8fca70427755535f2943007"
+        }
+      ],
+      "allowed_first_party_imports": ["contracts", "main"],
+      "allowed_external_imports": ["electron", "node:fs/promises", "node:path"]
+    },
+    {
+      "id": "workers",
+      "path": "src/workers",
+      "trust_zone": "Z7",
+      "runtime": "NODE_WORKER_THREADS",
+      "component_owner": "bounded-processing",
+      "implementation_state": "NOT_IMPLEMENTED",
+      "may_hold_authority": false,
+      "allowed_first_party_imports": ["contracts", "workers"],
+      "allowed_external_imports": []
+    }
+  ],
+  "native_helper_root": "native-helpers",
+  "native_helpers": [
+    {
+      "id": "policy-helper",
+      "path": "native-helpers/policy",
+      "trust_zone": "Z4",
+      "runtime": "NOT_IMPLEMENTED",
+      "component_owner": "policy-kernel",
+      "owner_phase": "P2",
+      "implementation_state": "RESERVED",
+      "authority": "POLICY_DECISION_ONLY",
+      "allowed_first_party_imports": [],
+      "allowed_external_imports": []
+    },
+    {
+      "id": "grant-proof-helper",
+      "path": "native-helpers/grants",
+      "trust_zone": "Z4",
+      "runtime": "ISOLATED_NODE_SYNTHETIC_AUTHORIZATION_PROOF",
+      "component_owner": "grant-proof-service",
+      "owner_phase": "P2",
+      "implementation_state": "ACTIVE",
+      "authority": "TEST_ONLY_OWNER_APPROVAL_AND_SINGLE_USE_NO_EFFECT_GRANT_PROOF",
+      "application_reachable": false,
+      "effect_authority": false,
+      "production_grant_authority": false,
+      "network_authority": false,
+      "allowed_first_party_imports": ["contracts", "policy", "audit-helper", "grant-proof-helper"],
+      "allowed_external_imports": ["node:crypto"]
+    },
+    {
+      "id": "execution-service",
+      "path": "native-helpers/execution-service",
+      "trust_zone": "Z5",
+      "runtime": "SWIFT_INERT_ANONYMOUS_XPC_TRANSPORT_FIXTURE_AUTHENTICATED",
+      "component_owner": "isolated-execution-service",
+      "owner_phase": "P3",
+      "implementation_state": "ACTIVE_TEST_FIXTURE_AUTHENTICATED",
+      "authority": "TEST_ONLY_INERT_CAPSULE_REDUCE_ONLY_CONTROL",
+      "application_reachable": false,
+      "registration_authority": false,
+      "production_registration_authority": false,
+      "service_management_authority": false,
+      "launch_agent_plist_authority": false,
+      "launch_daemon_plist_authority": false,
+      "static_packaged_composition_authority": "IMPLEMENTED_SIGNED_NESTED_ANONYMOUS_FIXTURE_ONLY",
+      "packaged_fixture_application_reachable": false,
+      "packaged_test_app_identifier": "com.socialeap.dosai",
+      "packaged_test_fixture_identifier": "com.socialeap.dosai.watchdog-xpc-fixture",
+      "packaged_test_fixture_relative_path": "Contents/Library/LaunchServices/com.socialeap.dosai.watchdog-xpc-fixture",
+      "packaged_test_signing_identity_selector": "UMXN25Z493",
+      "packaged_test_signing_team_identifier": "3RD3TADLRY",
+      "owner_authorized_packaged_test_app_signing": true,
+      "owner_authorized_packaged_test_fixture_signing": true,
+      "packaged_test_static_layout_observed": true,
+      "packaged_test_app_signature_observed": true,
+      "packaged_test_fixture_signature_observed": true,
+      "packaged_test_app_designated_requirement_observed": true,
+      "packaged_test_fixture_designated_requirement_observed": true,
+      "packaged_test_signing_team_identifier_observed": "3RD3TADLRY",
+      "packaged_test_launch_agent_artifact_observed": false,
+      "packaged_test_launch_daemon_artifact_observed": false,
+      "packaged_test_registration_operation_observed": false,
+      "packaged_test_named_listener_observed": false,
+      "admissible_static_package_run_app_launch_observed": false,
+      "admissible_static_package_run_fixture_launch_observed": false,
+      "admissible_static_package_run_packaged_helper_launch_observed": false,
+      "pre_admissible_read_only_fixture_description_invocation_observed": true,
+      "pre_admissible_read_only_fixture_description_invocation_remediated": true,
+      "pre_admissible_read_only_fixture_description_mutation_observed": false,
+      "pre_admissible_read_only_fixture_description_registration_observed": false,
+      "pre_admissible_packaged_secure_enclave_description_invocation_observed": true,
+      "pre_admissible_packaged_secure_enclave_description_invocation_remediated": true,
+      "pre_admissible_packaged_secure_enclave_description_mutation_observed": false,
+      "named_listener_source_authority": "IMPLEMENTED_COMPILE_ONLY_FIXED_TEST_CANDIDATE",
+      "named_listener_source_application_reachable": false,
+      "named_listener_source_typechecked": true,
+      "named_listener_typecheck_target": "arm64-apple-macos15.0",
+      "named_listener_source_imports": ["XPC"],
+      "named_listener_generic_configuration_observed": false,
+      "named_listener_activation_api_observed": false,
+      "named_listener_event_handler_api_observed": false,
+      "named_listener_message_api_observed": false,
+      "named_listener_privileged_flag_observed": false,
+      "named_listener_executable_output_observed": false,
+      "named_listener_source_compiled_to_executable": false,
+      "named_listener_source_packaged": false,
+      "named_listener_source_signed": false,
+      "named_listener_source_executed": false,
+      "named_listener_connection_activated": false,
+      "named_listener_registration_observed": false,
+      "named_listener_future_executable_identifier": "com.socialeap.dosai.execution-service-fixture",
+      "named_listener_mach_service_identifier": "com.socialeap.dosai.execution-service-fixture.watchdog",
+      "named_listener_expected_client_identifier": "com.socialeap.dosai",
+      "named_listener_expected_team_identifier": "3RD3TADLRY",
+      "named_listener_allowed_creation_api": "xpc_connection_create_mach_service",
+      "named_listener_allowed_flag": "XPC_CONNECTION_MACH_SERVICE_LISTENER",
+      "named_listener_privileged_flag_authority": false,
+      "named_listener_activation_authority": false,
+      "named_listener_proposed_files": [
+        "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+        "tests/security/p3-watchdog-named-listener-candidate.test.mjs"
+      ],
+      "named_listener_implemented_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "tests/security/p3-watchdog-named-listener-candidate.test.mjs",
+          "sha256": "beb7f1983c3c4ecd340091a394354e5a0bb7474e1f10c1fb1a19b1379b5544e3"
+        }
+      ],
+      "named_listener_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "0350b401ff50519cc97bae9cd0911f77cd6f163e65e243499fbfc6fe7617b7dd"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCFixtureMain.swift",
+          "sha256": "5ee2812a17dd73811515b41658dd19c4b1b7d655147ab1aa8004d37ca62931a5"
+        },
+        {
+          "path": "scripts/watchdog-xpc-fixture.mjs",
+          "sha256": "354b17eca55646826dfdf24aa47a8fc8af32d40fc7dcdf7aa18210286ca14bdf"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        }
+      ],
+      "named_listener_transport_adapter_authority": "PROPOSED_COMPILE_ONLY_FIXED_TEST_ADAPTER",
+      "named_listener_transport_adapter_application_reachable": false,
+      "named_listener_transport_adapter_source_observed": false,
+      "named_listener_transport_adapter_typechecked": false,
+      "named_listener_transport_adapter_shared_handler_refactor_authorized": true,
+      "named_listener_transport_adapter_activation_api_authorized": true,
+      "named_listener_transport_adapter_event_handler_api_authorized": true,
+      "named_listener_transport_adapter_strict_reply_api_authorized": true,
+      "named_listener_transport_adapter_generic_configuration_authority": false,
+      "named_listener_transport_adapter_client_connection_authority": false,
+      "named_listener_transport_adapter_executable_entry_point_authority": false,
+      "named_listener_transport_adapter_executable_output_authority": false,
+      "named_listener_transport_adapter_signing_authority": false,
+      "named_listener_transport_adapter_packaging_authority": false,
+      "named_listener_transport_adapter_plist_authority": false,
+      "named_listener_transport_adapter_registration_authority": false,
+      "named_listener_transport_adapter_launch_authority": false,
+      "named_listener_transport_adapter_runtime_effect_observed": false,
+      "named_listener_transport_refactor_baseline": {
+        "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+        "sha256": "0350b401ff50519cc97bae9cd0911f77cd6f163e65e243499fbfc6fe7617b7dd"
+      },
+      "named_listener_transport_adapter_proposed_files": [
+        "native-helpers/execution-service/WatchdogXPCTransport.swift",
+        "native-helpers/execution-service/WatchdogNamedListenerTransportCandidate.swift",
+        "tests/security/p3-watchdog-named-listener-transport-candidate.test.mjs"
+      ],
+      "named_listener_transport_adapter_immutable_inputs": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogNamedListenerCandidate.swift",
+          "sha256": "4a26ab98b20ed71e8ea19b1660afcd5d55f20eb636f750d6efb53282d25ca8ce"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCFixtureMain.swift",
+          "sha256": "5ee2812a17dd73811515b41658dd19c4b1b7d655147ab1aa8004d37ca62931a5"
+        },
+        {
+          "path": "scripts/watchdog-xpc-fixture.mjs",
+          "sha256": "354b17eca55646826dfdf24aa47a8fc8af32d40fc7dcdf7aa18210286ca14bdf"
+        },
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        }
+      ],
+      "xpc_listener_authority": "ANONYMOUS_IN_PROCESS_TEST_FIXTURE_ONLY",
+      "mach_service_listener_authority": false,
+      "peer_code_requirement_authority": "EXACT_OWNER_AUTHORIZED_TEST_IDENTITY_ONLY",
+      "peer_requirement_api": "xpc_connection_set_peer_code_signing_requirement",
+      "minimum_peer_requirement_os": "12.0",
+      "valid_signing_identity_required": true,
+      "valid_signing_identity_installed": true,
+      "valid_signing_identity_observation": "LOCAL_UNSANDBOXED_KEYCHAIN_VERIFIED",
+      "authorized_signing_identity_selector": "UMXN25Z493",
+      "signing_certificate_common_name_suffix": "UMXN25Z493",
+      "observed_code_signing_team_identifier": "3RD3TADLRY",
+      "owner_authorized_signing_identity_selector": true,
+      "owner_authorized_peer_requirement_team_identifier": true,
+      "authenticated_peer_observed": true,
+      "authenticated_peer_team_identifier": "3RD3TADLRY",
+      "authenticated_peer_fixture_identifier": "com.socialeap.dosai.watchdog-xpc-fixture",
+      "requirement_configured_on_both_connections_observed": true,
+      "disconnect_reduction_observed": true,
+      "synthetic_trust_installed": false,
+      "signed_peer_rejection_observed": true,
+      "signed_peer_rejection_reason": "AUTHORIZED_SELECTOR_TEAM_MISMATCH",
+      "ad_hoc_signature_eligible": false,
+      "ad_hoc_peer_rejection_observed": true,
+      "keychain_mutation_authority": false,
+      "signing_identity_export_authority": false,
+      "transport_frame_authority": "STRICT_ACCEPTED_WATCHDOG_V1_DICTIONARIES_ONLY",
+      "capsule_control_authority": "INERT_FIXTURE_RECORDS_ONLY",
+      "control_operations": ["INSPECT", "STOP_ONE", "STOP_ALL"],
+      "generic_payload_authority": false,
+      "pid_targeting_authority": false,
+      "ownership_release_authority": false,
+      "reconciliation_authority": false,
+      "journal_authority": false,
+      "vm_creation_authority": false,
+      "vm_start_authority": false,
+      "process_launch_authority": false,
+      "filesystem_authority": false,
+      "network_authority": false,
+      "accepted_implementation_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogControlCore.swift",
+          "sha256": "c1f1148225dc4b9dd7a4174f13243a12fe5148d62ea404d9289c01fc346b1e11"
+        },
+        {
+          "path": "native-helpers/execution-service/main.swift",
+          "sha256": "8bc5e445b7bf2f4b23b81a7ada47146202abfcde797818e15ea95ab4293994cf"
+        }
+      ],
+      "proposed_implementation_files": [
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCTransport.swift",
+          "sha256": "0350b401ff50519cc97bae9cd0911f77cd6f163e65e243499fbfc6fe7617b7dd"
+        },
+        {
+          "path": "native-helpers/execution-service/WatchdogXPCFixtureMain.swift",
+          "sha256": "5ee2812a17dd73811515b41658dd19c4b1b7d655147ab1aa8004d37ca62931a5"
+        }
+      ],
+      "packaging_baseline_files": [
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "9aebb658b82b60fd8203cb833f2e639152b40c77a843d9c845d9725350e82440"
+        },
+        {
+          "path": "package.json",
+          "sha256": "90908d571d3e54c9c03be4fa75d97cd401e6ef1dab5dbe0d48943f9ed30fd700"
+        }
+      ],
+      "proposed_packaging_changes": [
+        "scripts/package.mjs",
+        "tests/security/p3-packaged-service-composition.test.mjs"
+      ],
+      "implemented_packaging_files": [
+        {
+          "path": "scripts/package.mjs",
+          "sha256": "fa5c4e9c708e543318c3f681d1e8cab6b8722dc383f8b70195ebfe155d45226c"
+        },
+        {
+          "path": "tests/security/p3-packaged-service-composition.test.mjs",
+          "sha256": "d57cd4b4c699e7efd3647ec348396c618846a7602359d5b70d2edb5d1485f620"
+        }
+      ],
+      "allowed_first_party_imports": ["contracts", "execution-service"],
+      "allowed_external_imports": ["Foundation", "XPC"]
+    },
+    {
+      "id": "audit-helper",
+      "path": "native-helpers/audit",
+      "trust_zone": "Z6",
+      "runtime": "ISOLATED_NODE_SQLITE_AND_CRYPTO_PROOF",
+      "component_owner": "audit-journal-and-checkpoint-proof",
+      "owner_phase": "P2-P3",
+      "implementation_state": "ACTIVE",
+      "authority": "AUDIT_JOURNAL_WRITE_CAPSULE_REGISTRY_BINDING_AND_TEST_ONLY_CHECKPOINT_PROOF",
+      "application_reachable": true,
+      "application_interface": "INJECTED_CAPSULE_REGISTRY_AUDIT_BINDING_PORT_ONLY",
+      "general_append_authority_exposed": false,
+      "source_authentication_exposed": false,
+      "network_authority": false,
+      "process_launch_authority": false,
+      "allowed_first_party_imports": ["contracts", "audit-helper"],
+      "allowed_external_imports": ["node:crypto", "node:fs", "node:path", "node:sqlite"]
+    },
+    {
+      "id": "secure-enclave-proof-helper",
+      "path": "native-helpers/secure-enclave-proof",
+      "trust_zone": "Z6",
+      "runtime": "PACKAGED_SWIFT_SECURITY_FRAMEWORK_PROOF",
+      "component_owner": "audit-key-lifecycle-proof",
+      "owner_phase": "P2",
+      "implementation_state": "ACTIVE",
+      "authority": "OWNER_GATED_TRANSIENT_SECURE_ENCLAVE_TEST_KEY_LIFECYCLE_ONLY",
+      "application_reachable": false,
+      "network_authority": false,
+      "production_checkpoint_authority": false,
+      "allowed_first_party_imports": [],
+      "allowed_external_imports": ["CryptoKit", "Darwin", "Foundation", "LocalAuthentication", "Security"]
+    }
+  ],
+  "invariants": [
+    "Every application source file belongs to exactly one declared source boundary.",
+    "First-party imports follow the declared directional allowlist.",
+    "Renderer code imports neither Electron nor Node modules.",
+    "Preload code exposes typed contract methods and never generic IPC authority.",
+    "Main coordinates application lifecycle and holds no execution, signing, credential, database, policy, journal, approval, grant, VM, process-launch, service-configuration, or peer-requirement authority.",
+    "Main may define only an uncomposed typed test client over an injected transport for INSPECT, STOP_ONE, and STOP_ALL; it cannot create XPC connections, set peer requirements, register, configure, discover, or launch the service.",
+    "The injected watchdog client closes on malformed, oversized, timed-out, duplicate, rebound, or over-capacity sessions and cannot confer transport or effect authority.",
+    "Policy code imports only governed contracts, emits no authoritative wire decision, and holds no effect authority.",
+    "The isolated grant proof helper can create only service-local test approvals and one-use no-effect grants after exact policy, binding, durable acknowledgement, key, and assurance checks.",
+    "Execution-grant v1 remains a D5 envelope; only module-private proof-service state can consume it, and no proof result can invoke or represent an effect.",
+    "Emergency stop in the proof helper is audit-independent, idempotent, and reduce-only; it returns no execution authority.",
+    "The isolated audit helper writes only its canonical journal, exposes only an injected capsule-registry binding port to Main, and can sign only a freshly verified bounded checkpoint through a module-private software test fixture.",
+    "The capsule-registry binding port exposes no journal instance, database handle, source credential, generic append operation, signing operation, or reconciliation authority.",
+    "The packaged Secure Enclave proof helper has no Electron transport, production checkpoint API, arbitrary-message signing API, database access, or network authority.",
+    "Secure Enclave lifecycle and recovery cleanup operations require explicit owner authorization, are restricted to one UUID-derived proof-only application-tag namespace, and verify exact-tag deletion before success; signing is limited to one internally constructed challenge.",
+    "The inert execution-service fixture mutates only embedded fixture records through INSPECT, STOP_ONE, and STOP_ALL and accepts no PID, path, executable, arguments, environment, mount, socket, network, VM-start, or arbitrary payload field.",
+    "The XPC fixture may create only an anonymous in-process endpoint, admits only accepted watchdog v1 dictionaries within the fixed frame bound, and applies exact code-signing requirements on both endpoint connections.",
+    "The owner authorized test-only use of identity selector UMXN25Z493 and code-signing TeamIdentifier 3RD3TADLRY for the exact anonymous XPC peer requirement; no broader identity, team, registration, or production authorization may be inferred.",
+    "A directly Apple Development-signed fixture with identifier com.socialeap.dosai.watchdog-xpc-fixture authenticated under the exact 3RD3TADLRY requirement on both connections, then observed disconnect reduction and terminal inert records.",
+    "The owner authorized static test-package composition to place only the exact anonymous fixture at Contents/Library/LaunchServices/com.socialeap.dosai.watchdog-xpc-fixture and sign both nested code and the outer test app with selector UMXN25Z493 and TeamIdentifier 3RD3TADLRY.",
+    "The admissible static package run built and signed the nested fixture before the outer app, verified both exact identifiers and designated requirements under TeamIdentifier 3RD3TADLRY, and did not invoke the app, nested fixture, or packaged helper.",
+    "Pre-admissible package runs invoked read-only description operations on the nested fixture and inherited Secure Enclave helper; they observed no registration or mutation, were discarded as evidence, and were remediated by removing every packaged-executable invocation from static packaging with cross-file regression checks.",
+    "The proposed named-listener slice may add only one compile-only Swift source candidate with fixed test service, Mach service, client, and TeamIdentifier constants; it cannot modify accepted anonymous transport or package bytes.",
+    "The named-listener candidate may construct only an inactive listener with xpc_connection_create_mach_service and XPC_CONNECTION_MACH_SERVICE_LISTENER; it cannot activate a connection, accept a peer, send a message, compile an executable, sign, package, register, launch, or import ServiceManagement.",
+    "The named-listener candidate cannot accept caller-supplied service names, signing requirements, identifiers, flags, queues, handlers, PIDs, paths, payloads, or entitlements and cannot use XPC_CONNECTION_MACH_SERVICE_PRIVILEGED.",
+    "The compile-only named-listener candidate typechecked for arm64 macOS 15 without executable output and contains no activation, event-handler, messaging, client-connection, privileged-bootstrap, ServiceManagement, Virtualization, process, filesystem, or network API.",
+    "The proposed named-listener transport slice may refactor only the accepted anonymous fixture's existing strict decode, reply, and disconnect-reduction path into one internal fixed service-side handler, and the signed anonymous self-test must continue exercising that same handler without weaker admission.",
+    "The proposed named-listener transport adapter may add only one compile-only, zero-configuration test source that obtains the accepted fixed inactive listener, accepts only XPC connection events, installs the shared strict handler, and activates only that listener and its authenticated incoming peers.",
+    "The proposed adapter cannot create a client connection, accept a caller-supplied service name, requirement, identity, queue, handler, core, payload, path, PID, flag, or entitlement, and it cannot use privileged bootstrap or ServiceManagement APIs.",
+    "The proposed named-listener transport slice cannot add an executable entry point or output, sign, package, declare a plist, register, launch, connect from DOSAI, create or start a VM, access files or networks, reconcile ownership, write the journal, or perform production work.",
+    "Static composition cannot add Contents/Library/LaunchAgents, Contents/Library/LaunchDaemons, MachServices, ServiceManagement, SMAppService, launchctl, registration, unregistration, a named listener, or application reachability.",
+    "Authenticated and packaged evidence applies only to test fixtures and does not prove named-service, separate-process, registration, user-approval, application-composition runtime, VM, or production behavior.",
+    "Ad-hoc signatures and synthetic trust roots fail closed, and the fixture has no keychain mutation or signing-identity export authority.",
+    "The execution-service fixture has no named Mach service, registration, runtime application composition, VM, process-launch, filesystem, network, reconciliation, journal, ownership-release, or production authority.",
+    "A framework inspection fixture outside the native-helper root cannot create or start a VM, launch a process, access a filesystem, consume standard input, or contact a network.",
+    "No implemented helper can contact an anchor or label evidence ANCHORED without offline verification under independently obtained trust material.",
+    "Application source cannot import native-helper implementations; Main may invoke only contracts admitted by an accepted generation after their separate composition gates are accepted.",
+    "Workers accept bounded validated data and hold no effect authority.",
+    "Reserved native-helper roots contain no executable code before their owner phase and a separate accepted ownership update.",
+    "Renderer source satisfies docs/architecture/renderer-authority-policy-v1.json with no authority finding."
+  ]
+}
