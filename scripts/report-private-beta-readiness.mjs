@@ -53,6 +53,9 @@ export async function assessPrivateBetaReadiness() {
     'docs/architecture/p3-native-builder-host-source-recommendation.json',
   );
   const catalog = boundRecords.get('docs/testing/acceptance-test-catalog-v5.json');
+  const p3AcceptanceProposal = boundRecords.get(
+    'docs/architecture/p3-acceptance-fixture-generation-proposal.json',
+  );
   if (
     physical?.status !== 'AWAITING_OWNER_AUTHORIZATION' ||
     trustRoot?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
@@ -61,7 +64,9 @@ export async function assessPrivateBetaReadiness() {
     !everyAuthorityIsFalse(physical) ||
     !everyAuthorityIsFalse(trustRoot) ||
     !everyAuthorityIsFalse(builders) ||
-    !everyAuthorityIsFalse(builderHosts)
+    !everyAuthorityIsFalse(builderHosts) ||
+    p3AcceptanceProposal?.status !== 'PROPOSED_FOR_OWNER_REVIEW' ||
+    !everyAuthorityIsFalse(p3AcceptanceProposal)
   ) {
     throw new Error('PRIVATE_BETA_AUTHORITY_STATE_CHANGED');
   }

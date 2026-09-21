@@ -32,6 +32,9 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
     checkpoint.gates.find(({ id }) => id === 'BETA-CP-004').candidate_host_source,
     'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS',
   );
+  const p3Acceptance = checkpoint.gates.find(({ id }) => id === 'BETA-CP-005');
+  assert.equal(p3Acceptance.proposal_prepared, true);
+  assert.equal(p3Acceptance.proposed_manifest_count, 3);
   for (const binding of checkpoint.bound_inputs) {
     assert.equal(sha256(await readFile(resolve(root, binding.path))), binding.sha256);
   }

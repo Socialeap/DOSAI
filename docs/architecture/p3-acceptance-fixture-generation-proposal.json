@@ -1,0 +1,90 @@
+{
+  "record_type": "P3_ACCEPTANCE_FIXTURE_GENERATION_PROPOSAL",
+  "record_version": 1,
+  "status": "PROPOSED_FOR_OWNER_REVIEW",
+  "proposed_at": "2026-09-21T05:28:27.000Z",
+  "scope": "P3_FIXTURE_SCHEMA_AND_MANIFEST_DECLARATION_ONLY",
+  "preconditions": [
+    {
+      "path": "docs/testing/acceptance-test-catalog-v5.json",
+      "sha256": "482887c6e3d7a24d09471428a6486c9926d11a5b3e31673e3c91bf2ebf55843a"
+    },
+    {
+      "path": "docs/architecture/schemas/v3/acceptance-fixture-manifest.schema.json",
+      "sha256": "6eb13bca40dfe29ffb96b8940399026a69a1f1d5d42301be4057e3422a47368c"
+    },
+    {
+      "path": "tools/dosai-acceptance/src/runner.mjs",
+      "sha256": "977582791d0a35149ef8bd2ff900bf3280e6ea882f424c61168a994a12f69d22"
+    }
+  ],
+  "identified_gap": {
+    "catalog_p3_suite_count": 3,
+    "catalog_p3_implementation_state": "NOT_IMPLEMENTED",
+    "fixture_schema_v3_supported_phases": ["P1", "P2"],
+    "runner_0_2_supported_phases": ["P1", "P2"],
+    "current_p3_result": "DOSAI_ACCEPTANCE_SUITE_NOT_IMPLEMENTED_0001",
+    "current_p3_exit_code": 2
+  },
+  "proposed_artifacts": {
+    "schema": {
+      "path": "docs/architecture/schemas/v4/acceptance-fixture-manifest.schema.json",
+      "sha256": "e9f1d8b7834a52d375f673d95ab4d339df469b5e2a58ab7fa4d065842da89ae1",
+      "schema_id": "urn:dosai:schema:acceptance-fixture-manifest:4",
+      "status": "PROPOSAL_ONLY"
+    },
+    "manifests": [
+      {
+        "suite_id": "P3-AT-001",
+        "path": "tests/acceptance/manifests/p3-at-001.json",
+        "sha256": "b81beda8f50630f6d89997592c8c51f2ef5d4d783496066b0e191eaffae63800"
+      },
+      {
+        "suite_id": "P3-AT-002",
+        "path": "tests/acceptance/manifests/p3-at-002.json",
+        "sha256": "2d8c7aae25cab31445dc0c81cd8bee1888c2d8cc2ba5227285d94321fa8319b5"
+      },
+      {
+        "suite_id": "P3-AT-003",
+        "path": "tests/acceptance/manifests/p3-at-003.json",
+        "sha256": "d2074726b2c4b99fbc1b87c9c3d4cabe3c460d2be0d3200860a87390d89026be"
+      }
+    ],
+    "runner_version": "0.3.0",
+    "runner_implemented": false
+  },
+  "preserved_boundaries": {
+    "catalog_v5_changed": false,
+    "schema_registry_changed": false,
+    "runner_0_2_changed": false,
+    "suite_implementation_state_changed": false,
+    "accepted_fixture_changed": false,
+    "physical_prerequisite_bypassed": false,
+    "p3_execution_handler_present": false
+  },
+  "required_transition_sequence": [
+    "PHYSICAL_P3_PREREQUISITES_PASS",
+    "OWNER_ACCEPTS_EXACT_SCHEMA_AND_MANIFEST_BYTES",
+    "REGISTER_SCHEMA_V4_IN_ACCEPTED_SCHEMA_REGISTRY_SUCCESSOR",
+    "IMPLEMENT_P3_HANDLERS_WITH_SEPARATE_ACCEPTED_BOUNDARIES",
+    "CREATE_AND_ACCEPT_CATALOG_SUCCESSOR_AND_RUNNER_0_3_GENERATION",
+    "RUN_ALL_THREE_SUITES_ON_EXACT_CANDIDATE",
+    "OWNER_ACCEPTS_P3_GATE_EVIDENCE"
+  ],
+  "authorities": {
+    "schema_registration": false,
+    "catalog_change": false,
+    "runner_change": false,
+    "fixture_acceptance": false,
+    "p3_handler_implementation": false,
+    "package_build": false,
+    "signing": false,
+    "app_launch": false,
+    "service_management": false,
+    "builder_execution": false,
+    "capsule_execution": false,
+    "acceptance_execution": false,
+    "production_use": false
+  },
+  "next_gate": "OWNER_REVIEW_AFTER_PHYSICAL_PREREQUISITE_EVIDENCE"
+}

@@ -1,0 +1,68 @@
+{
+  "schema_id": "urn:dosai:schema:acceptance-fixture-manifest:4",
+  "schema_version": 4,
+  "manifest_id": "28b3db47-ef49-47c0-83c6-794b9a4c3519",
+  "created_at": "2026-09-21T05:28:27.000Z",
+  "data_class": "D5",
+  "catalog_version": 5,
+  "suite_id": "P3-AT-001",
+  "fixture_version": 4,
+  "status": "PROPOSED",
+  "runner": { "id": "dosai-acceptance", "version": "0.3.0" },
+  "secret_canary_set_version": 1,
+  "platform_profiles": ["MACOS_ARM64_V1", "LINUX_AMD64_V1"],
+  "required_artifacts": ["REPORT", "ASSERTIONS", "ENVIRONMENT", "COMMAND", "MANIFEST", "JOURNAL", "CLEANUP"],
+  "cases": [
+    {
+      "id": "P3-AT-001-S01-C01",
+      "scenario_id": "P3-AT-001-S01",
+      "mode": "POSITIVE",
+      "handler_id": "P3_TYPED_EXECUTION_CAPSULE",
+      "input_profile": "P3_TYPED_EXECUTION_CAPSULE_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "598b772ac42f801996342c11a6a1fe49c97f16d8eca65365bf57f3d523e173e7" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P3_PHYSICAL_PREREQUISITES_ACCEPTED", "SIGNED_TEST_CANDIDATE_EXACT", "TWO_NATIVE_BUILD_RECEIPTS_ACCEPTED"],
+      "setup_operations": ["CREATE_DEDICATED_TEST_WORKSPACE", "LOAD_ACCEPTED_BUILDER_ARCHIVE"],
+      "action_deadline_ms": 1200000,
+      "assertions": [
+        { "id": "P3_TYPED_OPERATION_ADMISSION_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "MANIFEST"] },
+        { "id": "P3_EXACT_CAPSULE_CONFIGURATION_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND", "ENVIRONMENT"] },
+        { "id": "P3_USEFUL_TEST_OPERATION_RESULT_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "JOURNAL"] },
+        { "id": "P3_PLAN_GRANT_AND_GENERATION_BINDING_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "MANIFEST", "JOURNAL"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "CAPSULE_TERMINAL_AND_CLEAN",
+      "teardown_postconditions": ["OWNED_RESOURCES_REMOVED", "UNRELATED_RESOURCES_UNCHANGED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P3.1", "P3.3", "P3.5", "I01"],
+      "limitations": ["TEST_RESOURCES_ONLY", "NO_PRODUCTION_CLAIM"]
+    },
+    {
+      "id": "P3-AT-001-S02-C01",
+      "scenario_id": "P3-AT-001-S02",
+      "mode": "SECURITY",
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "input_profile": "P3_EXECUTION_ATTACK_CORPUS_V1",
+      "input_digest": { "algorithm": "SHA-256", "value": "e184e4c9238af507243d8e20c1d61a242f21a8fd5888e55b15dc34217f8b82b0" },
+      "input_data_class": "D5",
+      "preconditions": ["CLEAN_REPOSITORY", "P3_PHYSICAL_PREREQUISITES_ACCEPTED", "SIGNED_TEST_CANDIDATE_EXACT", "TWO_NATIVE_BUILD_RECEIPTS_ACCEPTED"],
+      "setup_operations": ["CREATE_DEDICATED_TEST_WORKSPACE", "LOAD_ACCEPTED_BUILDER_ARCHIVE"],
+      "action_deadline_ms": 1200000,
+      "assertions": [
+        { "id": "P3_FORBIDDEN_EXECUTION_FORMS_REJECTED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "COMMAND"] },
+        { "id": "P3_MOUNT_NETWORK_ENVIRONMENT_ESCAPE_REJECTED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "ENVIRONMENT", "JOURNAL"] },
+        { "id": "P3_DIRECT_SPAWN_AND_DETACH_PATHS_ABSENT", "expected_code": "ASSERTION_PASS", "artifact_classes": ["ASSERTIONS", "MANIFEST"] },
+        { "id": "P3_ATTACK_CORPUS_CLEANUP_VERIFIED", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] },
+        { "id": "P3_WORKTREE_REMAINS_CLEAN", "expected_code": "ASSERTION_PASS", "artifact_classes": ["CLEANUP"] }
+      ],
+      "expected_external_effect": "NONE",
+      "cancellation_postcondition": "NO_UNOWNED_EFFECT_AUTHORITY_PRESENT",
+      "teardown_postconditions": ["OWNED_RESOURCES_REMOVED", "UNRELATED_RESOURCES_UNCHANGED", "WORKTREE_UNCHANGED"],
+      "retention_profile": "R3_EVIDENCE_STANDARD",
+      "deletion_postcondition": "MANAGED_EVIDENCE_ONLY",
+      "eligible_claims": ["P3.1", "P3.3", "P3.5", "I01"],
+      "limitations": ["TEST_RESOURCES_ONLY", "NO_PRODUCTION_CLAIM"]
+    }
+  ]
+}

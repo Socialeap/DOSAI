@@ -298,6 +298,14 @@ exists, and a future zero-cost host observation must prove two distinct DMI
 identities, native x64 execution, exact image versions, and no emulation before
 builder preparation can rely on that route.
 
+Formal P3 acceptance preparation also exposed and closed a representation gap:
+accepted fixture schema v3 and runner 0.2 support only P1/P2. A non-activating
+schema v4 proposal and all three catalog-referenced P3 manifests now express the
+six accepted scenarios, exact artifact classes, deadlines, prerequisites and
+cleanup claims. They remain `PROPOSED`; runner 0.2 still rejects P3 with exit 2,
+and no handler exists. Physical prerequisites, owner acceptance, a registry and
+catalog successor, runner 0.3, and separately bounded handlers remain required.
+
 **Release classification:** Local read-only reporting, governance tests, and
 documentation only. No Lovable action is required. No frontend Publish is
 required. No signing, app launch, Service Management operation, key retrieval,

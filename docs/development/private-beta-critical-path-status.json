@@ -61,6 +61,10 @@
     {
       "path": "docs/testing/acceptance-test-catalog-v5.json",
       "sha256": "482887c6e3d7a24d09471428a6486c9926d11a5b3e31673e3c91bf2ebf55843a"
+    },
+    {
+      "path": "docs/architecture/p3-acceptance-fixture-generation-proposal.json",
+      "sha256": "16d90624de634c836d4631c8ec1f96cd4b8ff535e5316f0703a2d8b832ed71af"
     }
   ],
   "gates": [
@@ -98,7 +102,10 @@
       "title": "Implement and pass formal P3 acceptance",
       "status": "NOT_IMPLEMENTED",
       "blocking_evidence": "P3_AT_001_P3_AT_002_P3_AT_003_ARE_NOT_IMPLEMENTED",
-      "next_action": "IMPLEMENT_ONLY_AFTER_THEIR_PHYSICAL_PREREQUISITES_ARE_PROVEN"
+      "proposal_prepared": true,
+      "proposed_fixture_schema": "urn:dosai:schema:acceptance-fixture-manifest:4",
+      "proposed_manifest_count": 3,
+      "next_action": "AFTER_PHYSICAL_PREREQUISITES_OWNER_REVIEWS_SCHEMA_MANIFESTS_AND_HANDLER_BOUNDARIES"
     },
     {
       "id": "BETA-CP-006",
