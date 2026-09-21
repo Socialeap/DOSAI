@@ -1,0 +1,37 @@
+{
+  "record_type": "P3_V50_GATE_V2_PHYSICAL_PROOF_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-21T16:18:00-04:00",
+  "status": "FAILED_CLOSED_PREFLIGHT_TOOL_PATH_REAUTHORIZATION_REQUIRED",
+  "subject_commit": "bcb69f9c7662b9b507ab1ce01c2956bf8a47d2bc",
+  "authorization_source": "OWNER_CHAT_EXACT_SINGLE_ATTEMPT_V50_GATE_V2",
+  "failure": {
+    "stage": "PRE_BUILD_PREFLIGHT",
+    "code": "PREFLIGHT_EXECUTABLE_NOT_FOUND",
+    "missing_executable": "/usr/bin/test",
+    "physical_proof_attempt_consumed": true,
+    "lifecycle_receipt_produced": false
+  },
+  "observed_effects": {
+    "package_builds": 0,
+    "signing_operations": 0,
+    "staged_applications": 0,
+    "application_launches": 0,
+    "native_module_loads": 0,
+    "status_observations": 0,
+    "registration_attempts": 0,
+    "unregistration_attempts": 0,
+    "workflow_dispatches": 0,
+    "provider_charge_usd": 0
+  },
+  "containment": {
+    "stopped_before_build": true,
+    "retry_performed": false,
+    "automatic_recovery_performed": false,
+    "preserved_v49_package_present": true,
+    "v50_staged_application_absent": true,
+    "background_item_state": "UNCHANGED_BY_ATTEMPT",
+    "further_physical_action_requires_new_owner_authorization": true
+  },
+  "next_gate": "IMPLEMENT_FIXED_SOURCE_PREFLIGHT_THEN_OBTAIN_NEW_EXACT_OWNER_AUTHORIZATION"
+}
