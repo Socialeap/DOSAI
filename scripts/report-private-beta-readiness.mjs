@@ -28,7 +28,26 @@ export async function assessPrivateBetaReadiness() {
     checkpoint.operational_constraints.credit_ceiling !== 120 ||
     checkpoint.operational_constraints.paid_activity_authorized !== false ||
     checkpoint.operational_constraints.merge_authorized !== false ||
-    checkpoint.operational_constraints.production_use_authorized !== false
+    checkpoint.operational_constraints.production_use_authorized !== false ||
+    checkpoint.validated_source_baseline.branch !== 'main' ||
+    checkpoint.validated_source_baseline.head !==
+      '6495ffe787189c9836af4d6a5be4e480bc9f38f1' ||
+    checkpoint.validated_source_baseline.validated_head !==
+      '4df74d0d95636226dedb8944d48b8fa6401600e8' ||
+    checkpoint.validated_source_baseline.validated_tree !==
+      '452935badff6a4189f2630e95bedd29ccbe9d0ab' ||
+    checkpoint.source_only_repair_candidate_validation.branch !==
+      'codex/p3-host-observation-v51' ||
+    checkpoint.source_only_repair_candidate_validation.based_on !==
+      checkpoint.validated_source_baseline.head ||
+    checkpoint.source_only_repair_candidate_validation.workflow_sha256 !==
+      '6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63' ||
+    checkpoint.source_only_repair_candidate_validation.node_version !== '24.18.0' ||
+    checkpoint.source_only_repair_candidate_validation.tests_passed !== 643 ||
+    checkpoint.source_only_repair_candidate_validation.tests_failed !== 0 ||
+    checkpoint.source_only_repair_candidate_validation.workflow_dispatches !== 0 ||
+    checkpoint.source_only_repair_candidate_validation.runner_allocations !== 0 ||
+    checkpoint.source_only_repair_candidate_validation.provider_spend !== 0
   ) {
     throw new Error('PRIVATE_BETA_CHECKPOINT_REJECTED');
   }
@@ -107,6 +126,12 @@ export async function assessPrivateBetaReadiness() {
   );
   const hostObservationVerifier = boundRecords.get(
     'docs/architecture/p3-native-builder-host-observation-verifier-source-record.json',
+  );
+  const hostObservationAttemptOne = boundRecords.get(
+    'docs/architecture/p3-native-builder-host-observation-attempt-1-result.json',
+  );
+  const hostObservabilityRepair = boundRecords.get(
+    'docs/architecture/p3-native-builder-host-observability-repair-source-record.json',
   );
   if (
     physical?.record_version !== 4 ||
@@ -211,7 +236,22 @@ export async function assessPrivateBetaReadiness() {
     hostObservationVerifier?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED' ||
     hostObservationVerifier?.contract?.success_status !== 'PASS_CANDIDATE_HOSTS_ONLY' ||
     hostObservationVerifier?.contract?.builder_receipts_produced_on_success !== 0 ||
-    !everyAuthorityIsFalse(hostObservationVerifier)
+    !everyAuthorityIsFalse(hostObservationVerifier) ||
+    hostObservationAttemptOne?.status !== 'FAILED_CLOSED_UNATTRIBUTED_ASSERTION' ||
+    hostObservationAttemptOne?.workflow?.run_id !== '35669182950' ||
+    hostObservationAttemptOne?.workflow?.run_attempt !== '1' ||
+    hostObservationAttemptOne?.workflow?.conclusion !== 'failure' ||
+    hostObservationAttemptOne?.containment?.manual_dispatches_observed !== 1 ||
+    hostObservationAttemptOne?.containment?.automatic_retries !== 0 ||
+    hostObservationAttemptOne?.containment?.reruns !== 0 ||
+    hostObservationAttemptOne?.evidence_result?.candidate_host_receipts !== 0 ||
+    hostObservationAttemptOne?.evidence_result?.builder_receipts_produced !== 0 ||
+    hostObservabilityRepair?.status !== 'IMPLEMENTED_SOURCE_ONLY_NOT_DISPATCHED' ||
+    hostObservabilityRepair?.workflow?.permissions !== 'NONE' ||
+    hostObservabilityRepair?.failure_contract?.existing_success_receipt_changed !== false ||
+    hostObservabilityRepair?.failure_contract?.existing_host_predicates_removed !== false ||
+    hostObservabilityRepair?.failure_contract?.failure_still_exits_nonzero !== true ||
+    !everyAuthorityIsFalse(hostObservabilityRepair)
   ) {
     throw new Error('PRIVATE_BETA_AUTHORITY_STATE_CHANGED');
   }
