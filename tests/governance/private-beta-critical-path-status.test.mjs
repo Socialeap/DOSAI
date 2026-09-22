@@ -24,12 +24,35 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   });
   assert.equal(
     checkpoint.validated_source_baseline.head,
-    'ecdfd7a5763eeb39fdad0224e3085e73e934f294',
+    '6495ffe787189c9836af4d6a5be4e480bc9f38f1',
+  );
+  assert.equal(checkpoint.validated_source_baseline.branch, 'main');
+  assert.equal(
+    checkpoint.validated_source_baseline.validated_head,
+    '4df74d0d95636226dedb8944d48b8fa6401600e8',
+  );
+  assert.equal(
+    checkpoint.validated_source_baseline.validated_tree,
+    '452935badff6a4189f2630e95bedd29ccbe9d0ab',
   );
   assert.equal(checkpoint.validated_source_baseline.source_validation.tests_passed, 639);
   assert.equal(checkpoint.validated_source_baseline.source_validation.typescript_projects_passed, 9);
   assert.equal(checkpoint.validated_source_baseline.source_validation.normal_builds_run, 0);
   assert.equal(checkpoint.validated_source_baseline.source_validation.build_authorized, false);
+  assert.deepEqual(checkpoint.source_only_repair_candidate_validation, {
+    branch: 'codex/p3-host-observation-v51',
+    based_on: '6495ffe787189c9836af4d6a5be4e480bc9f38f1',
+    workflow_sha256: '6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63',
+    node_version: '24.18.0',
+    test_file_concurrency: 1,
+    tests_passed: 643,
+    tests_failed: 0,
+    focused_tests_passed: 18,
+    embedded_bash_programs_syntax_checked: 2,
+    workflow_dispatches: 0,
+    runner_allocations: 0,
+    provider_spend: 0,
+  });
   assert.equal(checkpoint.fixture_overlay_validation.head, '0284f74d146f23581ab1833f817ac31883bcb96a');
   assert.equal(checkpoint.fixture_overlay_validation.tests_passed, 578);
   assert.equal(checkpoint.fixture_overlay_validation.integration_authorized, true);
@@ -40,6 +63,11 @@ test('private-beta checkpoint binds the exact current critical-path inputs', asy
   ]);
   const builders = checkpoint.gates.find(({ id }) => id === 'BETA-CP-004');
   assert.equal(builders.candidate_host_source, 'TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS');
+  assert.equal(builders.host_observation_status, 'ATTEMPT_1_FAILED_CLOSED_UNATTRIBUTED_ASSERTION');
+  assert.equal(builders.host_observation_dispatches, 1);
+  assert.equal(builders.host_observation_retries, 0);
+  assert.equal(builders.candidate_host_receipts, 0);
+  assert.equal(builders.observability_repair_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_DISPATCHED');
   assert.equal(builders.offline_verifier_status, 'IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED');
   assert.equal(builders.offline_verifier_success_claim, 'PASS_CANDIDATE_HOSTS_ONLY');
   const lifecycle = checkpoint.gates.find(({ id }) => id === 'BETA-CP-002');

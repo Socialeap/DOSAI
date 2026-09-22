@@ -1,7 +1,7 @@
 {
   "record_type": "DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS",
   "record_version": 1,
-  "recorded_at": "2026-09-21T18:06:58-04:00",
+  "recorded_at": "2026-09-22T00:38:18-04:00",
   "target": "SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING",
   "release_status": "NO_GO",
   "operational_constraints": {
@@ -12,8 +12,10 @@
   },
   "validated_source_baseline": {
     "pull_request": "https://github.com/Socialeap/DOSAI/pull/3",
-    "branch": "codex/p3-baseline-v43-proof",
-    "head": "ecdfd7a5763eeb39fdad0224e3085e73e934f294",
+    "branch": "main",
+    "head": "6495ffe787189c9836af4d6a5be4e480bc9f38f1",
+    "validated_head": "4df74d0d95636226dedb8944d48b8fa6401600e8",
+    "validated_tree": "452935badff6a4189f2630e95bedd29ccbe9d0ab",
     "source_validation": {
       "tests_passed": 639,
       "tests_failed": 0,
@@ -22,6 +24,20 @@
       "normal_builds_passed": 0,
       "build_authorized": false
     }
+  },
+  "source_only_repair_candidate_validation": {
+    "branch": "codex/p3-host-observation-v51",
+    "based_on": "6495ffe787189c9836af4d6a5be4e480bc9f38f1",
+    "workflow_sha256": "6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63",
+    "node_version": "24.18.0",
+    "test_file_concurrency": 1,
+    "tests_passed": 643,
+    "tests_failed": 0,
+    "focused_tests_passed": 18,
+    "embedded_bash_programs_syntax_checked": 2,
+    "workflow_dispatches": 0,
+    "runner_allocations": 0,
+    "provider_spend": 0
   },
   "fixture_overlay_validation": {
     "pull_request": "https://github.com/Socialeap/DOSAI/pull/2",
@@ -161,6 +177,14 @@
       "sha256": "41d4b01da257fa776939b7d61f70c39533f06af0d804433ea2bc2687dd6c4a3f"
     },
     {
+      "path": "docs/architecture/p3-native-builder-host-observation-attempt-1-result.json",
+      "sha256": "a963fdc0ca328c9dcd292b3587fa66384762e44c9593cc2be5dddc458fc77e6b"
+    },
+    {
+      "path": "docs/architecture/p3-native-builder-host-observability-repair-source-record.json",
+      "sha256": "69dbfa09cc27efbd47e0791e0f5ecb3d7b7d8893027caf9f06a703076e83c88e"
+    },
+    {
       "path": "docs/architecture/p3-v49-not-found-source-diagnosis.json",
       "sha256": "2558f04d2d207a9f34c12ab7972816f397898cbe5f924b99798fc52d869bd179"
     },
@@ -208,10 +232,14 @@
       "status": "MISSING_REQUIRED_EVIDENCE",
       "blocking_evidence": "QUALIFYING_INDEPENDENT_NATIVE_AMD64_BUILDER_RECEIPTS_IN_REPOSITORY_0_OF_2",
       "candidate_host_source": "TWO_STANDARD_GITHUB_HOSTED_UBUNTU_24_04_JOBS",
-      "host_observation_status": "WORKFLOW_AND_OFFLINE_VERIFIER_PREPARED_UNMERGED_NOT_DISPATCHABLE",
+      "host_observation_status": "ATTEMPT_1_FAILED_CLOSED_UNATTRIBUTED_ASSERTION",
+      "host_observation_dispatches": 1,
+      "host_observation_retries": 0,
+      "candidate_host_receipts": 0,
+      "observability_repair_status": "IMPLEMENTED_SOURCE_ONLY_NOT_DISPATCHED",
       "offline_verifier_status": "IMPLEMENTED_SOURCE_ONLY_NOT_EXECUTED",
       "offline_verifier_success_claim": "PASS_CANDIDATE_HOSTS_ONLY",
-      "next_action": "OBTAIN_SEPARATE_AUTHORIZATION_FOR_PR_MERGE_OR_DEFAULT_BRANCH_CHANGE_AND_ONE_ZERO_COST_DISPATCH"
+      "next_action": "REVIEW_AND_MERGE_SOURCE_ONLY_OBSERVABILITY_REPAIR_THEN_OBTAIN_SEPARATE_AUTHORIZATION_FOR_ONE_NEW_ZERO_COST_DISPATCH"
     },
     {
       "id": "BETA-CP-005",
