@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { copyFile, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 
 import { assessPrivateBetaReadiness } from '../../scripts/report-private-beta-readiness.mjs';
@@ -131,4 +133,48 @@ test('checkpoint never converts source or compatibility evidence into runtime au
     .filter(({ id }) => !['BETA-CP-001', 'BETA-CP-002', 'BETA-CP-003'].includes(id))
     .every(({ status }) => status !== 'PASS'));
   assert.equal(checkpoint.gates.at(-1).status, 'NOT_READY');
+});
+
+const workflowPath = '.github/workflows/p3-native-builder-host-feasibility.yml';
+
+async function isolatedAssessment(t) {
+  const fixtureRoot = await mkdtemp(resolve(tmpdir(), 'dosai-readiness-digest-'));
+  t.after(() => rm(fixtureRoot, { recursive: true, force: true }));
+  const paths = [
+    'scripts/report-private-beta-readiness.mjs',
+    'tools/dosai-acceptance/src/strict-json.mjs',
+    'docs/development/private-beta-critical-path-status.json',
+    workflowPath,
+    ...checkpoint.bound_inputs.map(({ path }) => path),
+  ];
+  for (const path of new Set(paths)) {
+    const target = resolve(fixtureRoot, path);
+    await mkdir(dirname(target), { recursive: true });
+    await copyFile(resolve(root, path), target);
+  }
+  await symlink(
+    resolve(root, 'tools/dosai-acceptance/node_modules'),
+    resolve(fixtureRoot, 'tools/dosai-acceptance/node_modules'),
+    'dir',
+  );
+  const { assessPrivateBetaReadiness: assess } = await import(pathToFileURL(resolve(
+    fixtureRoot, 'scripts/report-private-beta-readiness.mjs',
+  )).href);
+  // Prove the fixture is valid before changing only its workflow bytes.
+  assert.equal((await assess()).release_status, 'NO_GO');
+  return { assess, workflow: resolve(fixtureRoot, workflowPath) };
+}
+
+test('readiness rejects workflow drift while checkpoint digest remains unchanged', async t => {
+  const { assess, workflow } = await isolatedAssessment(t);
+  await writeFile(workflow, Buffer.concat([
+    await readFile(workflow), Buffer.from('\n# drift regression fixture\n'),
+  ]));
+  await assert.rejects(assess, { message: 'PRIVATE_BETA_WORKFLOW_CHANGED' });
+});
+
+test('readiness fails closed when the bound workflow is missing', async t => {
+  const { assess, workflow } = await isolatedAssessment(t);
+  await rm(workflow);
+  await assert.rejects(assess, { code: 'ENOENT' });
 });

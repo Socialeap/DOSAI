@@ -52,6 +52,13 @@ export async function assessPrivateBetaReadiness() {
     throw new Error('PRIVATE_BETA_CHECKPOINT_REJECTED');
   }
 
+  const workflowBytes = await readFile(resolve(
+    root, '.github/workflows/p3-native-builder-host-feasibility.yml',
+  ));
+  if (sha256(workflowBytes) !== checkpoint.source_only_repair_candidate_validation.workflow_sha256) {
+    throw new Error('PRIVATE_BETA_WORKFLOW_CHANGED');
+  }
+
   const boundRecords = new Map();
   for (const binding of checkpoint.bound_inputs) {
     const bytes = await readFile(resolve(root, binding.path));
