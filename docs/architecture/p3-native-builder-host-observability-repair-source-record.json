@@ -1,0 +1,71 @@
+{
+  "record_type": "P3_NATIVE_BUILDER_HOST_OBSERVABILITY_REPAIR_SOURCE_RECORD",
+  "record_version": 1,
+  "implemented_at": "2026-09-22T00:20:00-04:00",
+  "status": "IMPLEMENTED_SOURCE_ONLY_NOT_DISPATCHED",
+  "scope": "FIXED_NON_SENSITIVE_FAILURE_ATTRIBUTION_ONLY",
+  "failed_attempt": {
+    "path": "docs/architecture/p3-native-builder-host-observation-attempt-1-result.json",
+    "sha256": "a963fdc0ca328c9dcd292b3587fa66384762e44c9593cc2be5dddc458fc77e6b",
+    "run_id": "35669182950",
+    "run_attempt": "1",
+    "head_sha": "6495ffe787189c9836af4d6a5be4e480bc9f38f1"
+  },
+  "workflow": {
+    "path": ".github/workflows/p3-native-builder-host-feasibility.yml",
+    "prior_sha256": "04c1220cf1d6919c663aa678cc8ab51a05e2478ea4a99fa88ce6aa342b2830d3",
+    "repaired_sha256": "6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63",
+    "trigger": "workflow_dispatch",
+    "permissions": "NONE",
+    "job_count": 2,
+    "runner": "ubuntu-24.04",
+    "checkout": false,
+    "third_party_actions": false,
+    "secrets": false,
+    "cache": false,
+    "artifact_upload": false
+  },
+  "failure_contract": {
+    "prefix": "DOSAI_HOST_OBSERVATION_FAILURE_V1:",
+    "dynamic_host_data_in_failure_line": false,
+    "fixed_codes": [
+      "RUNNER_ENVIRONMENT_MISMATCH",
+      "RUNNER_OS_MISMATCH",
+      "RUNNER_ARCH_MISMATCH",
+      "UNAME_MACHINE_MISMATCH",
+      "IMAGE_OS_MISSING",
+      "IMAGE_VERSION_MISSING",
+      "DMI_UUID_UNREADABLE",
+      "DMI_UUID_READ_FAILED",
+      "DMI_UUID_EMPTY",
+      "DOCKER_ARCH_QUERY_FAILED",
+      "DOCKER_ARCH_MISMATCH",
+      "BINFMT_MISC_DIRECTORY_MISSING",
+      "BINFMT_MISC_SCAN_FAILED",
+      "BINFMT_MISC_INTERPRETER_ACTIVE",
+      "RECEIPT_EMISSION_FAILED"
+    ],
+    "existing_success_receipt_changed": false,
+    "existing_host_predicates_removed": false,
+    "failure_still_exits_nonzero": true
+  },
+  "authorities": {
+    "workflow_dispatch": false,
+    "runner_allocation": false,
+    "github_token_use": false,
+    "repository_checkout": false,
+    "cache_use": false,
+    "artifact_upload": false,
+    "network_retrieval": false,
+    "builder_image_load": false,
+    "container_launch": false,
+    "guest_compilation": false,
+    "guest_execution": false,
+    "builder_receipt_acceptance": false,
+    "provider_spend": false,
+    "pull_request_merge": false,
+    "default_branch_change": false,
+    "production_use": false
+  },
+  "next_gate": "OWNER_REVIEW_AND_SEPARATE_EXACT_AUTHORIZATION_REQUIRED_BEFORE_ANY_NEW_WORKFLOW_DISPATCH"
+}

@@ -1,0 +1,67 @@
+{
+  "record_type": "P3_NATIVE_BUILDER_HOST_OBSERVATION_ATTEMPT_RESULT",
+  "record_version": 1,
+  "recorded_at": "2026-09-22T00:20:00-04:00",
+  "status": "FAILED_CLOSED_UNATTRIBUTED_ASSERTION",
+  "repository": "Socialeap/DOSAI",
+  "workflow": {
+    "path": ".github/workflows/p3-native-builder-host-feasibility.yml",
+    "name": "P3 native builder host feasibility",
+    "trigger": "workflow_dispatch",
+    "permissions": "NONE",
+    "head_branch": "main",
+    "head_sha": "6495ffe787189c9836af4d6a5be4e480bc9f38f1",
+    "run_id": "35669182950",
+    "run_attempt": "1",
+    "run_url": "https://github.com/Socialeap/DOSAI/actions/runs/35669182950",
+    "created_at": "2026-09-21T23:47:59Z",
+    "completed_at": "2026-09-21T23:48:09Z",
+    "conclusion": "failure"
+  },
+  "jobs": [
+    {
+      "name": "BUILDER_HOST_A",
+      "job_id": "106561590802",
+      "observation_step_conclusion": "failure",
+      "process_exit_code": 1,
+      "success_receipt_lines": 0,
+      "attributed_failure_code_lines": 0
+    },
+    {
+      "name": "BUILDER_HOST_B",
+      "job_id": "106561591007",
+      "observation_step_conclusion": "failure",
+      "process_exit_code": 1,
+      "success_receipt_lines": 0,
+      "attributed_failure_code_lines": 0
+    }
+  ],
+  "failure": {
+    "code": "UNATTRIBUTED_FIXED_ASSERTION_EXIT_1",
+    "exact_failed_predicate_known": false,
+    "raw_host_identity_retained": false,
+    "explanation": "The workflow preserved fail-closed behavior but emitted only exit code 1, so the failing host predicate cannot be distinguished from the retained logs."
+  },
+  "evidence_result": {
+    "candidate_host_receipts": 0,
+    "physical_linux_builder_verified": false,
+    "builder_receipts_produced": 0,
+    "beta_cp_004_satisfied": false
+  },
+  "containment": {
+    "manual_dispatches_observed": 1,
+    "automatic_retries": 0,
+    "reruns": 0,
+    "checkout_performed": false,
+    "cache_used": false,
+    "artifact_uploaded": false,
+    "secrets_declared": false,
+    "build_performed": false,
+    "signing_performed": false,
+    "builder_or_guest_execution_performed": false,
+    "production_use": false,
+    "paid_runner_configured": false,
+    "billing_receipt_observed": false
+  },
+  "next_gate": "SOURCE_ONLY_FIXED_FAILURE_CODE_OBSERVABILITY_REPAIR_THEN_FRESH_OWNER_AUTHORIZATION_REQUIRED_FOR_ANY_NEW_DISPATCH"
+}

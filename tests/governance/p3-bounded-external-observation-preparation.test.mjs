@@ -42,8 +42,28 @@ test('manual host workflow has two standard zero-authority observation jobs only
   assert.equal((source.match(/runs-on: ubuntu-24\.04/g) ?? []).length, 2);
   assert.equal((source.match(/name: BUILDER_HOST_[AB]/g) ?? []).length, 2);
   assert.equal((source.match(/DOSAI_HOST_OBSERVATION_V1:/g) ?? []).length, 2);
+  assert.equal((source.match(/DOSAI_HOST_OBSERVATION_FAILURE_V1:/g) ?? []).length, 2);
   assert.equal((source.match(/docker version --format/g) ?? []).length, 2);
   assert.equal((source.match(/dmi\/id\/product_uuid/g) ?? []).length, 4);
   assert.equal((source.match(/\/proc\/sys\/fs\/binfmt_misc/g) ?? []).length, 4);
+  for (const code of [
+    'RUNNER_ENVIRONMENT_MISMATCH',
+    'RUNNER_OS_MISMATCH',
+    'RUNNER_ARCH_MISMATCH',
+    'UNAME_MACHINE_MISMATCH',
+    'IMAGE_OS_MISSING',
+    'IMAGE_VERSION_MISSING',
+    'DMI_UUID_UNREADABLE',
+    'DMI_UUID_READ_FAILED',
+    'DMI_UUID_EMPTY',
+    'DOCKER_ARCH_QUERY_FAILED',
+    'DOCKER_ARCH_MISMATCH',
+    'BINFMT_MISC_DIRECTORY_MISSING',
+    'BINFMT_MISC_SCAN_FAILED',
+    'BINFMT_MISC_INTERPRETER_ACTIVE',
+    'RECEIPT_EMISSION_FAILED',
+  ]) {
+    assert.equal((source.match(new RegExp(`\\|\\| fail ${code}\\b`, 'g')) ?? []).length, 2, code);
+  }
   assert.doesNotMatch(source, /\buses:|checkout|upload-artifact|cache|pull_request|push:|schedule:|secret/i);
 });

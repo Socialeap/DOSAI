@@ -75,7 +75,7 @@ test('corrected Debian observation matches every key and deletes temporary bytes
   assert.equal(record.containment.key_import_performed, false);
 });
 
-test('workflow preparation remains unmerged, unrun, and zero cost', async () => {
+test('historical workflow preparation record remains bounded after its source successor', async () => {
   const record = await readRecord(
     'docs/architecture/p3-native-builder-host-workflow-preparation-result.json',
   );
@@ -83,10 +83,8 @@ test('workflow preparation remains unmerged, unrun, and zero cost', async () => 
   assert.equal(record.workflow.trigger, 'workflow_dispatch');
   assert.equal(record.workflow.permissions, 'NONE');
   assert.equal(record.workflow.maximum_charge_usd, 0);
-  assert.equal(
-    sha256(await readFile(resolve(root, record.workflow.path))),
-    record.workflow.sha256,
-  );
+  assert.equal(record.workflow.sha256, '04c1220cf1d6919c663aa678cc8ab51a05e2478ea4a99fa88ce6aa342b2830d3');
+  assert.notEqual(sha256(await readFile(resolve(root, record.workflow.path))), record.workflow.sha256);
   assert.equal(record.external_effects.workflow_dispatches, 0);
   assert.equal(record.external_effects.runner_allocations, 0);
   assert.equal(record.merge_authorized, false);
