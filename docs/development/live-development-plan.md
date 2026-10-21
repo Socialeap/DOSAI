@@ -60,6 +60,14 @@ evidence is not erased.
 - Phase completion updates the capability matrix only for capabilities directly
   supported by reproducible evidence.
 
+## Beta continuation references
+
+The [operator runbook](private-beta-operator-runbook.md) records PR #4's merge,
+pinned-runtime digest-repair validation, and the remaining sequential beta gates.
+The [v1 agent connection end state](../product/v1-agent-connection-end-state.md)
+records the owner's GitHub/local MCP/repository fallback requirement. These
+references do not change phase status, accepted evidence, or runtime authority.
+
 ## Phase Rollup
 
 **Deadline planning:** The owner selected a working private beta for supervised
