@@ -23,6 +23,14 @@ was weakened and no replacement package was built or signed. The packaging
 argument-admission test also requires an existing `out` directory; preserve this
 fixture prerequisite when reproducing the full suite.
 
+The broad serial pinned-Node run completed 645 tests: 640 passed, 5 failed
+with `ENOENT` for the absent retained package or `out` directory. After restoring
+those fixture prerequisites, the four affected artifact checks passed within a
+22/22 focused run and packaging admission passed within a 5/5 focused run.
+Thus all five observed failures were resolved on rerun; this is not a claim that
+one full-suite invocation returned 645/645. No native workflow dispatch,
+registration, package rebuild, or provider spend was performed.
+
 ## Local preflight
 
 Use a clean isolated checkout. Preserve the owner checkout and other agents'
