@@ -1,0 +1,48 @@
+{
+  "record_type": "P3_KERNEL_WRITER_DIAGNOSTIC_SOURCE_PREPARATION",
+  "record_version": 1,
+  "status": "PREPARED_INACTIVE_NOT_DISPATCHED",
+  "based_on": "649aa510085770044b8a55b3c05f6c29b8ed55c9",
+  "inputs": {
+    "scripts/p3-kernel-writer-diagnostic.py": "6f40494ee7e3c00fa0557ef2f8779d67dd1e44dd9a1301d32b149ecc58450185",
+    "tests/governance/p3-kernel-writer-diagnostic.test.mjs": "2dd30d03e97b3658880c4e76880c23e7070b44b2af8381d3a3c0c05ded5e3b5b"
+  },
+  "bounds": {
+    "release_bytes": 256,
+    "signature_bytes": 512,
+    "mountinfo_bytes": 65536,
+    "mountinfo_rows": 512,
+    "query_count": 5,
+    "query_stdout_bytes": 4096,
+    "query_seconds": 1,
+    "collection_seconds": 7,
+    "alarm_seconds": 8,
+    "future_outer_timeout_seconds": 10,
+    "output_bytes": 65536
+  },
+  "validation": {
+    "python_tests": 14,
+    "python_versions": [
+      "3.9.6",
+      "3.15.0"
+    ],
+    "node_version": "24.18.0",
+    "focused_node_tests": 45
+  },
+  "proofs": {
+    "source_match_verified": false,
+    "single_writer_exclusion_proven": false,
+    "runtime_admission": false,
+    "execution_authorized": false
+  },
+  "authorities": {
+    "executor": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "merge": false
+  }
+}
