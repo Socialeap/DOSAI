@@ -1,0 +1,105 @@
+{
+  "record_type": "P3_KERNEL_WRITER_DIAGNOSTIC_FAILURE_ATTRIBUTION_SOURCE",
+  "record_version": 2,
+  "status": "PREPARED_INACTIVE_NOT_DISPATCHED",
+  "based_on": "09a44100c78999038b01084606a0e15bb8b66f9d",
+  "observed_failure": {
+    "run_url": "https://github.com/Socialeap/DOSAI/actions/runs/40563905019",
+    "commit": "09a44100c78999038b01084606a0e15bb8b66f9d",
+    "attempt": 1,
+    "jobs": [
+      "builder_host_a",
+      "builder_host_b"
+    ],
+    "collector_failure": "DOSAI_KERNEL_WRITER_DIAGNOSTIC_FAILURE_V1:REJECTED",
+    "host_failure": "DOSAI_HOST_OBSERVATION_FAILURE_V1:KERNEL_WRITER_DIAGNOSTIC_REJECTED",
+    "rejection_stage_known": false,
+    "kernel_writer_records": 0,
+    "host_success_receipts": 0,
+    "root_cause_confirmed": false
+  },
+  "inputs": {
+    "scripts/p3-kernel-writer-diagnostic-v2.py": "9d1805b38d2c4fe299d86e696ae2993324bd1403e4f2dff3140bc8b560234294",
+    "scripts/p3-kernel-writer-diagnostic.py": "6f40494ee7e3c00fa0557ef2f8779d67dd1e44dd9a1301d32b149ecc58450185",
+    "scripts/p3-binfmt-diagnostic.py": "15eadfc0a99602b67eb5b8359d741a76d10d645b58bdf8b057d8b3541c7e4a3d",
+    "tests/governance/p3-kernel-writer-attribution.test.py": "50f27caa4f251024d4731fdf853e80f59174d233b1642a82e44a9da4e49b63a2",
+    "tests/governance/p3-kernel-writer-attribution.test.mjs": "2471c5760c34754d89aee385bf3dd5f4542321c94f6db4ad52319261628c7d02",
+    "tests/fixtures/p3/kernel-writer-attribution-v2.json": "5f50851c4bbea577e3ed1ae1aace6b8d0517c19b576f8a116734e2f510ed0d98",
+    ".github/workflows/p3-kernel-writer-diagnostics.yml": "4d05e479c2009693a5d20c56fa94fdef085e2b1997ad16aaa5fbda5ca1790994",
+    ".github/workflows/p3-native-builder-host-feasibility.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+    "docs/architecture/p3-kernel-writer-workflow-activation-record.json": "92114a61fd4f95e3b8d8809dcd7ae6fe0b1a2eb59c120c96edd01e2d211f57fd",
+    "tests/governance/p3-kernel-writer-diagnostic.test.py": "7f30a3f87fe40a4069b2ee70aa8ae47a74bc9adea398d73d55d5842406973c95"
+  },
+  "failure_prefix": "DOSAI_KERNEL_WRITER_DIAGNOSTIC_FAILURE_V2:",
+  "failure_codes": [
+    "COLLECTION_DEADLINE",
+    "COMMAND_PROJECTION",
+    "CONTEXT_INVALID",
+    "ENTRY_PRECONDITION",
+    "KERNEL_RELEASE_MISMATCH",
+    "KERNEL_RELEASE_READ",
+    "KERNEL_RELEASE_RECHECK_MISMATCH",
+    "KERNEL_RELEASE_RECHECK_READ",
+    "MOUNTINFO_DEVICE_OR_INODE_MISMATCH",
+    "MOUNTINFO_ENCODING",
+    "MOUNTINFO_ID_FORMAT",
+    "MOUNTINFO_READ",
+    "MOUNTINFO_ROW_FORMAT",
+    "MOUNTINFO_ROW_LIMIT",
+    "MOUNTINFO_SUBMOUNT",
+    "MOUNTINFO_TARGET_COUNT",
+    "MOUNTINFO_TARGET_FS_OR_ROOT",
+    "NAMESPACE_ID_FORMAT",
+    "NAMESPACE_LINK_READ",
+    "NAMESPACE_READ",
+    "NATIVE_PLATFORM",
+    "OUTPUT_BOUND_OR_ENCODING",
+    "PROCESS_DEADLINE",
+    "QUERY_DEADLINE",
+    "REGISTRY_OPEN",
+    "REGISTRY_RECHECK_CHANGED",
+    "REGISTRY_STAT",
+    "ROOT_OPEN",
+    "UNEXPECTED_FAILURE",
+    "UNSPECIFIED_REJECTION"
+  ],
+  "success_prefix": "DOSAI_KERNEL_WRITER_DIAGNOSTIC_V1:",
+  "acceptance_policy": "V1_PREDICATES_PRESERVED_NO_MOUNT_STACK_EXCEPTION",
+  "fixtures": "SYNTHETIC_NOT_HOST_EVIDENCE",
+  "validation": {
+    "status": "PASSED_OFFLINE_SOURCE_VALIDATION",
+    "python_tests": 23,
+    "python_versions": [
+      "3.9.6",
+      "3.15.0"
+    ],
+    "representative_mount_cases": 12,
+    "node_version": "24.18.0",
+    "focused_node_tests": 50,
+    "readiness_exit_code": 2,
+    "readiness_status": "NO_GO",
+    "readiness_blockers": [
+      "BETA-CP-004",
+      "BETA-CP-005",
+      "BETA-CP-006"
+    ],
+    "live_queries_executed": false,
+    "builds_executed": false
+  },
+  "proofs": {
+    "source_match_verified": false,
+    "single_writer_exclusion_proven": false,
+    "runtime_admission": false,
+    "execution_authorized": false
+  },
+  "authorities": {
+    "executor": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "merge": false
+  }
+}

@@ -151,3 +151,19 @@ The [separate manual activation increment](p3-kernel-writer-workflow-activation-
 adds `p3-kernel-writer-diagnostics.yml` without altering the existing host workflow
 or checkpoint history. Owner-approved merge and a fresh exact zero-cost dispatch
 authorization are separate gates. No executor or runtime trust proof is added.
+
+## Kernel/writer diagnostic rejection and inactive attribution
+
+The separately authorized [run 40563905019](https://github.com/Socialeap/DOSAI/actions/runs/40563905019)
+ran once at PR #12's merged `09a44100c78999038b01084606a0e15bb8b66f9d`.
+Both jobs failed the generic kernel/writer diagnostic gate, without diagnostic,
+host success or builder receipts. Its internal stage and root cause remain
+unknown; that dispatch authorization is consumed.
+
+The [source-only attribution successor](p3-kernel-writer-attribution-source-evidence.md)
+adds fixed rejection codes and representative offline fixtures without changing
+the active collector, either workflow or the rejection predicates. A synthetic
+autofs/binfmt stack remains rejected and is not confirmed runner evidence.
+Owner source review precedes any separate activation preparation. A later
+dispatch requires fresh exact approval; no retry, mutation or executor is
+authorized. BETA-CP-004/005/006 remain NO_GO. No Lovable action is required.
