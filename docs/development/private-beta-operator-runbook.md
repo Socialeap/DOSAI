@@ -209,3 +209,13 @@ V1 source, tests and hash-bound history remain unchanged. V2 preserves the
 fixture protocol and valid scalar results; runtime admission and execution
 authority remain false. Owner source review precedes any merge. No live verifier, workflow or
 host action is activated, and the existing beta NO_GO gates remain open.
+
+## Corrected native-host fixture functional coverage
+
+The [v2 offline functional coverage](p3-native-profile-offline-functional-coverage-v1.md)
+runs the full original adversarial corpus against the corrected model plus
+multi-step trust, replay and writer-context scenarios. These are synthetic local
+tests only; stateless replay and test-controlled repinning are explicit limits.
+Source review/merge grants no runtime admission or host authority. Native-only
+and all existing NO_GO gates remain unchanged; no Lovable or Publish action is
+required for this tests-and-documentation increment.
