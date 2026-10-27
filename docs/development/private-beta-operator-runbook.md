@@ -137,3 +137,10 @@ The [v2 source contract and inert race fixtures](p3-binfmt-removal-contract-v2.m
 preserve v1 history and separate request acceptance, observed absence and
 unproven causality. Real trusted writer-boundary evidence remains absent;
 effectful executor work is still NO_GO. No workflow or runtime authority changes.
+
+## Prepared kernel and writer observations
+
+The [inactive kernel/writer diagnostic](p3-kernel-writer-diagnostic-source-evidence.md)
+collects bounded kernel/package, own namespace/mount and four-unit state
+projections. It cannot authenticate a deployed kernel or establish single-writer
+exclusion. No workflow activation, dispatch or executor authority is supplied.
