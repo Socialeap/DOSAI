@@ -1,0 +1,134 @@
+{
+  "record_type": "P3_EXACT_BINFMT_REMOVAL_PLAN",
+  "record_version": 2,
+  "status": "PROPOSED_SOURCE_CONTRACT_V2_NO_EXECUTOR",
+  "based_on": "cb9feaac79a439029b8caad96de366277561e287",
+  "observed_run_id": "40552566410",
+  "observed_workflow_sha256": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+  "required_image_os": "ubuntu24",
+  "required_image_version": "20261023.334.3",
+  "required_provider": "github-hosted",
+  "required_native_architecture": "x86_64",
+  "required_docker_architecture": "amd64",
+  "entries": [
+    {
+      "enabled": true,
+      "fields": {
+        "flags:": "",
+        "interpreter": "/usr/bin/lli-16",
+        "magic": "4243",
+        "offset": "0"
+      },
+      "name": "llvm-16-runtime.binfmt",
+      "sha256": "d7e7b1983d1aed010df992d2bc350a3d08e65b50d892011fde2ebb5162cc87df"
+    },
+    {
+      "enabled": true,
+      "fields": {
+        "flags:": "",
+        "interpreter": "/usr/bin/lli-17",
+        "magic": "4243",
+        "offset": "0"
+      },
+      "name": "llvm-17-runtime.binfmt",
+      "sha256": "bc924e5f89f1bd5df8fccda9cc0d61f4bb953b8ce550bc76041a41a537e476d0"
+    },
+    {
+      "enabled": true,
+      "fields": {
+        "flags:": "",
+        "interpreter": "/usr/bin/lli-18",
+        "magic": "4243",
+        "offset": "0"
+      },
+      "name": "llvm-18-runtime.binfmt",
+      "sha256": "e75859ce87c724796535508ac4845ced1b2ec1e52b3bc81460b2380595ebc205"
+    },
+    {
+      "enabled": true,
+      "fields": {
+        "flags:": "",
+        "interpreter": "/usr/bin/python3.12",
+        "magic": "cb0d0d0a",
+        "offset": "0"
+      },
+      "name": "python3.12",
+      "sha256": "9908195f4bc7f4c65df1b10202db690253ce03ed77e68470b1cf82afb6d55bf4"
+    }
+  ],
+  "root_components": [
+    "proc",
+    "sys",
+    "fs",
+    "binfmt_misc"
+  ],
+  "write_payload_hex": "2d310a",
+  "maximum_writes_per_host": 4,
+  "maximum_attempts_per_entry": 1,
+  "maximum_hosts": 2,
+  "maximum_preparation_seconds": 5,
+  "same_descriptor_read_and_write_required": true,
+  "all_original_predicates_must_be_rechecked": [
+    "RUNNER_ENVIRONMENT_MISMATCH",
+    "RUNNER_OS_MISMATCH",
+    "RUNNER_ARCH_MISMATCH",
+    "UNAME_MACHINE_MISMATCH",
+    "IMAGE_OS_MISSING",
+    "IMAGE_VERSION_MISSING",
+    "DMI_UUID_UNREADABLE",
+    "DMI_UUID_READ_FAILED",
+    "DMI_UUID_EMPTY",
+    "DOCKER_ARCH_QUERY_FAILED",
+    "DOCKER_ARCH_MISMATCH",
+    "BINFMT_MISC_DIRECTORY_MISSING",
+    "BINFMT_DIAGNOSTIC_REJECTED",
+    "BINFMT_MISC_SCAN_FAILED",
+    "BINFMT_MISC_INTERPRETER_ACTIVE",
+    "RECEIPT_EMISSION_FAILED"
+  ],
+  "preparation_is_builder_evidence": false,
+  "credit_ceiling": 120,
+  "maximum_charge_usd": 0,
+  "authorities": {
+    "executor_implementation": false,
+    "workflow_activation": false,
+    "merge": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false
+  },
+  "supersedes": {
+    "path": "docs/architecture/p3-exact-binfmt-removal-plan.json",
+    "sha256": "f9ce860088aa2d85fb123aeee0ad882a9b8ad58085a0bea001a78353a593b772"
+  },
+  "review_input": {
+    "path": "docs/development/p3-binfmt-kernel-single-writer-review.md",
+    "sha256": "0af7c78670f757e845c6bf034084e660c212a29413be0c1b0e5f096fbe5b7329"
+  },
+  "outcome_semantics": [
+    "WRITE_REQUEST_ACCEPTED",
+    "TARGET_ABSENCE_OBSERVED",
+    "EXCLUSIVE_CAUSAL_REMOVAL_UNPROVEN"
+  ],
+  "boundary_requirements": [
+    "INDEPENDENT_TRUSTED_VERIFIER",
+    "EXACT_CONTRACT_DIGEST",
+    "CURRENT_SOURCE_AND_JOB",
+    "DEPLOYED_KERNEL_AND_REVIEWED_SOURCE_IDENTITY",
+    "SAME_EFFECTIVE_REGISTRY_AND_NAMESPACES",
+    "ACTIVE_COOPERATING_WRITER_FENCE",
+    "SCOPED_PRIVILEGE_LIFETIME",
+    "CURRENT_WRITER_INVENTORY",
+    "EXPLICIT_HOST_PROVIDER_TRUST_DECISION",
+    "DENY_UNKNOWN_EXPIRED_REVOKED_OR_MISMATCHED_EVIDENCE"
+  ],
+  "owner_host_trust_decision": "NOT_ACCEPTED",
+  "deployed_kernel_behavior_proven": false,
+  "single_writer_exclusion_proven": false,
+  "atomic_compare_remove_available": false,
+  "effectful_executor_status": "NO_GO",
+  "fixture_model_has_runtime_authority": false
+}
