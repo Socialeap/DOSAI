@@ -97,3 +97,13 @@ hash or status merely to make the check pass.
   digest repair. Native packaging/activation and owner QA remain separate gates.
 - The 120-credit mission ceiling remains. No account reset, paid service,
   upgrade, auto-recharge, or provider spend is authorized.
+
+## Supplemental runner observation (2026-10-27)
+
+The separately authorized [run 40544343024](https://github.com/Socialeap/DOSAI/actions/runs/40544343024)
+executed once at `1afb5f989a6faeed91bcc08a27c32013f6d8fd13`. Both jobs failed
+`BINFMT_MISC_INTERPRETER_ACTIVE`; no candidate-host or builder receipts resulted.
+No retry was performed. See the [source-only suitability analysis](p3-native-runner-suitability-analysis.md)
+for the evidence limit and bounded diagnostic proposal. The prior one-dispatch
+authorization is consumed; another dispatch or host mutation requires fresh
+exact approval. The existing admission checks and NO_GO status remain in force.
