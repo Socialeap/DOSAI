@@ -1,0 +1,42 @@
+{
+  "record_type": "P3_BINFMT_DIAGNOSTIC_SOURCE_PREPARATION",
+  "record_version": 1,
+  "status": "PREPARED_INACTIVE_NOT_DISPATCHED",
+  "baseline_main": "20700f8e9dfa063f152a405c0647b2c84d258cb4",
+  "inputs": {
+    "scripts/p3-binfmt-diagnostic.py": "15eadfc0a99602b67eb5b8359d741a76d10d645b58bdf8b057d8b3541c7e4a3d",
+    "docs/proposals/p3-native-builder-host-feasibility-diagnostic.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+    ".github/workflows/p3-native-builder-host-feasibility.yml": "6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63"
+  },
+  "bounds": {
+    "entries": 32,
+    "bytes_per_file": 4096,
+    "output_bytes": 131072,
+    "collection_seconds": 1.5,
+    "alarm_seconds": 2,
+    "outer_timeout_seconds": 5
+  },
+  "diagnostic_prefix": "DOSAI_BINFMT_DIAGNOSTIC_V1:",
+  "existing_rejection_preserved": true,
+  "validation": {
+    "python_fixture_tests": 15,
+    "python_versions": [
+      "3.9.6",
+      "3.15.0"
+    ],
+    "node_version": "24.18.0",
+    "focused_node_tests": 13,
+    "shell_programs_syntax_checked": 2,
+    "candidate_yaml_syntax_checked": true
+  },
+  "authorities": {
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false,
+    "merge": false
+  }
+}

@@ -123,3 +123,10 @@ is required. The ordinary next action is owner review of the proposal; Codex may
 prepare the bounded source-only diagnostic after approval. No paid activity or
 account reset is authorized. No latency, reliability, or release-readiness claim
 is made.
+
+## Source-only diagnostic preparation
+
+The owner subsequently authorized preparation and local fixtures only. See
+[diagnostic source evidence](p3-binfmt-diagnostic-source-evidence.md) for the inert
+candidate, bounds, tests and separate activation/dispatch gates. The accepted
+workflow and native-only rejection remain unchanged; no new run is authorized.
