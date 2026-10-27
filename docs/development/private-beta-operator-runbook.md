@@ -241,3 +241,47 @@ The P3 checklist now includes [synthetic negative evidence vectors](p3-acceptanc
 Their tests prove test-data construction only; actual receipt rejection remains
 unimplemented and requires the separately accepted P3 handler generation. Do not
 count these vectors as acceptance evidence or enable a runner/host action.
+
+## Fixed source-only regression entrypoint v1
+
+For the current native-host/evidence-preparation corpus, use exactly Node
+24.18.0 with retained lockfile-matched dependencies, then run:
+
+```sh
+node scripts/report-native-profile-source-integrity.mjs
+node --test --test-concurrency=1 tests/source-only/p3-beta-regression-v1.mjs
+node scripts/report-private-beta-readiness.mjs
+```
+
+The middle command imports nine literal reviewed test modules and currently runs
+65 focused groups: native-host v1/v2 and functional scenarios, source integrity,
+critical-path readiness, P3 checklist/proposals and synthetic negative vectors.
+It performs no test discovery and launches no child process. It lives outside
+the normal `tests/*/*.test.mjs` glob, so the regular suite does not run the same
+corpus twice. Historical tests and accepted runner bytes remain unchanged.
+The entrypoint rejects an unsupported Node version before loading any corpus
+module; it accepts no forwarded module arguments or caller-selected paths.
+Use the exact command above rather than adding Node test-runner file arguments.
+
+Local validation on merged PR #21 plus this entrypoint: **65/65 groups pass on
+Node 24.18.0**. A direct module invocation with an extra argument rejects before
+loading the corpus, and the locally available Node 26.5.1 rejects before loading
+the corpus. Those negative probes are expected failures, not test passes on an
+unsupported runtime. Integrity remains a separate 35-file byte check; readiness
+remains a separate exit 2 / NO_GO result with BETA-CP-004/005/006.
+
+This is a development regression convenience, not a formal P3 acceptance runner,
+executor, app launch or receipt validator. Existing tests use synthetic software
+keys and temporary local fixtures; their results cannot establish native host
+eligibility, durable replay, writer enforcement or physical acceptance. No test
+scope, schema registry, catalog, model, manifest, workflow or runtime authority
+is expanded. No provisioning, dispatch, host mutation, builds, guest execution
+or paid activity is authorized. Native-only and all gates remain intact.
+
+The diff is the test-only entrypoint and this runbook section. It requires no
+migration, live-state change, backend deployment, secret/environment/provider
+configuration or activation. **No Lovable action is required.** No frontend
+Publish or application deployment is required. Owner source review/merge is
+separate from all live and acceptance gates. Native-builder evidence remains
+the first prerequisite for critical-path advancement; this command clears none
+of those gates.
