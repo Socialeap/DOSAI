@@ -189,3 +189,14 @@ independent hosts; availability and zero cost remain unproven. All current
 predicates and historical source/workflow bytes remain intact. Source review,
 host-profile/trust acceptance, activation and any exact future dispatch remain
 separate gates. No executor, host change, build, guest or paid activity is added.
+
+## Proposed native-host profile and writer-boundary design
+
+The [source-only profile and design](p3-native-host-profile-and-writer-boundary-design.md)
+define two independent clean native-amd64 host contexts, no DOSAI registry-write
+capability, independent issuer/owner/verifier responsibilities and bounded
+evidence lifetimes. Offline software-signature fixtures cannot establish host
+truth, persistent replay protection or runtime admission. Host selection, zero
+cost, enforcement, key registration and live verification remain unresolved.
+Owner source review precedes those trust/profile gates and any separate
+activation or exact bounded run. No provisioning or consequential action is added.

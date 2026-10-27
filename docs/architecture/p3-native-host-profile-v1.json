@@ -1,0 +1,126 @@
+{
+  "record_type": "DOSAI_NATIVE_HOST_PROFILE_PROPOSAL",
+  "record_version": 1,
+  "status": "PROPOSED_SOURCE_ONLY_NOT_ACTIVATED",
+  "based_on": "8ed3442626229dc4e811e500f59a0f902024bb9d",
+  "purpose": "READ_ONLY_HOST_QUALIFICATION_DESIGN_NO_EXECUTION",
+  "feasibility_packet": {
+    "path": "docs/architecture/p3-native-writer-feasibility-packet.json",
+    "sha256": "d89daea8b12c54e19a2df3d7b47310cf437bfd85e1bad7d475b167fdad6226f7"
+  },
+  "required_platform": {
+    "os": "Linux",
+    "machine": "x86_64",
+    "docker_arch": "amd64",
+    "emulation_permitted": false
+  },
+  "host_slots": [
+    "A",
+    "B"
+  ],
+  "independent_resource_classes": [
+    "instance",
+    "disk",
+    "daemon",
+    "cache",
+    "home",
+    "work",
+    "output"
+  ],
+  "immutable_input_set": [
+    "builder_archive",
+    "sealed_source",
+    "recipe",
+    "defconfig",
+    "fixed_parameters"
+  ],
+  "registry": {
+    "filesystem": "binfmt_misc",
+    "root": "/",
+    "target_mounts": 1,
+    "submounts": 0,
+    "registration_files": 0,
+    "dosai_write_authority": "NONE",
+    "stable_before_after_required": true,
+    "same_effective_future_registry_required": true
+  },
+  "original_predicates": [
+    "RUNNER_ENVIRONMENT_MISMATCH",
+    "RUNNER_OS_MISMATCH",
+    "RUNNER_ARCH_MISMATCH",
+    "UNAME_MACHINE_MISMATCH",
+    "IMAGE_OS_MISSING",
+    "IMAGE_VERSION_MISSING",
+    "DMI_UUID_UNREADABLE",
+    "DMI_UUID_READ_FAILED",
+    "DMI_UUID_EMPTY",
+    "DOCKER_ARCH_QUERY_FAILED",
+    "DOCKER_ARCH_MISMATCH",
+    "BINFMT_MISC_DIRECTORY_MISSING",
+    "BINFMT_DIAGNOSTIC_REJECTED",
+    "BINFMT_MISC_SCAN_FAILED",
+    "BINFMT_MISC_INTERPRETER_ACTIVE",
+    "RECEIPT_EMISSION_FAILED"
+  ],
+  "additional_predicates": [
+    "KERNEL_WRITER_DIAGNOSTIC_REJECTED"
+  ],
+  "observation_window": {
+    "maximum_validity_ms": 5000,
+    "automatic_renewal": false,
+    "clock_authority_required": true,
+    "covers_future_build": false,
+    "boundary_must_cover_requested_interval": true,
+    "maximum_clock_uncertainty_ms": 100,
+    "sample_age_checked_separately_from_signature_issue_time": true
+  },
+  "current_host_selection": {
+    "provider": null,
+    "host_A": null,
+    "host_B": null,
+    "availability": "NOT_ESTABLISHED",
+    "zero_cost_eligibility": "NOT_ESTABLISHED"
+  },
+  "live_gate_state": {
+    "owner_trust_decision": "NOT_ACCEPTED",
+    "issuer_key_registration": "NOT_ESTABLISHED",
+    "writer_enforcement": "NOT_ESTABLISHED",
+    "runtime_verifier": "NOT_IMPLEMENTED",
+    "collector_or_adapter": "NOT_IMPLEMENTED",
+    "qualifying_builder_receipts": 0
+  },
+  "maximum_charge_usd": 0,
+  "operational_credit_ceiling": 120,
+  "runtime_status": "NO_GO",
+  "authorities": {
+    "merge": false,
+    "provisioning": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "executor": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false
+  },
+  "kernel_evidence_fields": [
+    "release",
+    "installed_package",
+    "package_version",
+    "reviewed_vendor_source_sha256",
+    "vendor_patch_manifest_sha256",
+    "running_identity_evidence_sha256"
+  ],
+  "host_context_bindings": [
+    "provider_profile_sha256",
+    "image_sha256",
+    "evidence_manifest_sha256",
+    "kernel",
+    "registry_before",
+    "registry_after",
+    "writer",
+    "privilege",
+    "predicates"
+  ]
+}
