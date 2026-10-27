@@ -1,0 +1,587 @@
+{
+  "record_type": "P3_ACCEPTANCE_EVIDENCE_CHECKLIST",
+  "record_version": 1,
+  "status": "PREPARED_SOURCE_ONLY_NOT_ACCEPTANCE_EVIDENCE",
+  "based_on": "0d568d9dc77e50d30d9e5828419ed99fe03c70de",
+  "role": "UNCLASSIFIED_ASSISTANT_NO_SPECIALIZED_ROLE",
+  "scope": "DECLARED_ASSERTION_OCCURRENCE_AND_ARTIFACT_TRACEABILITY_ONLY",
+  "inputs": {
+    "docs/testing/acceptance-test-catalog-v5.json": "482887c6e3d7a24d09471428a6486c9926d11a5b3e31673e3c91bf2ebf55843a",
+    "docs/architecture/p3-acceptance-handler-implementation-proposal.json": "a458733e72bf2babc65be0e343f91889e87abd9f7c76e3eef358157c158e5c13",
+    "docs/architecture/p3-acceptance-fixture-generation-proposal.json": "16d90624de634c836d4631c8ec1f96cd4b8ff535e5316f0703a2d8b832ed71af",
+    "docs/architecture/schemas/v4/acceptance-fixture-manifest.schema.json": "e9f1d8b7834a52d375f673d95ab4d339df469b5e2a58ab7fa4d065842da89ae1",
+    "tools/dosai-acceptance/src/runner.mjs": "977582791d0a35149ef8bd2ff900bf3280e6ea882f424c61168a994a12f69d22",
+    "tests/acceptance/manifests/p3-at-001.json": "b81beda8f50630f6d89997592c8c51f2ef5d4d783496066b0e191eaffae63800",
+    "tests/acceptance/manifests/p3-at-002.json": "2d8c7aae25cab31445dc0c81cd8bee1888c2d8cc2ba5227285d94321fa8319b5",
+    "tests/acceptance/manifests/p3-at-003.json": "d2074726b2c4b99fbc1b87c9c3d4cabe3c460d2be0d3200860a87390d89026be"
+  },
+  "suite_count": 3,
+  "scenario_count": 6,
+  "assertion_occurrences": 27,
+  "acceptance_proven_occurrences": 0,
+  "runtime_status": "NO_GO",
+  "rows": [
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S01",
+        "P3-AT-001-S01-C01",
+        "P3_TYPED_OPERATION_ADMISSION_VERIFIED"
+      ],
+      "handler_id": "P3_TYPED_EXECUTION_CAPSULE",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "MANIFEST"
+      ],
+      "missing_scenario_evidence": [
+        "ACCEPTED_GUEST_EXECUTION_RESULT",
+        "EXACT_PLAN_GRANT_GENERATION_CHAIN",
+        "SIGNED_CANDIDATE_COMMAND_AND_ENVIRONMENT_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S01",
+        "P3-AT-001-S01-C01",
+        "P3_EXACT_CAPSULE_CONFIGURATION_VERIFIED"
+      ],
+      "handler_id": "P3_TYPED_EXECUTION_CAPSULE",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND",
+        "ENVIRONMENT"
+      ],
+      "missing_scenario_evidence": [
+        "ACCEPTED_GUEST_EXECUTION_RESULT",
+        "EXACT_PLAN_GRANT_GENERATION_CHAIN",
+        "SIGNED_CANDIDATE_COMMAND_AND_ENVIRONMENT_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S01",
+        "P3-AT-001-S01-C01",
+        "P3_USEFUL_TEST_OPERATION_RESULT_VERIFIED"
+      ],
+      "handler_id": "P3_TYPED_EXECUTION_CAPSULE",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "ACCEPTED_GUEST_EXECUTION_RESULT",
+        "EXACT_PLAN_GRANT_GENERATION_CHAIN",
+        "SIGNED_CANDIDATE_COMMAND_AND_ENVIRONMENT_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S01",
+        "P3-AT-001-S01-C01",
+        "P3_PLAN_GRANT_AND_GENERATION_BINDING_VERIFIED"
+      ],
+      "handler_id": "P3_TYPED_EXECUTION_CAPSULE",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "MANIFEST",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "ACCEPTED_GUEST_EXECUTION_RESULT",
+        "EXACT_PLAN_GRANT_GENERATION_CHAIN",
+        "SIGNED_CANDIDATE_COMMAND_AND_ENVIRONMENT_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S02",
+        "P3-AT-001-S02-C01",
+        "P3_FORBIDDEN_EXECUTION_FORMS_REJECTED"
+      ],
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_ATTACK_CORPUS_RECEIPT",
+        "GUEST_BOUNDARY_ESCAPE_NEGATIVE_RESULTS",
+        "POST_RUN_CLEANUP_AND_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S02",
+        "P3-AT-001-S02-C01",
+        "P3_MOUNT_NETWORK_ENVIRONMENT_ESCAPE_REJECTED"
+      ],
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "ENVIRONMENT",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_ATTACK_CORPUS_RECEIPT",
+        "GUEST_BOUNDARY_ESCAPE_NEGATIVE_RESULTS",
+        "POST_RUN_CLEANUP_AND_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S02",
+        "P3-AT-001-S02-C01",
+        "P3_DIRECT_SPAWN_AND_DETACH_PATHS_ABSENT"
+      ],
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "MANIFEST"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_ATTACK_CORPUS_RECEIPT",
+        "GUEST_BOUNDARY_ESCAPE_NEGATIVE_RESULTS",
+        "POST_RUN_CLEANUP_AND_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S02",
+        "P3-AT-001-S02-C01",
+        "P3_ATTACK_CORPUS_CLEANUP_VERIFIED"
+      ],
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "artifact_classes": [
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_ATTACK_CORPUS_RECEIPT",
+        "GUEST_BOUNDARY_ESCAPE_NEGATIVE_RESULTS",
+        "POST_RUN_CLEANUP_AND_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-001",
+        "P3-AT-001-S02",
+        "P3-AT-001-S02-C01",
+        "P3_WORKTREE_REMAINS_CLEAN"
+      ],
+      "handler_id": "P3_EXECUTION_ATTACK_CORPUS",
+      "artifact_classes": [
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_ATTACK_CORPUS_RECEIPT",
+        "GUEST_BOUNDARY_ESCAPE_NEGATIVE_RESULTS",
+        "POST_RUN_CLEANUP_AND_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S01",
+        "P3-AT-002-S01-C01",
+        "P3_CANCELLATION_STAGE_MATRIX_VERIFIED"
+      ],
+      "handler_id": "P3_CANCELLATION_FAULT_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CANCELLATION_STAGE_RECEIPTS",
+        "OWNED_DESCENDANT_AND_HANDLE_INVENTORY",
+        "SIGNED_CANDIDATE_DEADLINE_MEASUREMENTS"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S01",
+        "P3-AT-002-S01-C01",
+        "P3_OWNED_DESCENDANTS_AND_HANDLES_TERMINATED"
+      ],
+      "handler_id": "P3_CANCELLATION_FAULT_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CANCELLATION_STAGE_RECEIPTS",
+        "OWNED_DESCENDANT_AND_HANDLE_INVENTORY",
+        "SIGNED_CANDIDATE_DEADLINE_MEASUREMENTS"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S01",
+        "P3-AT-002-S01-C01",
+        "P3_GRACE_AND_FORCE_DEADLINES_VERIFIED"
+      ],
+      "handler_id": "P3_CANCELLATION_FAULT_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CANCELLATION_STAGE_RECEIPTS",
+        "OWNED_DESCENDANT_AND_HANDLE_INVENTORY",
+        "SIGNED_CANDIDATE_DEADLINE_MEASUREMENTS"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S01",
+        "P3-AT-002-S01-C01",
+        "P3_UNCERTAIN_CLEANUP_QUARANTINED"
+      ],
+      "handler_id": "P3_CANCELLATION_FAULT_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CANCELLATION_STAGE_RECEIPTS",
+        "OWNED_DESCENDANT_AND_HANDLE_INVENTORY",
+        "SIGNED_CANDIDATE_DEADLINE_MEASUREMENTS"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S02",
+        "P3-AT-002-S02-C01",
+        "P3_ALL_OWNED_RESOURCE_CLASSES_TERMINATED"
+      ],
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND",
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_RESOURCE_INVENTORY_AND_TERMINATION_RECEIPT",
+        "UNRELATED_PROCESS_AND_WORKSPACE_CANARY_RECEIPT",
+        "REMOTE_REQUEST_RECONCILIATION_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S02",
+        "P3-AT-002-S02-C01",
+        "P3_UNRELATED_PROCESS_CANARY_SURVIVES"
+      ],
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_RESOURCE_INVENTORY_AND_TERMINATION_RECEIPT",
+        "UNRELATED_PROCESS_AND_WORKSPACE_CANARY_RECEIPT",
+        "REMOTE_REQUEST_RECONCILIATION_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S02",
+        "P3-AT-002-S02-C01",
+        "P3_UNRELATED_WORKSPACE_CANARY_UNCHANGED"
+      ],
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_RESOURCE_INVENTORY_AND_TERMINATION_RECEIPT",
+        "UNRELATED_PROCESS_AND_WORKSPACE_CANARY_RECEIPT",
+        "REMOTE_REQUEST_RECONCILIATION_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S02",
+        "P3-AT-002-S02-C01",
+        "P3_REMOTE_REQUEST_SCOPE_RECONCILED"
+      ],
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_RESOURCE_INVENTORY_AND_TERMINATION_RECEIPT",
+        "UNRELATED_PROCESS_AND_WORKSPACE_CANARY_RECEIPT",
+        "REMOTE_REQUEST_RECONCILIATION_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-002",
+        "P3-AT-002-S02",
+        "P3-AT-002-S02-C01",
+        "P3_WORKTREE_REMAINS_CLEAN"
+      ],
+      "handler_id": "P3_SCOPED_CLEANUP_SECURITY",
+      "artifact_classes": [
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_RESOURCE_INVENTORY_AND_TERMINATION_RECEIPT",
+        "UNRELATED_PROCESS_AND_WORKSPACE_CANARY_RECEIPT",
+        "REMOTE_REQUEST_RECONCILIATION_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S01",
+        "P3-AT-003-S01-C01",
+        "P3_SATURATION_DIMENSION_MATRIX_VERIFIED"
+      ],
+      "handler_id": "P3_WATCHDOG_SATURATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND",
+        "PERFORMANCE"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_MULTI_DIMENSION_SATURATION_RECEIPTS",
+        "INDEPENDENT_WATCHDOG_DEADLINE_MEASUREMENTS",
+        "POST_SATURATION_CLEANUP_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S01",
+        "P3-AT-003-S01-C01",
+        "P3_INDEPENDENT_WATCHDOG_DEADLINE_VERIFIED"
+      ],
+      "handler_id": "P3_WATCHDOG_SATURATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "PERFORMANCE",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_MULTI_DIMENSION_SATURATION_RECEIPTS",
+        "INDEPENDENT_WATCHDOG_DEADLINE_MEASUREMENTS",
+        "POST_SATURATION_CLEANUP_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S01",
+        "P3-AT-003-S01-C01",
+        "P3_OUTPUT_AND_QUEUE_BOUNDS_VERIFIED"
+      ],
+      "handler_id": "P3_WATCHDOG_SATURATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "PERFORMANCE"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_MULTI_DIMENSION_SATURATION_RECEIPTS",
+        "INDEPENDENT_WATCHDOG_DEADLINE_MEASUREMENTS",
+        "POST_SATURATION_CLEANUP_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S01",
+        "P3-AT-003-S01-C01",
+        "P3_SATURATION_CLEANUP_VERIFIED"
+      ],
+      "handler_id": "P3_WATCHDOG_SATURATION_MATRIX",
+      "artifact_classes": [
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_MULTI_DIMENSION_SATURATION_RECEIPTS",
+        "INDEPENDENT_WATCHDOG_DEADLINE_MEASUREMENTS",
+        "POST_SATURATION_CLEANUP_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S02",
+        "P3-AT-003-S02-C01",
+        "P3_COORDINATOR_AND_WORKER_CRASHES_RECONCILED"
+      ],
+      "handler_id": "P3_CRASH_RECONCILIATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "COMMAND",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CRASH_RECONCILIATION_RECEIPTS",
+        "ORPHAN_INVENTORY_AND_QUARANTINE_RECEIPT",
+        "POST_RECOVERY_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S02",
+        "P3-AT-003-S02-C01",
+        "P3_ORPHANED_CAPSULES_RECONCILED_OR_QUARANTINED"
+      ],
+      "handler_id": "P3_CRASH_RECONCILIATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "JOURNAL",
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CRASH_RECONCILIATION_RECEIPTS",
+        "ORPHAN_INVENTORY_AND_QUARANTINE_RECEIPT",
+        "POST_RECOVERY_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S02",
+        "P3-AT-003-S02-C01",
+        "P3_BLIND_RETRY_ABSENT"
+      ],
+      "handler_id": "P3_CRASH_RECONCILIATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CRASH_RECONCILIATION_RECEIPTS",
+        "ORPHAN_INVENTORY_AND_QUARANTINE_RECEIPT",
+        "POST_RECOVERY_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S02",
+        "P3-AT-003-S02-C01",
+        "P3_UNKNOWN_EFFECT_OUTCOME_NOT_INVENTED"
+      ],
+      "handler_id": "P3_CRASH_RECONCILIATION_MATRIX",
+      "artifact_classes": [
+        "ASSERTIONS",
+        "JOURNAL"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CRASH_RECONCILIATION_RECEIPTS",
+        "ORPHAN_INVENTORY_AND_QUARANTINE_RECEIPT",
+        "POST_RECOVERY_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    },
+    {
+      "occurrence": [
+        "P3-AT-003",
+        "P3-AT-003-S02",
+        "P3-AT-003-S02-C01",
+        "P3_WORKTREE_REMAINS_CLEAN"
+      ],
+      "handler_id": "P3_CRASH_RECONCILIATION_MATRIX",
+      "artifact_classes": [
+        "CLEANUP"
+      ],
+      "missing_scenario_evidence": [
+        "PHYSICAL_CRASH_RECONCILIATION_RECEIPTS",
+        "ORPHAN_INVENTORY_AND_QUARANTINE_RECEIPT",
+        "POST_RECOVERY_WORKTREE_RECEIPT"
+      ],
+      "artifact_state": "NOT_COLLECTED",
+      "acceptance_state": "UNPROVEN"
+    }
+  ],
+  "authorities": {
+    "schema_registration": false,
+    "catalog_change": false,
+    "runner_change": false,
+    "fixture_acceptance": false,
+    "p3_handler_implementation": false,
+    "package_build": false,
+    "signing": false,
+    "app_launch": false,
+    "service_management": false,
+    "builder_execution": false,
+    "capsule_execution": false,
+    "acceptance_execution": false,
+    "workflow_dispatch": false,
+    "pull_request_merge": false,
+    "paid_activity": false,
+    "production_use": false
+  }
+}

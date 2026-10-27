@@ -227,3 +227,12 @@ verify pinned source bytes, run the focused tests, then check beta readiness.
 The read-only integrity report runs no tests and grants no authority. A source
 pass does not clear native host, writer enforcement, P3 or app-workflow gates.
 No activation, Lovable action or Publish follows from this source-only increment.
+
+## Formal P3 evidence preparation
+
+The [P3 evidence checklist](p3-acceptance-evidence-checklist-v1.md) preserves all
+27 scoped assertion occurrences and their existing artifact requirements. Its
+source-consistency tests are not acceptance evidence. Keep completed lifecycle
+proof intact; native builder/guest prerequisites and exact owner acceptance
+must precede handler implementation or runner activation. No dispatch, build,
+execution, Lovable action or Publish is authorized by this preparation.
