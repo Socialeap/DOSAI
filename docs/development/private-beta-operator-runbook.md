@@ -144,3 +144,10 @@ The [inactive kernel/writer diagnostic](p3-kernel-writer-diagnostic-source-evide
 collects bounded kernel/package, own namespace/mount and four-unit state
 projections. It cannot authenticate a deployed kernel or establish single-writer
 exclusion. No workflow activation, dispatch or executor authority is supplied.
+
+## Prepared separate kernel/writer workflow
+
+The [separate manual activation increment](p3-kernel-writer-workflow-activation-evidence.md)
+adds `p3-kernel-writer-diagnostics.yml` without altering the existing host workflow
+or checkpoint history. Owner-approved merge and a fresh exact zero-cost dispatch
+authorization are separate gates. No executor or runtime trust proof is added.

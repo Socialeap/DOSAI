@@ -1,0 +1,1103 @@
+name: P3 kernel and writer diagnostics
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: p3-kernel-writer-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  builder_host_a:
+    name: BUILDER_HOST_A
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Observe bounded native host identity
+        shell: bash --noprofile --norc -euo pipefail {0}
+        env:
+          DOSAI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+          DOSAI_RUNNER_OS: ${{ runner.os }}
+          DOSAI_RUNNER_ARCH: ${{ runner.arch }}
+        run: |
+          fail() {
+            printf 'DOSAI_HOST_OBSERVATION_FAILURE_V1:%s\n' "$1" >&2
+            exit 1
+          }
+          test "$DOSAI_RUNNER_ENVIRONMENT" = "github-hosted" || fail RUNNER_ENVIRONMENT_MISMATCH
+          test "$DOSAI_RUNNER_OS" = "Linux" || fail RUNNER_OS_MISMATCH
+          test "$DOSAI_RUNNER_ARCH" = "X64" || fail RUNNER_ARCH_MISMATCH
+          test "$(uname -m)" = "x86_64" || fail UNAME_MACHINE_MISMATCH
+          test -n "${ImageOS:-}" || fail IMAGE_OS_MISSING
+          test -n "${ImageVersion:-}" || fail IMAGE_VERSION_MISSING
+          test -r /sys/class/dmi/id/product_uuid || fail DMI_UUID_UNREADABLE
+          product_uuid="$(tr '[:lower:]' '[:upper:]' < /sys/class/dmi/id/product_uuid | tr -d '\n')" || fail DMI_UUID_READ_FAILED
+          test -n "$product_uuid" || fail DMI_UUID_EMPTY
+          docker_arch="$(docker version --format '{{.Server.Arch}}')" || fail DOCKER_ARCH_QUERY_FAILED
+          test "$docker_arch" = "amd64" || fail DOCKER_ARCH_MISMATCH
+          test -d /proc/sys/fs/binfmt_misc || fail BINFMT_MISC_DIRECTORY_MISSING
+          timeout --signal=KILL 10s python3 -I -B - <<'DOSAI_KERNEL_WRITER_PY' || fail KERNEL_WRITER_DIAGNOSTIC_REJECTED
+          """Inactive, bounded, read-only diagnostic. No runtime trust or writer exclusion."""
+          import json
+          import os
+          import platform
+          import re
+          import select
+          import signal
+          import stat
+          import subprocess
+          import sys
+          import time
+
+          PREFIX = 'DOSAI_KERNEL_WRITER_DIAGNOSTIC_V1:'
+          MAX_QUERY_BYTES = 4096
+          MAX_OUTPUT_BYTES = 65536
+          UNITS = ('systemd-binfmt.service', 'binfmt-support.service',
+                   'proc-sys-fs-binfmt_misc.automount', 'proc-sys-fs-binfmt_misc.mount')
+          PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'UnitFileState',
+                        'NeedDaemonReload', 'DropInPaths', 'TriggeredBy')
+          PACKAGE_FORMAT = '${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\t${db:Status-Status}\n'
+
+
+          class Rejected(Exception):
+              pass
+
+
+          def require(value):
+              if not value:
+                  raise Rejected()
+
+
+          def check(deadline):
+              require(time.monotonic() < deadline)
+
+
+          def ascii_text(data):
+              text = data.decode('ascii', errors='strict')
+              require(all(c in '\n\t' or 32 <= ord(c) <= 126 for c in text))
+              return text
+
+
+          def directory(root, parts):
+              fd = os.dup(root)
+              try:
+                  for part in parts:
+                      require(re.fullmatch(r'[A-Za-z0-9_.-]+', part) is not None and part not in ('.', '..'))
+                      next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                      os.close(fd)
+                      fd = next_fd
+                  return fd
+              except BaseException:
+                  os.close(fd)
+                  raise
+
+
+          def identity(info):
+              return (info.st_dev, info.st_ino, info.st_mode, info.st_mtime_ns, info.st_ctime_ns)
+
+
+          def read_fixed(root, parts, limit, deadline):
+              check(deadline)
+              parent = directory(root, parts[:-1])
+              try:
+                  fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+                  try:
+                      before = os.fstat(fd)
+                      require(stat.S_ISREG(before.st_mode))
+                      data = bytearray()
+                      while True:
+                          check(deadline)
+                          chunk = os.read(fd, limit + 1 - len(data))
+                          if not chunk:
+                              break
+                          data.extend(chunk)
+                          require(len(data) <= limit)
+                      after = os.fstat(fd)
+                      require(identity(before) == identity(after))
+                      require(identity(after) == identity(os.stat(parts[-1], dir_fd=parent, follow_symlinks=False)))
+                      return bytes(data)
+                  finally:
+                      os.close(fd)
+              finally:
+                  os.close(parent)
+
+
+          def namespaces(root, pid):
+              parent = directory(root, ('proc', str(pid), 'ns'))
+              try:
+                  result = {}
+                  for name, prefix in [('mnt', 'mnt'), ('user', 'user')]:
+                      # These two fixed kernel namespace links are read as opaque text, never followed.
+                      value = os.readlink(name, dir_fd=parent)
+                      require(re.fullmatch(prefix + r':\[[1-9][0-9]{0,19}\]', value) is not None)
+                      result[name] = value
+                  return result
+              finally:
+                  os.close(parent)
+
+
+          def mount_identity(data, device, inode):
+              text = ascii_text(data)
+              rows = text.splitlines()
+              require(len(rows) <= 512)
+              matches = []
+              target = '/proc/sys/fs/binfmt_misc'
+              for row in rows:
+                  halves = row.split(' - ')
+                  require(len(halves) == 2)
+                  left, right = halves[0].split(), halves[1].split()
+                  require(len(left) >= 6 and len(right) == 3)
+                  require(re.fullmatch(r'[1-9][0-9]{0,19}', left[0]) is not None)
+                  require(re.fullmatch(r'[0-9]{1,20}', left[1]) is not None)
+                  require(not left[4].startswith(target + '/'))
+                  if left[4] == target:
+                      require(left[3] == '/' and right[0] == 'binfmt_misc')
+                      require(left[2] == device and inode > 0)
+                      matches.append({'filesystem': 'binfmt_misc', 'mount_id': left[0],
+                                      'parent_mount_id': left[1], 'device': device, 'inode': str(inode),
+                                      'read_only': 'ro' in left[5].split(','),
+                                      'shared_propagation': any(x.startswith('shared:') for x in left[6:])})
+              require(len(matches) == 1)  # Stacked/ambiguous target mounts are unavailable.
+              return matches[0]
+
+
+          def commands(release):
+              require(re.fullmatch(r'[0-9][A-Za-z0-9.+_-]{0,127}', release) is not None)
+              package = 'linux-image-' + release
+              return [('/usr/bin/dpkg-query', '--show', '--showformat=' + PACKAGE_FORMAT, '--', package)] + [
+                  ('/usr/bin/systemctl', '--system', '--no-pager', '--no-ask-password', 'show',
+                   '--property=' + ','.join(PROPERTIES), unit) for unit in UNITS]
+
+
+          def query(argv, deadline):
+              """Only called with the five fixed query projections constructed above."""
+              require(type(argv) is tuple and len(argv) > 0 and all(type(arg) is str for arg in argv))
+              if argv[0] == '/usr/bin/dpkg-query':
+                  require(type(argv[-1]) is str and argv[-1].startswith('linux-image-'))
+                  require(argv == commands(argv[-1][len('linux-image-'):])[0])
+              else:
+                  require(argv in commands('0')[1:])
+              check(deadline)
+              child = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                       stderr=subprocess.DEVNULL, close_fds=True,
+                                       env={'LANG': 'C', 'LC_ALL': 'C', 'PATH': '/usr/bin:/bin'})
+              try:
+                  output = bytearray()
+                  stop_at = min(deadline, time.monotonic() + 1.0)
+                  while True:
+                      check(stop_at)
+                      readable, _, _ = select.select([child.stdout], [], [], max(0, stop_at - time.monotonic()))
+                      require(readable)
+                      chunk = os.read(child.stdout.fileno(), MAX_QUERY_BYTES + 1 - len(output))
+                      if not chunk:
+                          break
+                      output.extend(chunk)
+                      require(len(output) <= MAX_QUERY_BYTES)
+                  require(child.wait(timeout=max(0.001, stop_at - time.monotonic())) == 0)
+                  return bytes(output)
+              finally:
+                  # Only this directly owned observation child may be terminated on failure.
+                  if child.poll() is None:
+                      child.kill()
+                      child.wait(timeout=1)
+                  child.stdout.close()
+
+
+          def package_record(data, release):
+              require(len(data) <= MAX_QUERY_BYTES)
+              text = ascii_text(data)
+              require(text.endswith('\n') and text.count('\n') == 1)
+              parts = text[:-1].split('\t')
+              require(len(parts) == 5)
+              require(parts[0] in ('linux-image-' + release, 'linux-image-' + release + ':amd64'))
+              require(parts[4] == 'installed')
+              require(re.fullmatch(r'[a-z0-9][a-z0-9+.-]{0,127}', parts[2]) is not None)
+              for version in (parts[1], parts[3]):
+                  require(re.fullmatch(r'[A-Za-z0-9.+:~_-]{1,160}', version) is not None)
+              return dict(zip(('binary_package', 'binary_version', 'source_package', 'source_version', 'package_state'), parts))
+
+
+          def unit_record(data, unit):
+              require(unit in UNITS and len(data) <= MAX_QUERY_BYTES)
+              fields = {}
+              for line in ascii_text(data).splitlines():
+                  key, separator, value = line.partition('=')
+                  require(separator and key not in fields)
+                  fields[key] = value
+              require(set(fields) == set(PROPERTIES) and fields['Id'] == unit)
+              require(fields['LoadState'] in ('loaded', 'not-found', 'bad-setting', 'error', 'masked'))
+              require(fields['ActiveState'] in ('active', 'inactive', 'failed', 'activating', 'deactivating', 'maintenance', 'reloading', 'refreshing'))
+              require(fields['SubState'] in ('dead', 'exited', 'running', 'failed', 'mounted', 'waiting', 'listening', 'start', 'stop', 'auto-restart', 'condition'))
+              require(fields['UnitFileState'] in ('', 'enabled', 'enabled-runtime', 'disabled', 'static', 'indirect', 'generated', 'alias', 'linked', 'linked-runtime', 'masked', 'masked-runtime', 'not-found'))
+              require(fields['NeedDaemonReload'] in ('yes', 'no'))
+              triggers = fields['TriggeredBy'].split()
+              require(len(triggers) <= 16 and all(re.fullmatch(r'[A-Za-z0-9@_.:-]{1,160}', t) is not None for t in triggers))
+              return {'unit': unit, 'load_state': fields['LoadState'], 'active_state': fields['ActiveState'],
+                      'sub_state': fields['SubState'], 'unit_file_state': fields['UnitFileState'],
+                      'needs_reload': fields['NeedDaemonReload'] == 'yes',
+                      'dropins_present': bool(fields['DropInPaths']), 'trigger_count': len(triggers)}
+
+
+          def safe_observation(function):
+              try:
+                  return {'status': 'OBSERVED', 'data': function()}
+              except Exception:
+                  return {'status': 'UNKNOWN', 'reason': 'QUERY_UNAVAILABLE_OR_UNSUPPORTED'}
+
+
+          def collect(root, pid, kernel, provenance, deadline, query_function=query):
+              require(kernel.sysname == 'Linux' and kernel.machine == 'x86_64')
+              release = kernel.release
+              cmds = commands(release)
+              release_file = read_fixed(root, ('proc', 'sys', 'kernel', 'osrelease'), 256, deadline)
+              require(release_file == (release + '\n').encode('ascii'))
+              def signature():
+                  text = ascii_text(read_fixed(root, ('proc', 'version_signature'), 512, deadline))
+                  require(re.fullmatch(r'Ubuntu [A-Za-z0-9.:+~_-]{1,128} [A-Za-z0-9.:+~_-]{1,128}\n', text) is not None)
+                  vendor, version, upstream = text.strip().split()
+                  return {'vendor': vendor, 'version': version, 'upstream_version': upstream}
+              def registry_snapshot():
+                  fd = directory(root, ('proc', 'sys', 'fs', 'binfmt_misc'))
+                  try:
+                      info = os.fstat(fd)
+                      data = read_fixed(root, ('proc', str(pid), 'mountinfo'), 65536, deadline)
+                      mount = mount_identity(data, '%d:%d' % (os.major(info.st_dev), os.minor(info.st_dev)), info.st_ino)
+                      mount.update(namespaces(root, pid))
+                      return mount
+                  finally:
+                      os.close(fd)
+              before = registry_snapshot()
+              version = safe_observation(signature)
+              package = safe_observation(lambda: package_record(query_function(cmds[0], deadline), release))
+              units = []
+              for unit, command in zip(UNITS, cmds[1:]):
+                  check(deadline)
+                  observation = safe_observation(lambda c=command, u=unit: unit_record(query_function(c, deadline), u))
+                  units.append({'unit': unit, 'observation': observation})
+              require(registry_snapshot() == before)
+              require(read_fixed(root, ('proc', 'sys', 'kernel', 'osrelease'), 256, deadline) == release_file)
+              check(deadline)
+              return {'schema': 'DOSAI_KERNEL_WRITER_DIAGNOSTIC_V1', 'diagnostic_only': True,
+                      'provenance': provenance, 'kernel': {'release': release, 'machine': 'x86_64',
+                      'version_signature': version, 'installed_package': package}, 'registry': before,
+                      'writer_units': units, 'writer_inventory_scope': 'FIXED_UNITS_ONLY_NON_ATOMIC',
+                      'gaps': ['RUNNING_KERNEL_NOT_CRYPTOGRAPHICALLY_BOUND_TO_PACKAGE',
+                               'VENDOR_SOURCE_AND_PATCH_MATCH_NOT_VERIFIED', 'UNLISTED_PRIVILEGED_WRITERS_NOT_EXCLUDED',
+                               'COOPERATING_FENCE_NOT_OBSERVED', 'OWNER_TRUST_DECISION_NOT_ACCEPTED',
+                               'SAME_EFFECTIVE_REGISTRY_FOR_FUTURE_EXECUTION_NOT_PROVEN'],
+                      'proofs': {'source_match_verified': False, 'single_writer_exclusion_proven': False,
+                                 'runtime_admission': False, 'execution_authorized': False}}
+
+
+          def context():
+              patterns = {'GITHUB_RUN_ID': r'[1-9][0-9]{0,31}', 'GITHUB_RUN_ATTEMPT': r'1',
+                          'GITHUB_JOB': r'builder_host_[ab]', 'GITHUB_SHA': r'[0-9a-f]{40}',
+                          'ImageOS': r'ubuntu24', 'ImageVersion': r'[A-Za-z0-9._-]{1,64}',
+                          'DOSAI_RUNNER_ENVIRONMENT': r'github-hosted', 'DOSAI_RUNNER_OS': r'Linux',
+                          'DOSAI_RUNNER_ARCH': r'X64'}
+              values = {}
+              for key, pattern in patterns.items():
+                  value = os.environ.get(key, '')
+                  require(re.fullmatch(pattern, value) is not None)
+                  values[key] = value
+              return values
+
+
+          def encode(value):
+              output = PREFIX + json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+              require(len(output.encode('ascii')) + 1 <= MAX_OUTPUT_BYTES)
+              return output
+
+
+          def expired(_signal, _frame):
+              raise Rejected()
+
+
+          def main():
+              try:
+                  require(len(sys.argv) == 1 and platform.system() == 'Linux' and sys.flags.isolated and sys.dont_write_bytecode)
+                  signal.signal(signal.SIGALRM, expired)
+                  signal.setitimer(signal.ITIMER_REAL, 8.0)
+                  provenance = context()
+                  root = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                  try:
+                      result = collect(root, os.getpid(), os.uname(), provenance, time.monotonic() + 7.0)
+                  finally:
+                      os.close(root)
+                  print(encode(result), flush=True)
+                  return 0
+              except Exception:
+                  print('DOSAI_KERNEL_WRITER_DIAGNOSTIC_FAILURE_V1:REJECTED', file=sys.stderr)
+                  return 2
+              finally:
+                  if hasattr(signal, 'setitimer'):
+                      signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+          if __name__ == '__main__':
+              sys.exit(main())
+          DOSAI_KERNEL_WRITER_PY
+          timeout --signal=KILL 5s python3 -I -B - <<'DOSAI_BINFMT_PY' || fail BINFMT_DIAGNOSTIC_REJECTED
+          """Source-only, read-only binfmt inventory. Not a host-admission verifier."""
+          import hashlib
+          import json
+          import os
+          import platform
+          import re
+          import signal
+          import stat
+          import sys
+          import time
+
+          PREFIX = 'DOSAI_BINFMT_DIAGNOSTIC_V1:'
+          MAX_ENTRIES = 32
+          MAX_BYTES = 4096
+          MAX_OUTPUT = 131072
+          ROOT_COMPONENTS = ('proc', 'sys', 'fs', 'binfmt_misc')
+
+
+          class Rejected(Exception):
+              pass
+
+
+          def require(condition):
+              if not condition:
+                  raise Rejected()
+
+
+          def deadline_check(deadline):
+              require(time.monotonic() < deadline)
+
+
+          def open_root():
+              """Traverse only fixed directory components, refusing links at every step."""
+              fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+              try:
+                  for component in ROOT_COMPONENTS:
+                      next_fd = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                                        dir_fd=fd)
+                      os.close(fd)
+                      fd = next_fd
+                  return fd
+              except BaseException:
+                  os.close(fd)
+                  raise
+
+
+          def names_at(fd, deadline):
+              names = []
+              with os.scandir(fd) as entries:
+                  for entry in entries:
+                      deadline_check(deadline)
+                      require(len(names) < MAX_ENTRIES + 2)
+                      require(re.fullmatch(r'[A-Za-z0-9_+.-]{1,128}', entry.name) is not None)
+                      require(entry.name not in ('.', '..'))
+                      require(entry.is_file(follow_symlinks=False))
+                      names.append(entry.name)
+              require('status' in names and 'register' in names)
+              return sorted(names)
+
+
+          def read_entry(fd, name, deadline):
+              deadline_check(deadline)
+              child = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+              try:
+                  before = os.fstat(child)
+                  require(stat.S_ISREG(before.st_mode))
+                  data = bytearray()
+                  while True:
+                      deadline_check(deadline)
+                      chunk = os.read(child, MAX_BYTES + 1 - len(data))
+                      if not chunk:
+                          break
+                      data.extend(chunk)
+                      require(len(data) <= MAX_BYTES)
+                  after = os.fstat(child)
+                  identity = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_mtime_ns, s.st_ctime_ns)
+                  require(identity(before) == identity(after))
+                  linked = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                  require(identity(after) == identity(linked))
+                  return bytes(data), identity(after)
+              finally:
+                  os.close(child)
+
+
+          def parse_entry(name, data):
+              require(len(data) <= MAX_BYTES and data.endswith(b'\n'))
+              text = data.decode('ascii', errors='strict')
+              require(all(c == '\n' or 32 <= ord(c) <= 126 for c in text))
+              lines = text.splitlines()
+              require(3 <= len(lines) <= 6 and lines[0] in ('enabled', 'disabled'))
+              fields = {}
+              for line in lines[1:]:
+                  key, separator, value = line.partition(' ')
+                  require(separator == ' ' and key not in fields)
+                  fields[key] = value
+              require('interpreter' in fields and 'flags:' in fields)
+              require(re.fullmatch(r'/[A-Za-z0-9_+./-]{1,254}', fields['interpreter']) is not None)
+              flags = fields['flags:']
+              require(re.fullmatch(r'[POCF]*', flags) is not None and len(set(flags)) == len(flags))
+              common = {'interpreter', 'flags:'}
+              if 'extension' in fields:
+                  require(set(fields) == common | {'extension'})
+                  require(re.fullmatch(r'\.?[A-Za-z0-9_+-]{1,64}', fields['extension']) is not None)
+              else:
+                  require(set(fields) in (common | {'offset', 'magic'}, common | {'offset', 'magic', 'mask'}))
+                  require(re.fullmatch(r'[0-9]{1,3}', fields['offset']) is not None)
+                  require(0 <= int(fields['offset']) < 128)
+                  for key in ('magic', 'mask'):
+                      if key in fields:
+                          require(re.fullmatch(r'(?:[0-9a-f]{2}){1,128}', fields[key]) is not None)
+                  require('mask' not in fields or len(fields['mask']) == len(fields['magic']))
+              return {'name': name, 'enabled': lines[0] == 'enabled',
+                      'fields': fields, 'sha256': hashlib.sha256(data).hexdigest()}
+
+
+          def snapshot(fd, deadline):
+              names = names_at(fd, deadline)
+              records = {}
+              for name in names:
+                  if name != 'register':  # Never read the registration control file.
+                      records[name] = read_entry(fd, name, deadline)
+              require(names_at(fd, deadline) == names)
+              require(records['status'][0] in (b'enabled\n', b'disabled\n'))
+              return records
+
+
+          def collect(fd, deadline):
+              before = snapshot(fd, deadline)
+              after = snapshot(fd, deadline)
+              require(before == after)
+              entries = [parse_entry(name, data) for name, (data, _) in sorted(after.items())
+                         if name != 'status']
+              require(len(entries) <= MAX_ENTRIES)
+              return {'global_enabled': after['status'][0] == b'enabled\n', 'entries': entries}
+
+
+          def context():
+              patterns = {
+                  'GITHUB_RUN_ID': r'[1-9][0-9]{0,31}',
+                  'GITHUB_RUN_ATTEMPT': r'[1-9][0-9]{0,15}',
+                  'GITHUB_JOB': r'builder_host_[ab]',
+                  'GITHUB_SHA': r'[0-9a-f]{40}',
+                  'ImageOS': r'[A-Za-z0-9._-]{1,64}',
+                  'ImageVersion': r'[A-Za-z0-9._-]{1,64}',
+                  'DOSAI_RUNNER_ENVIRONMENT': r'github-hosted',
+                  'DOSAI_RUNNER_OS': r'Linux',
+                  'DOSAI_RUNNER_ARCH': r'X64',
+              }
+              result = {}
+              for key, pattern in patterns.items():
+                  value = os.environ.get(key, '')
+                  require(re.fullmatch(pattern, value) is not None)
+                  result[key] = value
+              require(platform.system() == 'Linux' and platform.machine() == 'x86_64')
+              result['uname_machine'] = 'x86_64'
+              return result
+
+
+          def encode(inventory, provenance):
+              result = {'schema': 'DOSAI_BINFMT_DIAGNOSTIC_V1', 'diagnostic_only': True,
+                        'provenance': provenance, 'inventory': inventory}
+              output = PREFIX + json.dumps(result, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+              require(len(output.encode('ascii')) + 1 <= MAX_OUTPUT)
+              return output
+
+
+          def expired(_signum, _frame):
+              raise Rejected()
+
+
+          def main():
+              try:
+                  require(len(sys.argv) == 1)
+                  require(hasattr(signal, 'setitimer'))
+                  signal.signal(signal.SIGALRM, expired)
+                  signal.setitimer(signal.ITIMER_REAL, 2.0)
+                  provenance = context()
+                  fd = open_root()
+                  try:
+                      inventory = collect(fd, time.monotonic() + 1.5)
+                  finally:
+                      os.close(fd)
+                  print(encode(inventory, provenance), flush=True)
+                  return 0
+              except Exception:
+                  # Never include raw input, exception details, environment or host identifiers.
+                  print('DOSAI_BINFMT_DIAGNOSTIC_FAILURE_V1:REJECTED', file=sys.stderr)
+                  return 2
+              finally:
+                  if hasattr(signal, 'setitimer'):
+                      signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+          if __name__ == '__main__':
+              sys.exit(main())
+          DOSAI_BINFMT_PY
+          active_binfmt="$(find /proc/sys/fs/binfmt_misc -maxdepth 1 -type f ! -name register ! -name status -print -quit)" || fail BINFMT_MISC_SCAN_FAILED
+          test -z "$active_binfmt" || fail BINFMT_MISC_INTERPRETER_ACTIVE
+          jq -cn \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg job "$GITHUB_JOB" \
+            --arg sha "$GITHUB_SHA" \
+            --arg runner_environment "$DOSAI_RUNNER_ENVIRONMENT" \
+            --arg runner_os "$DOSAI_RUNNER_OS" \
+            --arg runner_arch "$DOSAI_RUNNER_ARCH" \
+            --arg uname_machine "$(uname -m)" \
+            --arg image_os "$ImageOS" \
+            --arg image_version "$ImageVersion" \
+            --arg kernel_release "$(uname -r)" \
+            --arg dmi_product_uuid "$product_uuid" \
+            --arg docker_server_arch "$docker_arch" \
+            '{schema:"DOSAI_P3_HOST_OBSERVATION_V1",run_id:$run_id,run_attempt:$run_attempt,job:$job,sha:$sha,runner_environment:$runner_environment,runner_os:$runner_os,runner_arch:$runner_arch,uname_machine:$uname_machine,image_os:$image_os,image_version:$image_version,kernel_release:$kernel_release,dmi_product_uuid:$dmi_product_uuid,docker_server_arch:$docker_server_arch,no_active_binfmt_misc_interpreters:true}' \
+            | sed 's/^/DOSAI_HOST_OBSERVATION_V1:/' \
+            || fail RECEIPT_EMISSION_FAILED
+
+  builder_host_b:
+    name: BUILDER_HOST_B
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Observe bounded native host identity
+        shell: bash --noprofile --norc -euo pipefail {0}
+        env:
+          DOSAI_RUNNER_ENVIRONMENT: ${{ runner.environment }}
+          DOSAI_RUNNER_OS: ${{ runner.os }}
+          DOSAI_RUNNER_ARCH: ${{ runner.arch }}
+        run: |
+          fail() {
+            printf 'DOSAI_HOST_OBSERVATION_FAILURE_V1:%s\n' "$1" >&2
+            exit 1
+          }
+          test "$DOSAI_RUNNER_ENVIRONMENT" = "github-hosted" || fail RUNNER_ENVIRONMENT_MISMATCH
+          test "$DOSAI_RUNNER_OS" = "Linux" || fail RUNNER_OS_MISMATCH
+          test "$DOSAI_RUNNER_ARCH" = "X64" || fail RUNNER_ARCH_MISMATCH
+          test "$(uname -m)" = "x86_64" || fail UNAME_MACHINE_MISMATCH
+          test -n "${ImageOS:-}" || fail IMAGE_OS_MISSING
+          test -n "${ImageVersion:-}" || fail IMAGE_VERSION_MISSING
+          test -r /sys/class/dmi/id/product_uuid || fail DMI_UUID_UNREADABLE
+          product_uuid="$(tr '[:lower:]' '[:upper:]' < /sys/class/dmi/id/product_uuid | tr -d '\n')" || fail DMI_UUID_READ_FAILED
+          test -n "$product_uuid" || fail DMI_UUID_EMPTY
+          docker_arch="$(docker version --format '{{.Server.Arch}}')" || fail DOCKER_ARCH_QUERY_FAILED
+          test "$docker_arch" = "amd64" || fail DOCKER_ARCH_MISMATCH
+          test -d /proc/sys/fs/binfmt_misc || fail BINFMT_MISC_DIRECTORY_MISSING
+          timeout --signal=KILL 10s python3 -I -B - <<'DOSAI_KERNEL_WRITER_PY' || fail KERNEL_WRITER_DIAGNOSTIC_REJECTED
+          """Inactive, bounded, read-only diagnostic. No runtime trust or writer exclusion."""
+          import json
+          import os
+          import platform
+          import re
+          import select
+          import signal
+          import stat
+          import subprocess
+          import sys
+          import time
+
+          PREFIX = 'DOSAI_KERNEL_WRITER_DIAGNOSTIC_V1:'
+          MAX_QUERY_BYTES = 4096
+          MAX_OUTPUT_BYTES = 65536
+          UNITS = ('systemd-binfmt.service', 'binfmt-support.service',
+                   'proc-sys-fs-binfmt_misc.automount', 'proc-sys-fs-binfmt_misc.mount')
+          PROPERTIES = ('Id', 'LoadState', 'ActiveState', 'SubState', 'UnitFileState',
+                        'NeedDaemonReload', 'DropInPaths', 'TriggeredBy')
+          PACKAGE_FORMAT = '${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\t${db:Status-Status}\n'
+
+
+          class Rejected(Exception):
+              pass
+
+
+          def require(value):
+              if not value:
+                  raise Rejected()
+
+
+          def check(deadline):
+              require(time.monotonic() < deadline)
+
+
+          def ascii_text(data):
+              text = data.decode('ascii', errors='strict')
+              require(all(c in '\n\t' or 32 <= ord(c) <= 126 for c in text))
+              return text
+
+
+          def directory(root, parts):
+              fd = os.dup(root)
+              try:
+                  for part in parts:
+                      require(re.fullmatch(r'[A-Za-z0-9_.-]+', part) is not None and part not in ('.', '..'))
+                      next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                      os.close(fd)
+                      fd = next_fd
+                  return fd
+              except BaseException:
+                  os.close(fd)
+                  raise
+
+
+          def identity(info):
+              return (info.st_dev, info.st_ino, info.st_mode, info.st_mtime_ns, info.st_ctime_ns)
+
+
+          def read_fixed(root, parts, limit, deadline):
+              check(deadline)
+              parent = directory(root, parts[:-1])
+              try:
+                  fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+                  try:
+                      before = os.fstat(fd)
+                      require(stat.S_ISREG(before.st_mode))
+                      data = bytearray()
+                      while True:
+                          check(deadline)
+                          chunk = os.read(fd, limit + 1 - len(data))
+                          if not chunk:
+                              break
+                          data.extend(chunk)
+                          require(len(data) <= limit)
+                      after = os.fstat(fd)
+                      require(identity(before) == identity(after))
+                      require(identity(after) == identity(os.stat(parts[-1], dir_fd=parent, follow_symlinks=False)))
+                      return bytes(data)
+                  finally:
+                      os.close(fd)
+              finally:
+                  os.close(parent)
+
+
+          def namespaces(root, pid):
+              parent = directory(root, ('proc', str(pid), 'ns'))
+              try:
+                  result = {}
+                  for name, prefix in [('mnt', 'mnt'), ('user', 'user')]:
+                      # These two fixed kernel namespace links are read as opaque text, never followed.
+                      value = os.readlink(name, dir_fd=parent)
+                      require(re.fullmatch(prefix + r':\[[1-9][0-9]{0,19}\]', value) is not None)
+                      result[name] = value
+                  return result
+              finally:
+                  os.close(parent)
+
+
+          def mount_identity(data, device, inode):
+              text = ascii_text(data)
+              rows = text.splitlines()
+              require(len(rows) <= 512)
+              matches = []
+              target = '/proc/sys/fs/binfmt_misc'
+              for row in rows:
+                  halves = row.split(' - ')
+                  require(len(halves) == 2)
+                  left, right = halves[0].split(), halves[1].split()
+                  require(len(left) >= 6 and len(right) == 3)
+                  require(re.fullmatch(r'[1-9][0-9]{0,19}', left[0]) is not None)
+                  require(re.fullmatch(r'[0-9]{1,20}', left[1]) is not None)
+                  require(not left[4].startswith(target + '/'))
+                  if left[4] == target:
+                      require(left[3] == '/' and right[0] == 'binfmt_misc')
+                      require(left[2] == device and inode > 0)
+                      matches.append({'filesystem': 'binfmt_misc', 'mount_id': left[0],
+                                      'parent_mount_id': left[1], 'device': device, 'inode': str(inode),
+                                      'read_only': 'ro' in left[5].split(','),
+                                      'shared_propagation': any(x.startswith('shared:') for x in left[6:])})
+              require(len(matches) == 1)  # Stacked/ambiguous target mounts are unavailable.
+              return matches[0]
+
+
+          def commands(release):
+              require(re.fullmatch(r'[0-9][A-Za-z0-9.+_-]{0,127}', release) is not None)
+              package = 'linux-image-' + release
+              return [('/usr/bin/dpkg-query', '--show', '--showformat=' + PACKAGE_FORMAT, '--', package)] + [
+                  ('/usr/bin/systemctl', '--system', '--no-pager', '--no-ask-password', 'show',
+                   '--property=' + ','.join(PROPERTIES), unit) for unit in UNITS]
+
+
+          def query(argv, deadline):
+              """Only called with the five fixed query projections constructed above."""
+              require(type(argv) is tuple and len(argv) > 0 and all(type(arg) is str for arg in argv))
+              if argv[0] == '/usr/bin/dpkg-query':
+                  require(type(argv[-1]) is str and argv[-1].startswith('linux-image-'))
+                  require(argv == commands(argv[-1][len('linux-image-'):])[0])
+              else:
+                  require(argv in commands('0')[1:])
+              check(deadline)
+              child = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                       stderr=subprocess.DEVNULL, close_fds=True,
+                                       env={'LANG': 'C', 'LC_ALL': 'C', 'PATH': '/usr/bin:/bin'})
+              try:
+                  output = bytearray()
+                  stop_at = min(deadline, time.monotonic() + 1.0)
+                  while True:
+                      check(stop_at)
+                      readable, _, _ = select.select([child.stdout], [], [], max(0, stop_at - time.monotonic()))
+                      require(readable)
+                      chunk = os.read(child.stdout.fileno(), MAX_QUERY_BYTES + 1 - len(output))
+                      if not chunk:
+                          break
+                      output.extend(chunk)
+                      require(len(output) <= MAX_QUERY_BYTES)
+                  require(child.wait(timeout=max(0.001, stop_at - time.monotonic())) == 0)
+                  return bytes(output)
+              finally:
+                  # Only this directly owned observation child may be terminated on failure.
+                  if child.poll() is None:
+                      child.kill()
+                      child.wait(timeout=1)
+                  child.stdout.close()
+
+
+          def package_record(data, release):
+              require(len(data) <= MAX_QUERY_BYTES)
+              text = ascii_text(data)
+              require(text.endswith('\n') and text.count('\n') == 1)
+              parts = text[:-1].split('\t')
+              require(len(parts) == 5)
+              require(parts[0] in ('linux-image-' + release, 'linux-image-' + release + ':amd64'))
+              require(parts[4] == 'installed')
+              require(re.fullmatch(r'[a-z0-9][a-z0-9+.-]{0,127}', parts[2]) is not None)
+              for version in (parts[1], parts[3]):
+                  require(re.fullmatch(r'[A-Za-z0-9.+:~_-]{1,160}', version) is not None)
+              return dict(zip(('binary_package', 'binary_version', 'source_package', 'source_version', 'package_state'), parts))
+
+
+          def unit_record(data, unit):
+              require(unit in UNITS and len(data) <= MAX_QUERY_BYTES)
+              fields = {}
+              for line in ascii_text(data).splitlines():
+                  key, separator, value = line.partition('=')
+                  require(separator and key not in fields)
+                  fields[key] = value
+              require(set(fields) == set(PROPERTIES) and fields['Id'] == unit)
+              require(fields['LoadState'] in ('loaded', 'not-found', 'bad-setting', 'error', 'masked'))
+              require(fields['ActiveState'] in ('active', 'inactive', 'failed', 'activating', 'deactivating', 'maintenance', 'reloading', 'refreshing'))
+              require(fields['SubState'] in ('dead', 'exited', 'running', 'failed', 'mounted', 'waiting', 'listening', 'start', 'stop', 'auto-restart', 'condition'))
+              require(fields['UnitFileState'] in ('', 'enabled', 'enabled-runtime', 'disabled', 'static', 'indirect', 'generated', 'alias', 'linked', 'linked-runtime', 'masked', 'masked-runtime', 'not-found'))
+              require(fields['NeedDaemonReload'] in ('yes', 'no'))
+              triggers = fields['TriggeredBy'].split()
+              require(len(triggers) <= 16 and all(re.fullmatch(r'[A-Za-z0-9@_.:-]{1,160}', t) is not None for t in triggers))
+              return {'unit': unit, 'load_state': fields['LoadState'], 'active_state': fields['ActiveState'],
+                      'sub_state': fields['SubState'], 'unit_file_state': fields['UnitFileState'],
+                      'needs_reload': fields['NeedDaemonReload'] == 'yes',
+                      'dropins_present': bool(fields['DropInPaths']), 'trigger_count': len(triggers)}
+
+
+          def safe_observation(function):
+              try:
+                  return {'status': 'OBSERVED', 'data': function()}
+              except Exception:
+                  return {'status': 'UNKNOWN', 'reason': 'QUERY_UNAVAILABLE_OR_UNSUPPORTED'}
+
+
+          def collect(root, pid, kernel, provenance, deadline, query_function=query):
+              require(kernel.sysname == 'Linux' and kernel.machine == 'x86_64')
+              release = kernel.release
+              cmds = commands(release)
+              release_file = read_fixed(root, ('proc', 'sys', 'kernel', 'osrelease'), 256, deadline)
+              require(release_file == (release + '\n').encode('ascii'))
+              def signature():
+                  text = ascii_text(read_fixed(root, ('proc', 'version_signature'), 512, deadline))
+                  require(re.fullmatch(r'Ubuntu [A-Za-z0-9.:+~_-]{1,128} [A-Za-z0-9.:+~_-]{1,128}\n', text) is not None)
+                  vendor, version, upstream = text.strip().split()
+                  return {'vendor': vendor, 'version': version, 'upstream_version': upstream}
+              def registry_snapshot():
+                  fd = directory(root, ('proc', 'sys', 'fs', 'binfmt_misc'))
+                  try:
+                      info = os.fstat(fd)
+                      data = read_fixed(root, ('proc', str(pid), 'mountinfo'), 65536, deadline)
+                      mount = mount_identity(data, '%d:%d' % (os.major(info.st_dev), os.minor(info.st_dev)), info.st_ino)
+                      mount.update(namespaces(root, pid))
+                      return mount
+                  finally:
+                      os.close(fd)
+              before = registry_snapshot()
+              version = safe_observation(signature)
+              package = safe_observation(lambda: package_record(query_function(cmds[0], deadline), release))
+              units = []
+              for unit, command in zip(UNITS, cmds[1:]):
+                  check(deadline)
+                  observation = safe_observation(lambda c=command, u=unit: unit_record(query_function(c, deadline), u))
+                  units.append({'unit': unit, 'observation': observation})
+              require(registry_snapshot() == before)
+              require(read_fixed(root, ('proc', 'sys', 'kernel', 'osrelease'), 256, deadline) == release_file)
+              check(deadline)
+              return {'schema': 'DOSAI_KERNEL_WRITER_DIAGNOSTIC_V1', 'diagnostic_only': True,
+                      'provenance': provenance, 'kernel': {'release': release, 'machine': 'x86_64',
+                      'version_signature': version, 'installed_package': package}, 'registry': before,
+                      'writer_units': units, 'writer_inventory_scope': 'FIXED_UNITS_ONLY_NON_ATOMIC',
+                      'gaps': ['RUNNING_KERNEL_NOT_CRYPTOGRAPHICALLY_BOUND_TO_PACKAGE',
+                               'VENDOR_SOURCE_AND_PATCH_MATCH_NOT_VERIFIED', 'UNLISTED_PRIVILEGED_WRITERS_NOT_EXCLUDED',
+                               'COOPERATING_FENCE_NOT_OBSERVED', 'OWNER_TRUST_DECISION_NOT_ACCEPTED',
+                               'SAME_EFFECTIVE_REGISTRY_FOR_FUTURE_EXECUTION_NOT_PROVEN'],
+                      'proofs': {'source_match_verified': False, 'single_writer_exclusion_proven': False,
+                                 'runtime_admission': False, 'execution_authorized': False}}
+
+
+          def context():
+              patterns = {'GITHUB_RUN_ID': r'[1-9][0-9]{0,31}', 'GITHUB_RUN_ATTEMPT': r'1',
+                          'GITHUB_JOB': r'builder_host_[ab]', 'GITHUB_SHA': r'[0-9a-f]{40}',
+                          'ImageOS': r'ubuntu24', 'ImageVersion': r'[A-Za-z0-9._-]{1,64}',
+                          'DOSAI_RUNNER_ENVIRONMENT': r'github-hosted', 'DOSAI_RUNNER_OS': r'Linux',
+                          'DOSAI_RUNNER_ARCH': r'X64'}
+              values = {}
+              for key, pattern in patterns.items():
+                  value = os.environ.get(key, '')
+                  require(re.fullmatch(pattern, value) is not None)
+                  values[key] = value
+              return values
+
+
+          def encode(value):
+              output = PREFIX + json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+              require(len(output.encode('ascii')) + 1 <= MAX_OUTPUT_BYTES)
+              return output
+
+
+          def expired(_signal, _frame):
+              raise Rejected()
+
+
+          def main():
+              try:
+                  require(len(sys.argv) == 1 and platform.system() == 'Linux' and sys.flags.isolated and sys.dont_write_bytecode)
+                  signal.signal(signal.SIGALRM, expired)
+                  signal.setitimer(signal.ITIMER_REAL, 8.0)
+                  provenance = context()
+                  root = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                  try:
+                      result = collect(root, os.getpid(), os.uname(), provenance, time.monotonic() + 7.0)
+                  finally:
+                      os.close(root)
+                  print(encode(result), flush=True)
+                  return 0
+              except Exception:
+                  print('DOSAI_KERNEL_WRITER_DIAGNOSTIC_FAILURE_V1:REJECTED', file=sys.stderr)
+                  return 2
+              finally:
+                  if hasattr(signal, 'setitimer'):
+                      signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+          if __name__ == '__main__':
+              sys.exit(main())
+          DOSAI_KERNEL_WRITER_PY
+          timeout --signal=KILL 5s python3 -I -B - <<'DOSAI_BINFMT_PY' || fail BINFMT_DIAGNOSTIC_REJECTED
+          """Source-only, read-only binfmt inventory. Not a host-admission verifier."""
+          import hashlib
+          import json
+          import os
+          import platform
+          import re
+          import signal
+          import stat
+          import sys
+          import time
+
+          PREFIX = 'DOSAI_BINFMT_DIAGNOSTIC_V1:'
+          MAX_ENTRIES = 32
+          MAX_BYTES = 4096
+          MAX_OUTPUT = 131072
+          ROOT_COMPONENTS = ('proc', 'sys', 'fs', 'binfmt_misc')
+
+
+          class Rejected(Exception):
+              pass
+
+
+          def require(condition):
+              if not condition:
+                  raise Rejected()
+
+
+          def deadline_check(deadline):
+              require(time.monotonic() < deadline)
+
+
+          def open_root():
+              """Traverse only fixed directory components, refusing links at every step."""
+              fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+              try:
+                  for component in ROOT_COMPONENTS:
+                      next_fd = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                                        dir_fd=fd)
+                      os.close(fd)
+                      fd = next_fd
+                  return fd
+              except BaseException:
+                  os.close(fd)
+                  raise
+
+
+          def names_at(fd, deadline):
+              names = []
+              with os.scandir(fd) as entries:
+                  for entry in entries:
+                      deadline_check(deadline)
+                      require(len(names) < MAX_ENTRIES + 2)
+                      require(re.fullmatch(r'[A-Za-z0-9_+.-]{1,128}', entry.name) is not None)
+                      require(entry.name not in ('.', '..'))
+                      require(entry.is_file(follow_symlinks=False))
+                      names.append(entry.name)
+              require('status' in names and 'register' in names)
+              return sorted(names)
+
+
+          def read_entry(fd, name, deadline):
+              deadline_check(deadline)
+              child = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+              try:
+                  before = os.fstat(child)
+                  require(stat.S_ISREG(before.st_mode))
+                  data = bytearray()
+                  while True:
+                      deadline_check(deadline)
+                      chunk = os.read(child, MAX_BYTES + 1 - len(data))
+                      if not chunk:
+                          break
+                      data.extend(chunk)
+                      require(len(data) <= MAX_BYTES)
+                  after = os.fstat(child)
+                  identity = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_mtime_ns, s.st_ctime_ns)
+                  require(identity(before) == identity(after))
+                  linked = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                  require(identity(after) == identity(linked))
+                  return bytes(data), identity(after)
+              finally:
+                  os.close(child)
+
+
+          def parse_entry(name, data):
+              require(len(data) <= MAX_BYTES and data.endswith(b'\n'))
+              text = data.decode('ascii', errors='strict')
+              require(all(c == '\n' or 32 <= ord(c) <= 126 for c in text))
+              lines = text.splitlines()
+              require(3 <= len(lines) <= 6 and lines[0] in ('enabled', 'disabled'))
+              fields = {}
+              for line in lines[1:]:
+                  key, separator, value = line.partition(' ')
+                  require(separator == ' ' and key not in fields)
+                  fields[key] = value
+              require('interpreter' in fields and 'flags:' in fields)
+              require(re.fullmatch(r'/[A-Za-z0-9_+./-]{1,254}', fields['interpreter']) is not None)
+              flags = fields['flags:']
+              require(re.fullmatch(r'[POCF]*', flags) is not None and len(set(flags)) == len(flags))
+              common = {'interpreter', 'flags:'}
+              if 'extension' in fields:
+                  require(set(fields) == common | {'extension'})
+                  require(re.fullmatch(r'\.?[A-Za-z0-9_+-]{1,64}', fields['extension']) is not None)
+              else:
+                  require(set(fields) in (common | {'offset', 'magic'}, common | {'offset', 'magic', 'mask'}))
+                  require(re.fullmatch(r'[0-9]{1,3}', fields['offset']) is not None)
+                  require(0 <= int(fields['offset']) < 128)
+                  for key in ('magic', 'mask'):
+                      if key in fields:
+                          require(re.fullmatch(r'(?:[0-9a-f]{2}){1,128}', fields[key]) is not None)
+                  require('mask' not in fields or len(fields['mask']) == len(fields['magic']))
+              return {'name': name, 'enabled': lines[0] == 'enabled',
+                      'fields': fields, 'sha256': hashlib.sha256(data).hexdigest()}
+
+
+          def snapshot(fd, deadline):
+              names = names_at(fd, deadline)
+              records = {}
+              for name in names:
+                  if name != 'register':  # Never read the registration control file.
+                      records[name] = read_entry(fd, name, deadline)
+              require(names_at(fd, deadline) == names)
+              require(records['status'][0] in (b'enabled\n', b'disabled\n'))
+              return records
+
+
+          def collect(fd, deadline):
+              before = snapshot(fd, deadline)
+              after = snapshot(fd, deadline)
+              require(before == after)
+              entries = [parse_entry(name, data) for name, (data, _) in sorted(after.items())
+                         if name != 'status']
+              require(len(entries) <= MAX_ENTRIES)
+              return {'global_enabled': after['status'][0] == b'enabled\n', 'entries': entries}
+
+
+          def context():
+              patterns = {
+                  'GITHUB_RUN_ID': r'[1-9][0-9]{0,31}',
+                  'GITHUB_RUN_ATTEMPT': r'[1-9][0-9]{0,15}',
+                  'GITHUB_JOB': r'builder_host_[ab]',
+                  'GITHUB_SHA': r'[0-9a-f]{40}',
+                  'ImageOS': r'[A-Za-z0-9._-]{1,64}',
+                  'ImageVersion': r'[A-Za-z0-9._-]{1,64}',
+                  'DOSAI_RUNNER_ENVIRONMENT': r'github-hosted',
+                  'DOSAI_RUNNER_OS': r'Linux',
+                  'DOSAI_RUNNER_ARCH': r'X64',
+              }
+              result = {}
+              for key, pattern in patterns.items():
+                  value = os.environ.get(key, '')
+                  require(re.fullmatch(pattern, value) is not None)
+                  result[key] = value
+              require(platform.system() == 'Linux' and platform.machine() == 'x86_64')
+              result['uname_machine'] = 'x86_64'
+              return result
+
+
+          def encode(inventory, provenance):
+              result = {'schema': 'DOSAI_BINFMT_DIAGNOSTIC_V1', 'diagnostic_only': True,
+                        'provenance': provenance, 'inventory': inventory}
+              output = PREFIX + json.dumps(result, sort_keys=True, separators=(',', ':'), ensure_ascii=True)
+              require(len(output.encode('ascii')) + 1 <= MAX_OUTPUT)
+              return output
+
+
+          def expired(_signum, _frame):
+              raise Rejected()
+
+
+          def main():
+              try:
+                  require(len(sys.argv) == 1)
+                  require(hasattr(signal, 'setitimer'))
+                  signal.signal(signal.SIGALRM, expired)
+                  signal.setitimer(signal.ITIMER_REAL, 2.0)
+                  provenance = context()
+                  fd = open_root()
+                  try:
+                      inventory = collect(fd, time.monotonic() + 1.5)
+                  finally:
+                      os.close(fd)
+                  print(encode(inventory, provenance), flush=True)
+                  return 0
+              except Exception:
+                  # Never include raw input, exception details, environment or host identifiers.
+                  print('DOSAI_BINFMT_DIAGNOSTIC_FAILURE_V1:REJECTED', file=sys.stderr)
+                  return 2
+              finally:
+                  if hasattr(signal, 'setitimer'):
+                      signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+          if __name__ == '__main__':
+              sys.exit(main())
+          DOSAI_BINFMT_PY
+          active_binfmt="$(find /proc/sys/fs/binfmt_misc -maxdepth 1 -type f ! -name register ! -name status -print -quit)" || fail BINFMT_MISC_SCAN_FAILED
+          test -z "$active_binfmt" || fail BINFMT_MISC_INTERPRETER_ACTIVE
+          jq -cn \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg job "$GITHUB_JOB" \
+            --arg sha "$GITHUB_SHA" \
+            --arg runner_environment "$DOSAI_RUNNER_ENVIRONMENT" \
+            --arg runner_os "$DOSAI_RUNNER_OS" \
+            --arg runner_arch "$DOSAI_RUNNER_ARCH" \
+            --arg uname_machine "$(uname -m)" \
+            --arg image_os "$ImageOS" \
+            --arg image_version "$ImageVersion" \
+            --arg kernel_release "$(uname -r)" \
+            --arg dmi_product_uuid "$product_uuid" \
+            --arg docker_server_arch "$docker_arch" \
+            '{schema:"DOSAI_P3_HOST_OBSERVATION_V1",run_id:$run_id,run_attempt:$run_attempt,job:$job,sha:$sha,runner_environment:$runner_environment,runner_os:$runner_os,runner_arch:$runner_arch,uname_machine:$uname_machine,image_os:$image_os,image_version:$image_version,kernel_release:$kernel_release,dmi_product_uuid:$dmi_product_uuid,docker_server_arch:$docker_server_arch,no_active_binfmt_misc_interpreters:true}' \
+            | sed 's/^/DOSAI_HOST_OBSERVATION_V1:/' \
+            || fail RECEIPT_EMISSION_FAILED

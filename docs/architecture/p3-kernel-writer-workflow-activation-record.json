@@ -1,0 +1,50 @@
+{
+  "record_type": "P3_KERNEL_WRITER_WORKFLOW_ACTIVATION_PREPARATION",
+  "record_version": 1,
+  "status": "PREPARED_FOR_REVIEW_NOT_DISPATCHED",
+  "based_on": "0cd5daf8b8cb1d24d97e07b66ffa8e9d1c374e8e",
+  "workflow_path": ".github/workflows/p3-kernel-writer-diagnostics.yml",
+  "workflow_sha256": "4d05e479c2009693a5d20c56fa94fdef085e2b1997ad16aaa5fbda5ca1790994",
+  "workflow_name": "P3 kernel and writer diagnostics",
+  "inputs": {
+    ".github/workflows/p3-native-builder-host-feasibility.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+    ".github/workflows/p3-kernel-writer-diagnostics.yml": "4d05e479c2009693a5d20c56fa94fdef085e2b1997ad16aaa5fbda5ca1790994",
+    "scripts/p3-kernel-writer-diagnostic.py": "6f40494ee7e3c00fa0557ef2f8779d67dd1e44dd9a1301d32b149ecc58450185",
+    "docs/architecture/p3-kernel-writer-diagnostic-source-record.json": "075dda07a1dbb117536336f77d9fe645cfebe5b0c2dc059b9242dec1faae0d0a",
+    "scripts/p3-binfmt-diagnostic.py": "15eadfc0a99602b67eb5b8359d741a76d10d645b58bdf8b057d8b3541c7e4a3d",
+    "docs/development/private-beta-critical-path-status-v2.json": "ec3df7f247e695017c32273400391b3da7ac46d2a68fd1b750d9bd49a9a88a33"
+  },
+  "existing_host_workflow_unchanged": true,
+  "all_original_predicates_preserved": true,
+  "original_success_receipt_preserved": true,
+  "collection_timeout_seconds": 10,
+  "workflow_job_count": 2,
+  "maximum_charge_usd": 0,
+  "dispatches_performed": 0,
+  "proofs": {
+    "source_match_verified": false,
+    "single_writer_exclusion_proven": false,
+    "runtime_admission": false,
+    "execution_authorized": false
+  },
+  "authorities": {
+    "merge": false,
+    "workflow_dispatch": false,
+    "executor": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false,
+    "workflow_activation": false
+  },
+  "next_gate": "OWNER_REVIEW_AND_MERGE_THEN_SEPARATE_EXACT_ZERO_COST_DISPATCH_AUTHORIZATION",
+  "validation": {
+    "node_version": "24.18.0",
+    "focused_node_tests": 49,
+    "new_activation_tests": 4,
+    "inline_shell_programs_syntax_checked": 2,
+    "yaml_syntax_checked": true,
+    "live_queries_executed": 0
+  }
+}
