@@ -130,3 +130,10 @@ finds that successful byte counts are not removal-causality proof and the curren
 plan has not established a single-writer boundary. It recommends a versioned
 source-contract revision before an effectful executor. No executor, dispatch,
 writer exclusion or new runtime authority is supplied by that review.
+
+## Proposed v2 removal contract
+
+The [v2 source contract and inert race fixtures](p3-binfmt-removal-contract-v2.md)
+preserve v1 history and separate request acceptance, observed absence and
+unproven causality. Real trusted writer-boundary evidence remains absent;
+effectful executor work is still NO_GO. No workflow or runtime authority changes.
