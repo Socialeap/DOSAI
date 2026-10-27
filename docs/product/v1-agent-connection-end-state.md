@@ -9,8 +9,12 @@ sandboxes even when their native apps run on the same Mac. The location of the
 executor determines which connection methods it can use.
 
 - GitHub is the durable source of truth for code, accepted decisions, tests, and
-  reviewed evidence. Each agent uses an owned branch/worktree and explicit PR
-  handoffs. Repository access alone conveys no local execution authority.
+  reviewed evidence. Agents operate through fenced leases over broker-owned
+  worktrees, with explicit PR handoffs. Lease authority resides in trusted policy
+  and Git services; each write must remain within the current lease generation's
+  path and operation scope. Branch names and prefixes provide attribution only,
+  never authorization. Repository access alone conveys no local execution
+  authority. See [ADR 0005](../decisions/0005-workspace-leases-and-git-broker.md).
 - DOSAI provides a local MCP adapter for synchronous policy-governed requests.
   Adapter scope must follow accepted typed operations and integration contracts;
   it cannot expose arbitrary shell, bypass policy, grant approval, or turn an
