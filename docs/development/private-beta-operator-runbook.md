@@ -219,3 +219,11 @@ tests only; stateless replay and test-controlled repinning are explicit limits.
 Source review/merge grants no runtime admission or host authority. Native-only
 and all existing NO_GO gates remain unchanged; no Lovable or Publish action is
 required for this tests-and-documentation increment.
+
+## Native-host source integrity before local regression tests
+
+Follow the [source-integrity operator sequence](p3-native-profile-source-integrity-v1.md):
+verify pinned source bytes, run the focused tests, then check beta readiness.
+The read-only integrity report runs no tests and grants no authority. A source
+pass does not clear native host, writer enforcement, P3 or app-workflow gates.
+No activation, Lovable action or Publish follows from this source-only increment.
