@@ -200,3 +200,12 @@ truth, persistent replay protection or runtime admission. Host selection, zero
 cost, enforcement, key registration and live verification remain unresolved.
 Owner source review precedes those trust/profile gates and any separate
 activation or exact bounded run. No provisioning or consequential action is added.
+
+## Versioned namespace fixture correction
+
+The [v2 fixture correction](p3-native-profile-namespace-correction-v2.md) adds
+explicit string guards for mount/user namespace identities and negative tests.
+V1 source, tests and hash-bound history remain unchanged. V2 preserves the
+fixture protocol and valid scalar results; runtime admission and execution
+authority remain false. Owner source review precedes any merge. No live verifier, workflow or
+host action is activated, and the existing beta NO_GO gates remain open.
