@@ -87,3 +87,42 @@ No migration, durable live-state change, backend deployment, secret, environment
 or provider configuration is required. **No Lovable action is required.** No
 frontend Publish or application deployment is required. Review/merge is separate
 from any future authority or acceptance decision.
+
+## Supplemental synthetic negative evidence vectors
+
+The source-only
+[vector builder](../../tests/fixtures/p3/acceptance-evidence-negative-vectors-v1.mjs)
+prepares six fault types for every scoped occurrence: missing assertion,
+duplicate occurrence, contradictory synthetic outcomes, wrong scenario, missing
+artifact class and malformed artifact reference. Three additional vectors reuse
+an otherwise matching cleanup fragment from a different declared scenario.
+Total: **165 synthetic vectors** across all 27 occurrences.
+
+The fragments deliberately use `SYNTHETIC_SUCCESS` / `SYNTHETIC_FAILURE` and
+`SYNTHETIC_ONLY` references. They are not serialized runtime receipts or a
+registered schema. Every vector says fixture-only, expected rejection and no
+acceptance authority. The builder has no imports, I/O, network, signing or host
+operations and is unreachable from the app and accepted runner.
+
+The four new test groups verify complete coverage, correct fault construction,
+independent clones, deterministic output, pinned source inputs and import
+isolation. **They do not test receipt rejection by a handler:** no P3 handler
+exists or is implemented here. A later owner-authorized handler generation must
+map these inputs into its accepted receipt format and independently demonstrate
+actual rejection; merely generating the vectors never proves that behavior.
+
+```sh
+node --test tests/governance/p3-acceptance-negative-vectors.test.mjs
+```
+
+Use pinned Node 24.18.0. The supplemental
+[source record](../architecture/p3-acceptance-negative-vectors-source-record-v1.json)
+binds the fixture, tests and unchanged checklist/proposal/catalog/runner/manifests.
+Native-only and all physical, implementation and acceptance prerequisites remain.
+No provisioning, dispatch, executor, host mutation, builds, guest execution or
+paid activity is added. **No Lovable action is required.** No deployment,
+configuration, secret, migration or frontend Publish action is required.
+
+Supplemental validation: **65/65 focused groups passed on Node 24.18.0**.
+The integrity CLI still verifies 35 pinned files; beta readiness remains
+exit 2 / NO_GO with BETA-CP-004/005/006. No acceptance suite or host action ran.
