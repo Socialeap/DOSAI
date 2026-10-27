@@ -236,3 +236,8 @@ source-consistency tests are not acceptance evidence. Keep completed lifecycle
 proof intact; native builder/guest prerequisites and exact owner acceptance
 must precede handler implementation or runner activation. No dispatch, build,
 execution, Lovable action or Publish is authorized by this preparation.
+
+The P3 checklist now includes [synthetic negative evidence vectors](p3-acceptance-evidence-checklist-v1.md#supplemental-synthetic-negative-evidence-vectors).
+Their tests prove test-data construction only; actual receipt rejection remains
+unimplemented and requires the separately accepted P3 handler generation. Do not
+count these vectors as acceptance evidence or enable a runner/host action.
