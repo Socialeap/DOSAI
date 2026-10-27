@@ -1,0 +1,67 @@
+{
+  "schema": "P3_KERNEL_WRITER_ATTRIBUTION_FIXTURES_V2",
+  "synthetic_only": true,
+  "host_failure_cause_confirmed": false,
+  "mount_cases": [
+    {
+      "name": "single-binfmt-target",
+      "mountinfo": "42 1 {device} / /proc/sys/fs/binfmt_misc rw,nosuid shared:1 - binfmt_misc binfmt_misc rw\n",
+      "rejection": null
+    },
+    {
+      "name": "unrelated-root-plus-single-binfmt-target",
+      "mountinfo": "1 0 0:1 / / rw - ext4 /dev/root rw\n42 1 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n",
+      "rejection": null
+    },
+    {
+      "name": "autofs-under-binfmt-hypothesis-unconfirmed",
+      "mountinfo": "41 1 0:41 / /proc/sys/fs/binfmt_misc rw - autofs systemd-1 rw\n42 41 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n",
+      "rejection": "MOUNTINFO_TARGET_FS_OR_ROOT"
+    },
+    {
+      "name": "binfmt-before-autofs-still-rejected",
+      "mountinfo": "42 41 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n41 1 0:41 / /proc/sys/fs/binfmt_misc rw - autofs systemd-1 rw\n",
+      "rejection": "MOUNTINFO_TARGET_FS_OR_ROOT"
+    },
+    {
+      "name": "two-binfmt-targets",
+      "mountinfo": "41 1 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n42 41 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n",
+      "rejection": "MOUNTINFO_TARGET_COUNT"
+    },
+    {
+      "name": "target-submount",
+      "mountinfo": "42 1 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n43 42 0:2 / /proc/sys/fs/binfmt_misc/entry rw - tmpfs tmpfs rw\n",
+      "rejection": "MOUNTINFO_SUBMOUNT"
+    },
+    {
+      "name": "target-wrong-filesystem",
+      "mountinfo": "42 1 {device} / /proc/sys/fs/binfmt_misc rw - ext4 /dev/root rw\n",
+      "rejection": "MOUNTINFO_TARGET_FS_OR_ROOT"
+    },
+    {
+      "name": "target-subdirectory-root",
+      "mountinfo": "42 1 {device} /subdir /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n",
+      "rejection": "MOUNTINFO_TARGET_FS_OR_ROOT"
+    },
+    {
+      "name": "target-device-mismatch",
+      "mountinfo": "42 1 999:999 / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n",
+      "rejection": "MOUNTINFO_DEVICE_OR_INODE_MISMATCH"
+    },
+    {
+      "name": "no-target",
+      "mountinfo": "1 0 0:1 / / rw - ext4 /dev/root rw\n",
+      "rejection": "MOUNTINFO_TARGET_COUNT"
+    },
+    {
+      "name": "malformed-row",
+      "mountinfo": "DO_NOT_EMIT_MOUNT_MARKER\n",
+      "rejection": "MOUNTINFO_ROW_FORMAT"
+    },
+    {
+      "name": "invalid-mount-id",
+      "mountinfo": "bad 1 {device} / /proc/sys/fs/binfmt_misc rw - binfmt_misc binfmt_misc rw\n",
+      "rejection": "MOUNTINFO_ID_FORMAT"
+    }
+  ]
+}
