@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parseStrictJson } from '../tools/dosai-acceptance/src/strict-json.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const statusPath = 'docs/development/private-beta-critical-path-status.json';
+const statusPath = 'docs/development/private-beta-critical-path-status-v2.json';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -24,6 +24,15 @@ export async function assessPrivateBetaReadiness() {
   const checkpoint = await readJson(statusPath);
   if (
     checkpoint.record_type !== 'DOSAI_SUPERVISED_PRIVATE_BETA_CRITICAL_PATH_STATUS' ||
+    checkpoint.record_version !== 2 ||
+    checkpoint.workflow_activation_generation?.record_path !==
+      'docs/architecture/p3-binfmt-workflow-activation-record.json' ||
+    checkpoint.workflow_activation_generation?.workflow_sha256 !==
+      '1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c' ||
+    checkpoint.workflow_activation_generation?.dispatch_authorized !== false ||
+    checkpoint.workflow_activation_generation?.record_sha256 !==
+      '8dc15f8ab3bbc081796c6f8ae26d4608fd8b6c8c7af6517d1c32b0b0329cbc23' ||
+    checkpoint.supersedes?.path !== 'docs/development/private-beta-critical-path-status.json' ||
     checkpoint.target !== 'SUPERVISED_PRIVATE_BETA_FULL_FUNCTIONALITY_TESTING' ||
     checkpoint.operational_constraints.credit_ceiling !== 120 ||
     checkpoint.operational_constraints.paid_activity_authorized !== false ||
@@ -55,7 +64,7 @@ export async function assessPrivateBetaReadiness() {
   const workflowBytes = await readFile(resolve(
     root, '.github/workflows/p3-native-builder-host-feasibility.yml',
   ));
-  if (sha256(workflowBytes) !== checkpoint.source_only_repair_candidate_validation.workflow_sha256) {
+  if (sha256(workflowBytes) !== checkpoint.workflow_activation_generation.workflow_sha256) {
     throw new Error('PRIVATE_BETA_WORKFLOW_CHANGED');
   }
 
@@ -64,6 +73,52 @@ export async function assessPrivateBetaReadiness() {
     const bytes = await readFile(resolve(root, binding.path));
     if (sha256(bytes) !== binding.sha256) throw new Error('PRIVATE_BETA_INPUT_CHANGED');
     boundRecords.set(binding.path, parseStrictJson(bytes));
+  }
+
+  if (sha256(await readFile(resolve(root, checkpoint.workflow_activation_generation.record_path))) !==
+      checkpoint.workflow_activation_generation.record_sha256) {
+    throw new Error('PRIVATE_BETA_ACTIVATION_REJECTED');
+  }
+  const activation = boundRecords.get(checkpoint.workflow_activation_generation.record_path);
+  if (
+    activation?.record_type !== 'P3_BINFMT_WORKFLOW_ACTIVATION_PREPARATION' ||
+    activation?.status !== 'PREPARED_FOR_REVIEW_NOT_DISPATCHED' ||
+    activation?.based_on !== '74da5a5addc8f0766b32c6789e9eb670ad0eda61' ||
+    activation?.workflow_path !== '.github/workflows/p3-native-builder-host-feasibility.yml' ||
+    activation?.workflow_sha256 !== checkpoint.workflow_activation_generation.workflow_sha256 ||
+    activation?.historical_workflow_path !==
+      'docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml' ||
+    activation?.historical_workflow_sha256 !==
+      checkpoint.source_only_repair_candidate_validation.workflow_sha256 ||
+    activation?.diagnostic_only !== true ||
+    activation?.original_rejection_preserved !== true ||
+    activation?.original_success_receipt_preserved !== true ||
+    !everyAuthorityIsFalse(activation)
+  ) {
+    throw new Error('PRIVATE_BETA_ACTIVATION_REJECTED');
+  }
+  for (const [path, digest] of Object.entries(activation.inputs)) {
+    if (sha256(await readFile(resolve(root, path))) !== digest) {
+      throw new Error('PRIVATE_BETA_ACTIVATION_INPUT_CHANGED');
+    }
+  }
+  if (checkpoint.supersedes.sha256 !== activation.inputs[checkpoint.supersedes.path] ||
+      sha256(await readFile(resolve(root, checkpoint.supersedes.path))) !== checkpoint.supersedes.sha256) {
+    throw new Error('PRIVATE_BETA_HISTORY_CHANGED');
+  }
+
+  // Activation changes source placement only; no gate may gain runtime acceptance.
+  const historicalCheckpoint = boundRecords.get(checkpoint.supersedes.path);
+  const evidenceState = ({ next_action, diagnostic_activation_status, ...state }) => state;
+  if (
+    checkpoint.release_status !== 'NO_GO' ||
+    !Array.isArray(checkpoint.gates) ||
+    checkpoint.gates.length !== historicalCheckpoint.gates.length ||
+    checkpoint.gates.some((gate, index) =>
+      JSON.stringify(evidenceState(gate)) !==
+        JSON.stringify(evidenceState(historicalCheckpoint.gates[index])))
+  ) {
+    throw new Error('PRIVATE_BETA_GATE_STATE_CHANGED');
   }
 
   const physical = boundRecords.get(

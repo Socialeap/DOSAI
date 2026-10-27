@@ -1,0 +1,40 @@
+{
+  "record_type": "P3_BINFMT_WORKFLOW_ACTIVATION_PREPARATION",
+  "record_version": 1,
+  "status": "PREPARED_FOR_REVIEW_NOT_DISPATCHED",
+  "based_on": "74da5a5addc8f0766b32c6789e9eb670ad0eda61",
+  "inputs": {
+    "docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml": "6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63",
+    "docs/proposals/p3-native-builder-host-feasibility-diagnostic.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+    "scripts/p3-binfmt-diagnostic.py": "15eadfc0a99602b67eb5b8359d741a76d10d645b58bdf8b057d8b3541c7e4a3d",
+    "docs/architecture/p3-binfmt-diagnostic-source-record.json": "669dae83812d7f127d59949918334b78eebcca643655e50b0e0c474e50a7c9e5",
+    "docs/development/private-beta-critical-path-status.json": "6ace4f26752f72ae08f5b88bdbf5d2c4fa1a4a9333d76e6923a082c5fa9daab1",
+    ".github/workflows/p3-native-builder-host-feasibility.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c"
+  },
+  "workflow_path": ".github/workflows/p3-native-builder-host-feasibility.yml",
+  "workflow_sha256": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+  "historical_workflow_path": "docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml",
+  "historical_workflow_sha256": "6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63",
+  "diagnostic_only": true,
+  "original_rejection_preserved": true,
+  "original_success_receipt_preserved": true,
+  "operational_constraints": {
+    "credit_ceiling": 120,
+    "maximum_charge_usd": 0,
+    "dispatches_performed": 0,
+    "host_mutations": 0,
+    "builds": 0,
+    "guest_executions": 0,
+    "retries": 0
+  },
+  "authorities": {
+    "merge": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false
+  },
+  "next_gate": "OWNER_REVIEW_AND_MERGE_THEN_SEPARATE_EXACT_DISPATCH_AUTHORIZATION"
+}
