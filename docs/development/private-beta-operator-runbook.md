@@ -115,3 +115,10 @@ promotes the reviewed diagnostic candidate and adds checkpoint v2 without
 changing historical records or runtime gate results. Merge and a new exact
 one-dispatch authorization remain separate owner gates. The reporter still
 returns NO_GO; any registrations continue to trigger the original rejection.
+
+## Proposed exact-registration preparation
+
+The [source-only removal plan](p3-exact-binfmt-removal-plan.md) pins the four
+LLVM/Python registrations observed in run 40552566410 and models fail-closed
+removal followed by every original predicate. It supplies no executor or new
+workflow. All actual host mutation and dispatch remain separately gated.
