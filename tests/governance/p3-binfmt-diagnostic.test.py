@@ -199,8 +199,8 @@ class DiagnosticTests(unittest.TestCase):
                                     capture_output=True, timeout=2)
             self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_prepared_workflow_is_inactive_and_only_adds_diagnostics(self):
-        original = (ROOT / '.github/workflows/p3-native-builder-host-feasibility.yml').read_text()
+    def test_activated_candidate_only_adds_diagnostics_to_historical_workflow(self):
+        original = (ROOT / 'docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml').read_text()
         self.assertEqual(hashlib.sha256(original.encode()).hexdigest(),
                          '6d04426acf2f30e406a4d948861951813146c20f80196e315feec070cf101d63')
         record = json.loads((ROOT / 'docs/architecture/p3-binfmt-diagnostic-source-record.json').read_text())
@@ -209,7 +209,8 @@ class DiagnosticTests(unittest.TestCase):
         self.assertTrue(record['authorities'])
         self.assertTrue(all(value is False for value in record['authorities'].values()))
         for path, expected_digest in record['inputs'].items():
-            self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), expected_digest)
+            historical_path = 'docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml' if path == '.github/workflows/p3-native-builder-host-feasibility.yml' else path
+            self.assertEqual(hashlib.sha256((ROOT / historical_path).read_bytes()).hexdigest(), expected_digest)
         code = SOURCE.read_text()
         snippet = "          timeout --signal=KILL 5s python3 -I -B - <<'DOSAI_BINFMT_PY' || fail BINFMT_DIAGNOSTIC_REJECTED\n"
         snippet += ''.join(('          ' + line if line else '') + '\n' for line in code.splitlines())
@@ -218,6 +219,7 @@ class DiagnosticTests(unittest.TestCase):
         expected = original.replace(anchor, snippet + anchor)
         candidate = (ROOT / 'docs/proposals/p3-native-builder-host-feasibility-diagnostic.yml').read_text()
         self.assertEqual(candidate, expected)
+        self.assertEqual((ROOT / '.github/workflows/p3-native-builder-host-feasibility.yml').read_text(), candidate)
         self.assertEqual(candidate.count('|| fail BINFMT_MISC_INTERPRETER_ACTIVE'), 2)
         self.assertEqual(candidate.count('no_active_binfmt_misc_interpreters:true'), 2)
         self.assertNotIn('sudo', candidate)

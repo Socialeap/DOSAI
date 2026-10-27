@@ -38,7 +38,10 @@ test('source-only repair adds fixed failure codes without broadening workflow au
   const record = await readRecord(
     'docs/architecture/p3-native-builder-host-observability-repair-source-record.json',
   );
-  const workflow = await readFile(resolve(root, record.workflow.path));
+  // The repair record is historical; activation preserves its exact workflow bytes.
+  const workflow = await readFile(resolve(
+    root, 'docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml',
+  ));
   const failedAttempt = await readFile(resolve(root, record.failed_attempt.path));
   const source = workflow.toString('utf8');
 

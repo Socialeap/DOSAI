@@ -107,3 +107,11 @@ No retry was performed. See the [source-only suitability analysis](p3-native-run
 for the evidence limit and bounded diagnostic proposal. The prior one-dispatch
 authorization is consumed; another dispatch or host mutation requires fresh
 exact approval. The existing admission checks and NO_GO status remain in force.
+
+## Prepared diagnostic activation successor
+
+The [separate activation increment](p3-binfmt-workflow-activation-evidence.md)
+promotes the reviewed diagnostic candidate and adds checkpoint v2 without
+changing historical records or runtime gate results. Merge and a new exact
+one-dispatch authorization remain separate owner gates. The reporter still
+returns NO_GO; any registrations continue to trigger the original rejection.

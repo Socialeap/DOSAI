@@ -12,7 +12,7 @@ import { parseStrictJson } from '../../tools/dosai-acceptance/src/strict-json.mj
 const root = resolve(import.meta.dirname, '../..');
 const checkpoint = parseStrictJson(await readFile(resolve(
   root,
-  'docs/development/private-beta-critical-path-status.json',
+  'docs/development/private-beta-critical-path-status-v2.json',
 )));
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -140,12 +140,14 @@ const workflowPath = '.github/workflows/p3-native-builder-host-feasibility.yml';
 async function isolatedAssessment(t) {
   const fixtureRoot = await mkdtemp(resolve(tmpdir(), 'dosai-readiness-digest-'));
   t.after(() => rm(fixtureRoot, { recursive: true, force: true }));
+  const activation = parseStrictJson(await readFile(resolve(root, checkpoint.workflow_activation_generation.record_path)));
   const paths = [
     'scripts/report-private-beta-readiness.mjs',
     'tools/dosai-acceptance/src/strict-json.mjs',
-    'docs/development/private-beta-critical-path-status.json',
+    'docs/development/private-beta-critical-path-status-v2.json',
     workflowPath,
     ...checkpoint.bound_inputs.map(({ path }) => path),
+    ...Object.keys(activation.inputs),
   ];
   for (const path of new Set(paths)) {
     const target = resolve(fixtureRoot, path);
@@ -162,7 +164,7 @@ async function isolatedAssessment(t) {
   )).href);
   // Prove the fixture is valid before changing only its workflow bytes.
   assert.equal((await assess()).release_status, 'NO_GO');
-  return { assess, workflow: resolve(fixtureRoot, workflowPath) };
+  return { assess, fixtureRoot, workflow: resolve(fixtureRoot, workflowPath) };
 }
 
 test('readiness rejects workflow drift while checkpoint digest remains unchanged', async t => {
@@ -177,4 +179,55 @@ test('readiness fails closed when the bound workflow is missing', async t => {
   const { assess, workflow } = await isolatedAssessment(t);
   await rm(workflow);
   await assert.rejects(assess, { code: 'ENOENT' });
+});
+
+test('readiness rejects changed candidate and historical workflow inputs', async t => {
+  for (const path of [
+    'docs/proposals/p3-native-builder-host-feasibility-diagnostic.yml',
+    'docs/proposals/p3-native-builder-host-feasibility-pre-diagnostic.yml',
+    'scripts/p3-binfmt-diagnostic.py',
+  ]) {
+    const { assess, fixtureRoot } = await isolatedAssessment(t);
+    await writeFile(resolve(fixtureRoot, path), 'changed');
+    await assert.rejects(assess, { message: 'PRIVATE_BETA_ACTIVATION_INPUT_CHANGED' });
+  }
+});
+
+test('readiness rejects a changed activation binding and preserves historical checkpoint', async t => {
+  const { assess, fixtureRoot } = await isolatedAssessment(t);
+  await writeFile(resolve(fixtureRoot, checkpoint.workflow_activation_generation.record_path), '{}');
+  await assert.rejects(assess, { message: 'PRIVATE_BETA_INPUT_CHANGED' });
+  const parent = parseStrictJson(await readFile(resolve(root, checkpoint.supersedes.path)));
+  assert.equal(parent.record_version, 1);
+  assert.deepEqual(parent.source_only_repair_candidate_validation, checkpoint.source_only_repair_candidate_validation);
+  assert.equal(parent.release_status, 'NO_GO');
+  assert.equal(checkpoint.record_version, 2);
+  assert.equal(checkpoint.workflow_activation_generation.dispatch_authorized, false);
+});
+
+test('activation cannot promote historical runtime gates or declare release readiness', async t => {
+  for (const promote of [
+    value => { value.gates[3].status = 'PASS'; },
+    value => { value.gates = []; },
+    value => { value.release_status = 'GO_FOR_SUPERVISED_FULL_FUNCTIONALITY_TESTING'; },
+  ]) {
+    const { assess, fixtureRoot } = await isolatedAssessment(t);
+    const altered = structuredClone(checkpoint);
+    promote(altered);
+    await writeFile(resolve(fixtureRoot, 'docs/development/private-beta-critical-path-status-v2.json'), JSON.stringify(altered));
+    await assert.rejects(assess, { message: 'PRIVATE_BETA_GATE_STATE_CHANGED' });
+  }
+});
+
+test('activation rejects checkpoint-forged input digests and dispatch authority', async t => {
+  const { assess, fixtureRoot } = await isolatedAssessment(t);
+  const altered = structuredClone(checkpoint);
+  const path = altered.workflow_activation_generation.record_path;
+  const record = parseStrictJson(await readFile(resolve(fixtureRoot, path)));
+  record.authorities.workflow_dispatch = true;
+  const bytes = Buffer.from(JSON.stringify(record));
+  await writeFile(resolve(fixtureRoot, path), bytes);
+  altered.bound_inputs.find(binding => binding.path === path).sha256 = sha256(bytes);
+  await writeFile(resolve(fixtureRoot, 'docs/development/private-beta-critical-path-status-v2.json'), JSON.stringify(altered));
+  await assert.rejects(assess, { message: 'PRIVATE_BETA_ACTIVATION_REJECTED' });
 });
