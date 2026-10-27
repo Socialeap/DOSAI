@@ -167,3 +167,14 @@ autofs/binfmt stack remains rejected and is not confirmed runner evidence.
 Owner source review precedes any separate activation preparation. A later
 dispatch requires fresh exact approval; no retry, mutation or executor is
 authorized. BETA-CP-004/005/006 remain NO_GO. No Lovable action is required.
+
+## Prepared separate attribution workflow
+
+The [failure-attribution activation increment](p3-kernel-writer-attribution-workflow-activation-evidence.md)
+adds a separate manual `p3-kernel-writer-attribution-diagnostics.yml`, embedding
+PR #13's exact successor while preserving both earlier workflows and all native
+and binfmt rejection predicates. A narrow, hash-bound source-test successor
+admits only that exact workflow; historical source-record bytes remain intact.
+Owner review and merge precede fresh merged-SHA/ref/digest and zero-cost checks,
+then a separate exact one-dispatch authorization. This preparation dispatches
+nothing and supplies no executor, mutation, build, guest or paid authority.

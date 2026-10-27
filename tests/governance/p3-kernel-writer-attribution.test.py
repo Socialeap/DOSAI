@@ -278,9 +278,28 @@ class AttributionTests(unittest.TestCase):
         self.assertFalse(record['observed_failure']['rejection_stage_known'])
         self.assertEqual(set(record['failure_codes']), diag.FAILURE_CODES)
         self.assertTrue(all(value is False for value in record['authorities'].values()))
+        # Source-preparation history stays immutable; only this exact activation successor is allowed.
+        activation = json.loads((ROOT / 'docs/architecture/p3-kernel-writer-attribution-workflow-activation-record.json').read_text())
+        workflow_path = '.github/workflows/p3-kernel-writer-attribution-diagnostics.yml'
+        workflow_digest = '0b3b12bb600a67274acb8a7e211edf22cc4741539fbe8189c75da0595d2646b6'
+        guard_path = 'tests/governance/p3-kernel-writer-attribution.test.py'
+        transition = activation['guard_transition']
+        self.assertEqual(activation['status'], 'PREPARED_FOR_REVIEW_NOT_DISPATCHED')
+        self.assertEqual(activation['workflow_path'], workflow_path)
+        self.assertEqual(activation['workflow_sha256'], workflow_digest)
+        self.assertEqual(set(activation['authorities']), {'merge', 'workflow_activation', 'workflow_dispatch',
+                         'executor', 'host_mutation', 'build', 'guest_execution', 'paid_activity', 'capability_acceptance'})
+        self.assertTrue(all(value is False for value in activation['authorities'].values()))
+        self.assertEqual(transition['path'], guard_path)
+        self.assertEqual(transition['preimage_sha256'], record['inputs'][guard_path])
+        self.assertEqual(transition['postimage_sha256'], activation['inputs'][guard_path])
         for path, digest in record['inputs'].items():
-            self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), digest, path)
+            expected = transition['postimage_sha256'] if path == guard_path else digest
+            self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(), expected, path)
+        self.assertEqual(hashlib.sha256((ROOT / workflow_path).read_bytes()).hexdigest(), workflow_digest)
         for path in (ROOT / '.github/workflows').glob('*.yml'):
+            if path == ROOT / workflow_path:
+                continue
             self.assertNotIn('p3-kernel-writer-diagnostic-v2.py', path.read_text())
             self.assertNotIn('DOSAI_KERNEL_WRITER_DIAGNOSTIC_FAILURE_V2', path.read_text())
 
