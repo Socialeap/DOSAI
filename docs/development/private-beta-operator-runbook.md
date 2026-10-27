@@ -122,3 +122,11 @@ The [source-only removal plan](p3-exact-binfmt-removal-plan.md) pins the four
 LLVM/Python registrations observed in run 40552566410 and models fail-closed
 removal followed by every original predicate. It supplies no executor or new
 workflow. All actual host mutation and dispatch remain separately gated.
+
+## Kernel and writer-boundary review
+
+The [source-only kernel review](p3-binfmt-kernel-single-writer-review.md)
+finds that successful byte counts are not removal-causality proof and the current
+plan has not established a single-writer boundary. It recommends a versioned
+source-contract revision before an effectful executor. No executor, dispatch,
+writer exclusion or new runtime authority is supplied by that review.
