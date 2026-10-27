@@ -1,0 +1,61 @@
+{
+  "record_type": "DOSAI_NATIVE_PROFILE_OFFLINE_FUNCTIONAL_COVERAGE",
+  "record_version": 1,
+  "status": "PREPARED_SOURCE_ONLY_PENDING_OWNER_REVIEW",
+  "based_on": "1615630d196468a6ee88a0b41767a0ea46da7f45",
+  "role": "UNCLASSIFIED_ASSISTANT_NO_SPECIALIZED_ROLE",
+  "namespace_correction_merged": true,
+  "scope": "EXISTING_V2_FIXTURE_FULL_CORPUS_AND_MULTI_STEP_SCENARIOS_ONLY",
+  "runtime_status": "NO_GO",
+  "inputs": {
+    "tests/governance/p3-native-host-profile-v2-functional.test.mjs": "31f48c251e6d318ca814701d945edc11618eaee6c5fcfb823b14e615c6ecc7fb",
+    "tests/governance/p3-native-host-profile.test.mjs": "e3c39f822cde8c7b58a5d1e8534ce5f94a9354f124d5c4b80aa444714fd3e2d4",
+    "tests/governance/p3-native-host-profile-v2.test.mjs": "1c825a0907f02c52f694f9cea4495c87a9b53a1aaf3766de4a5b345610c9d052",
+    "tests/fixtures/p3/native-host-profile-model-v2.mjs": "593c4dc76d5237e9bfaf529c9042ab5fb097297a3dc94d9db6f39056a6119f5b",
+    "docs/architecture/p3-native-host-profile-namespace-correction-v2.json": "e6c417ed42ff8d36f4ee90d123ac17397198f440fcacad3f3b4edaa23066686e",
+    "docs/architecture/p3-native-host-profile-v1.json": "c02a6e17a923a2539a4b5300a4ad315f594fa6a9093b884a90d08b6c7e5059c7",
+    "docs/architecture/p3-native-writer-boundary-design-v1.json": "e5d0b76f10e4be7f93eff2f67d9c4a1a0e2e5950d22ce9aaa9d89390aca5564c",
+    "docs/architecture/p3-native-host-profile-source-record.json": "7b97b24178e276039a9c9cfcf4efef64de7b7314c3d2603626c7f447d0bfda50"
+  },
+  "coverage": {
+    "original_adversarial_groups_on_v2": 13,
+    "additional_functional_groups": 4,
+    "corpus_and_source_binding_groups": 1,
+    "namespace_type_matrix_cases_retained": 60
+  },
+  "limitations": [
+    "NO_RUNTIME_VERIFIER_OR_EXECUTOR",
+    "NO_DURABLE_NONCE_OR_REPLAY_STORE",
+    "NO_TRUST_REGISTRY_OR_WRITER_ENFORCEMENT",
+    "REPINS_ARE_SYNTHETIC_TEST_SETUP_ONLY",
+    "NO_HOST_OR_PROVIDER_EVIDENCE",
+    "NO_APP_FUNCTIONAL_ACCEPTANCE"
+  ],
+  "authorities": {
+    "merge": false,
+    "provisioning": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "executor": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false
+  },
+  "validation": {
+    "node_version": "24.18.0",
+    "focused_test_groups": 37,
+    "passed": 37,
+    "failed": 0,
+    "readiness_exit_code": 2,
+    "readiness_status": "NO_GO",
+    "readiness_blockers": [
+      "BETA-CP-004",
+      "BETA-CP-005",
+      "BETA-CP-006"
+    ],
+    "physical_host_evidence": false,
+    "app_functional_acceptance": false
+  }
+}
