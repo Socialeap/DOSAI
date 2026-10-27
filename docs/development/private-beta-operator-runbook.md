@@ -178,3 +178,14 @@ admits only that exact workflow; historical source-record bytes remain intact.
 Owner review and merge precede fresh merged-SHA/ref/digest and zero-cost checks,
 then a separate exact one-dispatch authorization. This preparation dispatches
 nothing and supplies no executor, mutation, build, guest or paid authority.
+
+## Consolidated native-host and writer-boundary feasibility
+
+The [consolidated source-only packet](p3-native-writer-feasibility-packet.md)
+reconciles the latest attributed run with the earlier registration inventory and
+the unestablished kernel/writer trust boundary. Runtime remains NO_GO. It
+recommends reviewing a preprovisioned clean native-amd64 host profile for two
+independent hosts; availability and zero cost remain unproven. All current
+predicates and historical source/workflow bytes remain intact. Source review,
+host-profile/trust acceptance, activation and any exact future dispatch remain
+separate gates. No executor, host change, build, guest or paid activity is added.

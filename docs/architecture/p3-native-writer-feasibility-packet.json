@@ -1,0 +1,207 @@
+{
+  "record_type": "DOSAI_CONSOLIDATED_NATIVE_HOST_WRITER_FEASIBILITY",
+  "record_version": 1,
+  "status": "SOURCE_ONLY_FEASIBILITY_PACKET_PENDING_OWNER_REVIEW",
+  "based_on": "3b273cb8d861be3810918118f02187fa27b812c4",
+  "role": "UNCLASSIFIED_ASSISTANT_NO_SPECIALIZED_ROLE",
+  "current_runtime_decision": "NO_GO",
+  "source_packet_decision": "GO_FOR_SOURCE_REVIEW_ONLY",
+  "operational_credit_ceiling": 120,
+  "maximum_charge_usd": 0,
+  "inputs": {
+    "docs/decisions/0018-native-linux-independent-builders.md": "834e76a5943406908e4ef077e1bd230c63d4b2ef36e953447a4ce8fdc765584d",
+    "docs/development/p3-binfmt-kernel-single-writer-review.md": "0af7c78670f757e845c6bf034084e660c212a29413be0c1b0e5f096fbe5b7329",
+    "docs/architecture/p3-exact-binfmt-removal-plan.json": "f9ce860088aa2d85fb123aeee0ad882a9b8ad58085a0bea001a78353a593b772",
+    "docs/architecture/p3-exact-binfmt-removal-contract-v2.json": "65338e7d60401f3967bfb9a44ca32488167497bc3f147c0103a99a62576b7124",
+    "tools/supervised-execution/binfmt-removal-model.mjs": "2abd06bff10628aac765d70e26657d6cc2b40c6bb4a15676cd5d141dc6faa416",
+    "tools/supervised-execution/binfmt-removal-model-v2.mjs": "bb35aaaa3c6b2ec7980921647614638be2f7a7bd800e0e507fca9c54f472cffb",
+    "scripts/p3-binfmt-diagnostic.py": "15eadfc0a99602b67eb5b8359d741a76d10d645b58bdf8b057d8b3541c7e4a3d",
+    "scripts/p3-kernel-writer-diagnostic.py": "6f40494ee7e3c00fa0557ef2f8779d67dd1e44dd9a1301d32b149ecc58450185",
+    "scripts/p3-kernel-writer-diagnostic-v2.py": "9d1805b38d2c4fe299d86e696ae2993324bd1403e4f2dff3140bc8b560234294",
+    ".github/workflows/p3-native-builder-host-feasibility.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c",
+    ".github/workflows/p3-kernel-writer-diagnostics.yml": "4d05e479c2009693a5d20c56fa94fdef085e2b1997ad16aaa5fbda5ca1790994",
+    ".github/workflows/p3-kernel-writer-attribution-diagnostics.yml": "0b3b12bb600a67274acb8a7e211edf22cc4741539fbe8189c75da0595d2646b6",
+    "docs/architecture/p3-kernel-writer-attribution-workflow-activation-record.json": "cda1e297d4338fe5373ac77940059dfa3fa73a8515e3c758b54a34aa74335713",
+    "docs/architecture/p3-kernel-writer-attribution-source-record.json": "7fbf794d501a73875338027df75a50cd7137c271dab41649d17020ea1a843423",
+    "docs/development/private-beta-critical-path-status-v2.json": "ec3df7f247e695017c32273400391b3da7ac46d2a68fd1b750d9bd49a9a88a33",
+    "tests/governance/p3-native-writer-feasibility.test.mjs": "191c947e807f9bcd76591b6033db610e1c02a633cce2d6fbd429b6ae0b79eddd",
+    "tests/governance/p3-native-writer-feasibility.test.py": "0f4719610dca8dad855176e4bcd7b58dd30230a5cb1e7b24308a813d6e87558f",
+    "tests/fixtures/p3/native-writer-boundary-fixture.mjs": "6b4d1874f7f7b064c0d2f819e21fffbcb96f6a7ca13e028170a7289667d856eb",
+    "tests/fixtures/p3/native-writer-feasibility-cases.json": "6d91886ed85be1d92936a8bf21ba3bd04c6a4cb11f23c6fc30de8af4318df934"
+  },
+  "observations": [
+    {
+      "run_id": "40552566410",
+      "url": "https://github.com/Socialeap/DOSAI/actions/runs/40552566410",
+      "rejection_code": "BINFMT_MISC_INTERPRETER_ACTIVE",
+      "registration_count": 4,
+      "is_current_host_state": false,
+      "limit": "Registration files observed on those historical hosts; not proof of CPU emulation or current registrations."
+    },
+    {
+      "run_id": "40563905019",
+      "url": "https://github.com/Socialeap/DOSAI/actions/runs/40563905019",
+      "rejection_code": "KERNEL_WRITER_DIAGNOSTIC_REJECTED",
+      "internal_stage_known": false,
+      "limit": "Generic v1 collector rejection; no kernel/writer record."
+    },
+    {
+      "run_id": "40568691301",
+      "url": "https://github.com/Socialeap/DOSAI/actions/runs/40568691301",
+      "commit": "3b273cb8d861be3810918118f02187fa27b812c4",
+      "workflow_sha256": "0b3b12bb600a67274acb8a7e211edf22cc4741539fbe8189c75da0595d2646b6",
+      "attempt": 1,
+      "jobs_rejected": 2,
+      "rejection_code": "MOUNTINFO_TARGET_FS_OR_ROOT",
+      "exact_topology_known": false,
+      "registration_inventory_available": false,
+      "kernel_writer_record_available": false,
+      "limit": "At least one target row failed the root/filesystem conjunction. No inference about autofs, current entries, package identity or writer state."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "NH-01",
+      "name": "Native execution profile",
+      "current_state": "PARTIAL_ARCHITECTURE_CONTEXT_ONLY",
+      "required_evidence": "Fresh Linux x86-64, Docker amd64, no emulation; repeat all original native predicates."
+    },
+    {
+      "id": "NH-02",
+      "name": "Two independent hosts",
+      "current_state": "MISSING_QUALIFYING_RECEIPTS",
+      "required_evidence": "Two fresh distinct host identities and writable disks/daemons/caches; two jobs alone are insufficient."
+    },
+    {
+      "id": "NH-03",
+      "name": "Pinned builder inputs",
+      "current_state": "NO_VERIFIED_BUILDER_ARCHIVE",
+      "required_evidence": "Same verified OCI archive and sealed source/recipe/defconfig; provenance, SBOM and output comparison remain separate."
+    },
+    {
+      "id": "NH-04",
+      "name": "Effective registry identity and emptiness",
+      "current_state": "LATEST_DIAGNOSTIC_REJECTED",
+      "required_evidence": "Original strict mount predicate, no registration files including disabled entries, stable namespaces and actual effective registry for later execution."
+    },
+    {
+      "id": "NH-05",
+      "name": "Deployed kernel and reviewed source",
+      "current_state": "NO_DEPLOYED_SOURCE_MATCH",
+      "required_evidence": "Actual deployed identity bound to exact vendor/source review; package metadata and upstream reference review alone are insufficient."
+    },
+    {
+      "id": "NH-06",
+      "name": "Writer boundary and residual trust",
+      "current_state": "NOT_ESTABLISHED",
+      "required_evidence": "Trusted inventory and documented boundary for privileged actors, active cooperating fence, explicit owner-accepted host/provider assumption; snapshots are not exclusion."
+    },
+    {
+      "id": "NH-07",
+      "name": "Scoped privilege and rechecks",
+      "current_state": "NOT_ESTABLISHED",
+      "required_evidence": "Enforced bounded privilege for any separately accepted preparation; recheck after privilege drop. No job-wide sudo revocation claim."
+    },
+    {
+      "id": "NH-08",
+      "name": "Independent evidence admission",
+      "current_state": "NO_RUNTIME_VERIFIER",
+      "required_evidence": "Independent trusted issuer/verifier with exact source/job/registry/fence bindings, expiry/revocation checks; fixture hashes are not authentication."
+    },
+    {
+      "id": "NH-09",
+      "name": "Execution and acceptance evidence",
+      "current_state": "ZERO_BUILDER_RECEIPTS",
+      "required_evidence": "Independent build/isolation/cleanup receipts, accepted guest artifacts and subsequent P3 acceptance; no diagnostic or model result promotes these gates."
+    }
+  ],
+  "original_predicates": [
+    "RUNNER_ENVIRONMENT_MISMATCH",
+    "RUNNER_OS_MISMATCH",
+    "RUNNER_ARCH_MISMATCH",
+    "UNAME_MACHINE_MISMATCH",
+    "IMAGE_OS_MISSING",
+    "IMAGE_VERSION_MISSING",
+    "DMI_UUID_UNREADABLE",
+    "DMI_UUID_READ_FAILED",
+    "DMI_UUID_EMPTY",
+    "DOCKER_ARCH_QUERY_FAILED",
+    "DOCKER_ARCH_MISMATCH",
+    "BINFMT_MISC_DIRECTORY_MISSING",
+    "BINFMT_DIAGNOSTIC_REJECTED",
+    "BINFMT_MISC_SCAN_FAILED",
+    "BINFMT_MISC_INTERPRETER_ACTIVE",
+    "RECEIPT_EMISSION_FAILED"
+  ],
+  "additional_active_predicates": [
+    "KERNEL_WRITER_DIAGNOSTIC_REJECTED"
+  ],
+  "removal_contract_requirements": [
+    "INDEPENDENT_TRUSTED_VERIFIER",
+    "EXACT_CONTRACT_DIGEST",
+    "CURRENT_SOURCE_AND_JOB",
+    "DEPLOYED_KERNEL_AND_REVIEWED_SOURCE_IDENTITY",
+    "SAME_EFFECTIVE_REGISTRY_AND_NAMESPACES",
+    "ACTIVE_COOPERATING_WRITER_FENCE",
+    "SCOPED_PRIVILEGE_LIFETIME",
+    "CURRENT_WRITER_INVENTORY",
+    "EXPLICIT_HOST_PROVIDER_TRUST_DECISION",
+    "DENY_UNKNOWN_EXPIRED_REVOKED_OR_MISMATCHED_EVIDENCE"
+  ],
+  "recommended_route": "REVIEW_PREPROVISIONED_CLEAN_NATIVE_HOST_PROFILE",
+  "alternative_host_availability": "NOT_ESTABLISHED",
+  "alternative_zero_cost_eligibility": "NOT_ESTABLISHED",
+  "owner_host_provider_trust_decision": "NOT_ACCEPTED",
+  "diagnostics_can_satisfy_writer_boundary": false,
+  "qualifying_builder_receipts": 0,
+  "route_decisions": {
+    "unchanged_observed_hosted_runner_path": "NO_GO_NO_QUALIFYING_HOST_RECEIPTS",
+    "registration_removal_executor": "NO_GO_NO_TRUSTED_WRITER_BOUNDARY",
+    "preprovisioned_clean_native_hosts": "SOURCE_PROFILE_REVIEW_ONLY_AVAILABILITY_AND_TRUST_UNPROVEN",
+    "emulation_paid_runners_or_one_shared_host": "EXCLUDED"
+  },
+  "next_gate": "OWNER_REVIEW_OF_CONSOLIDATED_PACKET_AND_NATIVE_HOST_PROFILE_BEFORE_ANY_ACTIVATION_OR_EXACT_DISPATCH_REQUEST",
+  "proofs": {
+    "source_match_verified": false,
+    "single_writer_exclusion_proven": false,
+    "runtime_admission": false,
+    "execution_authorized": false
+  },
+  "authorities": {
+    "merge": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "executor": false,
+    "host_mutation": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false,
+    "provisioning": false
+  },
+  "validation": {
+    "status": "PASSED_OFFLINE_SOURCE_VALIDATION",
+    "node_version": "24.18.0",
+    "focused_node_checks": 64,
+    "new_node_test_groups": 8,
+    "negative_boundary_substitutions": 15,
+    "original_predicate_missing_or_false_cases": 32,
+    "new_python_tests": 3,
+    "python_versions": [
+      "3.9.6",
+      "3.15.0"
+    ],
+    "readiness_exit_code": 2,
+    "readiness_status": "NO_GO",
+    "readiness_blockers": [
+      "BETA-CP-004",
+      "BETA-CP-005",
+      "BETA-CP-006"
+    ],
+    "live_queries_executed": 0,
+    "dispatches": 0,
+    "builds": 0,
+    "guest_executions": 0,
+    "paid_activity": false
+  }
+}

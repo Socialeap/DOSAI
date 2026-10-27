@@ -1,0 +1,21 @@
+{
+  "schema": "DOSAI_NATIVE_WRITER_FEASIBILITY_NEGATIVE_FIXTURES_V1",
+  "fixture_only": true,
+  "cases": [
+    {"id":"package-metadata-is-not-kernel-source-match","requirement":"NH-05","patches":[{"path":["trace","boundary","kernel_match"],"value":"PACKAGE_METADATA_ONLY"}]},
+    {"id":"upstream-source-is-not-vendor-match","requirement":"NH-05","patches":[{"path":["trace","boundary","kernel_match"],"value":"UPSTREAM_REFERENCE_ONLY"}]},
+    {"id":"inactive-unit-snapshot-is-not-writer-boundary","requirement":"NH-06","patches":[{"path":["trace","boundary","writer_state"],"value":"FOUR_UNITS_INACTIVE"}]},
+    {"id":"workflow-queue-is-not-a-writer-fence","requirement":"NH-06","patches":[{"path":["trace","boundary","fence","state"],"value":"WORKFLOW_CONCURRENCY"}]},
+    {"id":"local-lock-is-not-a-writer-fence","requirement":"NH-06","patches":[{"path":["trace","boundary","fence","state"],"value":"LOCAL_LOCK_ONLY"}]},
+    {"id":"unaccepted-provider-assumption-denies","requirement":"NH-06","patches":[{"path":["trace","boundary","trust_assumption"],"value":"NOT_ACCEPTED"}]},
+    {"id":"job-wide-sudo-is-not-scoped-privilege","requirement":"NH-07","patches":[{"path":["trace","boundary","fence","privilege_lifetime"],"value":"JOB_ACCOUNT_SUDO_REMAINS"}]},
+    {"id":"revoked-cooperative-fence-denies","requirement":"NH-08","patches":[{"path":["trace","boundary","fence","state"],"value":"REVOKED"}]},
+    {"id":"expired-evidence-denies-at-exact-boundary","requirement":"NH-08","patches":[{"path":["trust","evaluation_time_ms"],"value":5000}]},
+    {"id":"caller-runtime-schema-is-not-authentication","requirement":"NH-08","patches":[{"path":["trust","schema"],"value":"DOSAI_REAL_VERIFIER_ASSERTION"}]},
+    {"id":"changed-mount-namespace-denies","requirement":"NH-04","patches":[{"path":["trace","boundary","registry","mount_namespace"],"value":"mnt:[999]"}]},
+    {"id":"substitute-empty-registry-denies","requirement":"NH-04","patches":[{"path":["trace","recheck","inventory","registry","effective_scope"],"value":"SUBSTITUTE_EMPTY_MOUNT"}]},
+    {"id":"disabled-registration-is-still-a-registration","requirement":"NH-04","patches":[{"path":["trace","initial","entries",0,"enabled"],"value":false}]},
+    {"id":"new-provider-cannot-reuse-the-github-removal-profile","requirement":"NH-01","patches":[{"path":["trace","host","runner_environment"],"value":"owner-controlled"},{"path":["trace","boundary","host","runner_environment"],"value":"owner-controlled"},{"path":["trust","expected_host","runner_environment"],"value":"owner-controlled"}]},
+    {"id":"a-different-image-cannot-reuse-historical-pins","requirement":"NH-03","patches":[{"path":["trace","host","image_version"],"value":"NEW-IMAGE"},{"path":["trace","boundary","host","image_version"],"value":"NEW-IMAGE"},{"path":["trust","expected_host","image_version"],"value":"NEW-IMAGE"}]}
+  ]
+}
