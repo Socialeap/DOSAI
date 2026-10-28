@@ -1,0 +1,32 @@
+{
+  "record_type": "P3_TOPOLOGY_DIAGNOSTIC_SOURCE_RECORD",
+  "record_version": 1,
+  "status": "SOURCE_ONLY_NOT_ACTIVATED",
+  "based_on": "dcf48aa2f6eeefd7aaf4801adaead9dee36ce219",
+  "runtime_status": "NO_GO",
+  "inputs": {
+    "scripts/p3-mount-topology-diagnostic-v1.py": "3d54ef757a98812cf681aae6caf92b58bc20b4948809114099e4b28a9ed6b920",
+    "tests/governance/p3-mount-topology-diagnostic.test.py": "9503b2164d2bd6a9d2409f44fb9c8288d240a18127a43a18976fcfd5d12b3ecf",
+    "docs/proposals/p3-mount-topology-diagnostics-v1.yml": "72ac419f1381fd95605c96b1859e26f69b73b94facef511c830418ee262faa49",
+    "scripts/p3-kernel-writer-diagnostic-v2.py": "9d1805b38d2c4fe299d86e696ae2993324bd1403e4f2dff3140bc8b560234294",
+    ".github/workflows/p3-kernel-writer-attribution-diagnostics.yml": "0b3b12bb600a67274acb8a7e211edf22cc4741539fbe8189c75da0595d2646b6",
+    "docs/architecture/p3-native-host-profile-v1.json": "c02a6e17a923a2539a4b5300a4ad315f594fa6a9093b884a90d08b6c7e5059c7"
+  },
+  "validation": {
+    "offline_python_tests": 9,
+    "existing_node_checks": 65,
+    "node_version": "24.18.0",
+    "live_collector_invocations": 0
+  },
+  "authorities": {
+    "provisioning": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "executor": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false
+  }
+}
