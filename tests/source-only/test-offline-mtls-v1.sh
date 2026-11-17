@@ -17,13 +17,15 @@ if ! printf '%s  %s\n' \
 fi
 
 workdir=$(/usr/bin/mktemp -d /private/tmp/dosai-mtls-v1.XXXXXXXX)
-trap '/bin/rm -f -- "$workdir/offline-mtls"; /bin/rmdir -- "$workdir"' EXIT
+trap '/bin/rm -f -- "$workdir/offline-mtls-v1" "$workdir/offline-mtls-device-v1"; /bin/rmdir -- "$workdir"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-/usr/bin/clang -mmacosx-version-min=26.0 -std=c17 -O2 -Wall -Wextra -Werror -isystem "$openssl_prefix/include" \
-    tests/fixtures/transport/offline-mtls-v1.c "$ssl_archive" "$crypto_archive" \
-    -o "$workdir/offline-mtls"
-# Apply a per-process OS sandbox. Refuse to run if it cannot be installed.
-/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/sandbox-exec \
-    -p '(version 1) (allow default) (deny network*) (deny file-write*) (deny process-fork)' \
-    "$workdir/offline-mtls"
+for fixture in offline-mtls-v1 offline-mtls-device-v1; do
+    /usr/bin/clang -mmacosx-version-min=26.0 -std=c17 -O2 -Wall -Wextra -Werror \
+        -isystem "$openssl_prefix/include" "tests/fixtures/transport/$fixture.c" \
+        "$ssl_archive" "$crypto_archive" -o "$workdir/$fixture"
+    # Apply a per-process OS sandbox. Refuse to run if it cannot be installed.
+    /usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/sandbox-exec \
+        -p '(version 1) (allow default) (deny network*) (deny file-write*) (deny process-fork)' \
+        "$workdir/$fixture"
+done

@@ -1,8 +1,8 @@
 # Two-Mac mutual TLS device test runbook v1
 
 **Current decision — NO_GO for a device test.** This runbook is a source
-proposal. The merged reference fixture uses in-memory transport. A separate
-reviewed device-test candidate, accepted P3 evidence, and fresh owner
+proposal. The candidate below has offline evidence. A reviewed device
+transport and local operator driver, accepted P3 evidence, and fresh owner
 authorization are required before a listener can be armed.
 
 - **Baseline** — [PR #35](https://github.com/Socialeap/DOSAI/pull/35) merged into
@@ -103,9 +103,46 @@ each ceremony. Record `NO_GO` on any missing or unexpected result. Even a
 pass concerns this one fixture and these two devices. It grants no P5 exit,
 deployment, full-beta, or production authority.
 
+## Standalone candidate and offline evidence
+
+The [endpoint candidate](../../tools/mtls-device-test/device-v1.h), based on
+[merged PR #36](https://github.com/Socialeap/DOSAI/pull/36) at `0179400`,
+implements independent M1 and M4 state machines using the same
+[protocol primitives](../../tools/mtls-device-test/protocol-v1.h) as the
+reference fixture. Each endpoint checks its own role-ordered certificate
+comparison, exact private IPv4 scope and one-shot attachment. The driver
+supplies scoped endpoint observations and elapsed monotonic time. The endpoint
+processes only bounded encrypted bytes and explicit local events.
+
+The M4 requires a complete authenticated frame, authenticated TLS closure,
+and the driver's transport teardown before exposing one typed untrusted
+proposal. A separate local interface binds a single plan digest and checks
+denial, exact local confirmation, expiry, stop and policy invalidation. The
+confirmation disposition has no grant or evaluation authority. The M1
+reports delivery unknown after TLS closure.
+
+From a clean checkout on the pinned arm64 OpenSSL host, run both test
+executables in the existing network-denied sandbox:
+
+```sh
+"$HOME/.local/bin/codex-heavy" /bin/sh tests/source-only/test-offline-mtls-v1.sh
+```
+
+The five candidate groups exercise real TLS over in-memory transport and
+synthetic local decisions. They exercise the denial, confirmation and
+revocation sequence without running fixture evaluation. The separate eight
+reference groups cover wire-profile, replay, certificate and framing negatives.
+The candidate accepts no sockets and contains no bind, listen, connect,
+application import or durable receipt path. A future reviewed driver must
+verify actual socket metadata and teardown, enforce deadlines from trusted
+local clocks, and obtain trusted operator input. Any fixture evaluation still
+requires the existing local policy preflight, exact owner approval and
+verified local receipt. The source candidate supplies none of the pending
+phase or device activation evidence.
+
 ## Source change classification
 
-This documentation increment requires no backend migration, secrets, runtime
+This source and test increment requires no backend migration, secrets, runtime
 configuration, deployment, Lovable handoff, frontend publish, or device QA.
 Listener activation, host changes, workflow dispatch and paid activity are
 outside the increment. A future host or release action requires its own
