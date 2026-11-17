@@ -49,3 +49,25 @@ Reuse the ADR's channel boundaries and standard cryptographic libraries.
 P5 remains gated on P3. The proposal supplies no new phase acceptance or
 production authority and leaves the native-only, single-mount and writer
 exclusion requirements in force.
+
+## Offline receiver fixture
+
+Run the isolated fixture tests with pinned Node 24.18.0:
+
+```sh
+node --test tests/security/offline-fixture-receiver.test.mjs
+```
+
+The fixture accepts injected bytes for one frame per synthetic session. The
+40-byte header contains version, direction, 16-byte peer and session IDs, a
+big-endian sequence number and a big-endian payload length. A 32-byte HMAC
+covers the domain label, header and payload. The payload cap is 128 bytes.
+After end-of-input, the receiver checks authentication and session context
+before comparing the exact allowed payload bytes. Its output is an untrusted
+proposal for review. Errors close the fixture session and return fixed reasons.
+
+Tests cover every two-chunk split boundary, malformed and truncated input,
+authenticator and context mismatch, replay in a closed or different session,
+and authority-bearing payloads. Synthetic callers provide session IDs and keys.
+This fixture leaves live enrollment, fresh session creation, persistence,
+cross-process replay protection, and LAN integration to the gated transport work.
