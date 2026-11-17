@@ -105,3 +105,24 @@ This increment adds documentation only. A listener, credential creation, host
 configuration, workflow dispatch, deployment, and device QA require separate
 authorization. There is no backend migration, secret, runtime configuration,
 Lovable handoff, or frontend publish for this PR.
+
+## Offline lifecycle verification
+
+Run both focused suites with pinned Node 24.18.0.
+
+```sh
+node --test tests/security/offline-peer-lifecycle.test.mjs tests/security/offline-fixture-receiver.test.mjs
+```
+
+The lifecycle fixture models one ceremony at a time with separate local
+confirmations, synthetic identities, and an injected monotonic clock. Rotation
+uses stop followed by fresh pairing. Restart starts empty and uses a distinct
+synthetic process generation supplied by the test. Each stage's ten-tick
+deadline is a test input. It does not set a runtime protocol limit.
+
+The fixture accepts modeled handshake evidence and one exact synthetic proposal.
+After admission, only the review binding remains active. A review check can
+require local approval or reject the request. It issues no approval, plan,
+grant, or execution. The receiver tests exercise byte-level framing separately.
+Real cryptographic negotiation, device enrollment, and key storage remain
+outside this evidence.
