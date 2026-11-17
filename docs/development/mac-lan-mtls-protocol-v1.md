@@ -219,3 +219,6 @@ The guarded run passed eight native test groups on arm64 macOS 27.2.1 using
 Apple clang 16 and the two archive digests enforced by the launcher. The
 existing 12 receiver and enrollment test groups and 65 P3 source regression
 checks passed on Node 24.18.0. The readiness report remained `NO_GO`.
+
+See the [bounded two-Mac test runbook](mac-lan-mtls-device-test-runbook-v1.md)
+for the proposed device-test prerequisites, local decisions, and stop criteria.
