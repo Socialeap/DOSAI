@@ -41,3 +41,22 @@ The repository change consists of a test fixture, a test suite and this note.
 Policy, approval, grant and audit authority stay with DOSAI. There is no workflow
 activation, backend migration, secret or environment configuration, frontend
 Publish, deployment or owner QA for this increment.
+
+## Delayed display consumption
+
+The buffered fixture retains up to one unsent frame per resident. A newer
+accepted observation replaces the frame. Approval and completion observations
+clear the slot and remain in DOSAI. Disconnect clears the slot immediately.
+Reconnect alone leaves it empty. Taking a frame at or after the five-second
+freshness threshold returns no frame, while the DOSAI view retains the last
+observation and shows stale status. Rejected observations do not replace a frame
+that is still eligible.
+
+The buffer is an in-memory simulation of delayed display consumption. Taking a
+frame transfers a test value once. It does not model Devalley delivery,
+acknowledgement, or recovery, and a superseded SessionStart may be discarded.
+A live consumer would need its initial resident behavior verified separately.
+
+```sh
+node --test tests/governance/devalley-display-buffer-fixture.test.mjs
+```
