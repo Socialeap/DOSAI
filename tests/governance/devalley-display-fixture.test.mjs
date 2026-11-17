@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createSyntheticDevalleyDisplayAdapter } from '../fixtures/spatial/devalley-display-adapter.mjs';
+import { createSyntheticDevalleyDisplayAdapter, createSyntheticDevalleyResidentSet } from '../fixtures/spatial/devalley-display-adapter.mjs';
 
 function event(generation, sequence, state = 'RUNNING') {
   return { generation, sequence, state };
@@ -104,4 +104,62 @@ test('closed input rejects authority, paths, unknown types and getters without r
   assert.throws(() => adapter.view(4999), { message: 'INVALID_FIXTURE_MONOTONIC_TIME' });
   assert.throws(() => adapter.observe(event(1, 2), NaN), { message: 'INVALID_FIXTURE_MONOTONIC_TIME' });
   assert.equal(adapter.view(5000).lastObservedSequence, 1);
+});
+
+test('M1 and M4 use distinct fixed identities even with matching generations and sequences', () => {
+  const residents = createSyntheticDevalleyResidentSet();
+  assert.ok(Object.isFrozen(residents));
+  assert.deepEqual(Object.keys(residents), ['m1', 'm4']);
+
+  const first = {};
+  for (const [node, resident] of Object.entries(residents)) {
+    resident.connect(1, 0);
+    first[node] = resident.observe(event(1, 1, 'QUEUED'), 1);
+    assert.equal(first[node].agent, `dosai-${node}-fixture`);
+    const work = resident.observe(event(1, 2), 2);
+    assert.equal(JSON.parse(work.stdin).session_id, JSON.parse(first[node].stdin).session_id);
+  }
+  assert.notEqual(JSON.parse(first.m1.stdin).session_id, JSON.parse(first.m4.stdin).session_id);
+  assert.equal(JSON.parse(first.m1.stdin).session_id, JSON.parse(running().frame.stdin).session_id);
+});
+
+test('M1 expiry, reconnect and old-generation rejection leave the M4 resident fresh', () => {
+  const { m1, m4 } = createSyntheticDevalleyResidentSet();
+  m1.connect(1, 0);
+  m4.connect(1, 0);
+  const first = m1.observe(event(1, 1), 1);
+  m4.observe(event(1, 1), 1);
+  m1.disconnect(1, 2);
+  m4.observe(event(1, 2), 4999);
+
+  assert.equal(m1.view(5001).state, 'STALE');
+  const activeM4 = m4.view(5001);
+  assert.equal(activeM4.state, 'RUNNING');
+  assert.equal(m1.connect(2, 5002), true);
+  assert.equal(m1.observe(event(1, 99), 5003), null);
+  assert.equal(m1.observe(event(2, 1), 5004), null);
+  assert.equal(m1.view(5004).state, 'STALE');
+  assert.deepEqual(m1.observe(event(2, 2), 5005), first);
+  assert.equal(m1.view(5005).state, 'RUNNING');
+  assert.deepEqual(m4.view(5005), activeM4);
+});
+
+test('synthetic observations cannot select another resident or expose authority', () => {
+  const { m1, m4 } = createSyntheticDevalleyResidentSet();
+  m1.connect(1, 0);
+  m4.connect(1, 0);
+  m1.observe(event(1, 1), 0);
+  m4.observe(event(1, 1), 0);
+  const other = m4.view(1);
+  for (const extra of [
+    { resident: 'm4' },
+    { session_id: 'untrusted' },
+    { agent: 'untrusted' },
+    { requires_action: true },
+  ]) assert.equal(m1.observe({ ...event(1, 2), ...extra }, 1), null);
+
+  assert.equal(m1.view(1).lastObservedSequence, 1);
+  assert.equal(m1.observe(event(1, 2, 'AWAITING_APPROVAL'), 2), null);
+  assert.equal(m1.view(2).state, 'AWAITING_APPROVAL');
+  assert.deepEqual(m4.view(2), other);
 });

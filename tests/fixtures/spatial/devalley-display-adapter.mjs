@@ -1,20 +1,28 @@
 // Source-only model. Hook input is returned as data for synthetic tests.
-const agent = 'dosai-m1-fixture';
-const sessionId = 'c76c9a4b-b095-45ed-bcb8-01e48effb714';
+const m1Identity = {
+  agent: 'dosai-m1-fixture',
+  sessionId: 'c76c9a4b-b095-45ed-bcb8-01e48effb714',
+  prompt: 'Synthetic DOSAI M1 display observation',
+};
+const m4Identity = {
+  agent: 'dosai-m4-fixture',
+  sessionId: '0150137c-bacf-48f6-9448-de75a3acd89e',
+  prompt: 'Synthetic DOSAI M4 display observation',
+};
 const staleAfterMs = 5000;
 const states = new Set(['QUEUED', 'RUNNING', 'AWAITING_APPROVAL', 'COMPLETED']);
 const positiveInteger = value => Number.isSafeInteger(value) && value > 0;
 
-function hookInput(state) {
+function hookInput({ agent, sessionId, prompt }, state) {
   const common = { session_id: sessionId, cwd: '/private/tmp' };
   const event = state === 'QUEUED'
     ? { ...common, hook_event_name: 'SessionStart', source: 'startup' }
-    : { ...common, hook_event_name: 'UserPromptSubmit', prompt: 'Synthetic DOSAI M1 display observation' };
+    : { ...common, hook_event_name: 'UserPromptSubmit', prompt };
 
   return Object.freeze({ agent, stdin: JSON.stringify(event) + '\n' });
 }
 
-export function createSyntheticDevalleyDisplayAdapter() {
+function createAdapter(identity) {
   let connected = false;
   let connection = 0;
   let sequence = 0;
@@ -66,7 +74,7 @@ export function createSyntheticDevalleyDisplayAdapter() {
       sequence = next;
       state = nextState;
       observedAtMs = nowMs;
-      if (state === 'QUEUED' || state === 'RUNNING') return hookInput(state);
+      if (state === 'QUEUED' || state === 'RUNNING') return hookInput(identity, state);
       return null;
     },
 
@@ -78,5 +86,16 @@ export function createSyntheticDevalleyDisplayAdapter() {
         lastObservedSequence: sequence, observedAtMs,
       });
     },
+  });
+}
+
+export function createSyntheticDevalleyDisplayAdapter() {
+  return createAdapter(m1Identity);
+}
+
+export function createSyntheticDevalleyResidentSet() {
+  return Object.freeze({
+    m1: createAdapter(m1Identity),
+    m4: createAdapter(m4Identity),
   });
 }

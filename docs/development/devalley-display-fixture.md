@@ -21,10 +21,15 @@ that value. The fixture opens no connection and invokes no process.
 Connection generations increase across reconnects. The observation sequence is
 monotonic across the life of the resident. Older generations, duplicates and
 late sequences leave the latest observation and its age intact. The five-second
-threshold uses a caller-provided synthetic monotonic clock. The model has one
-fixed resident identity per proof, with no authentication or persistent replay
-store. Production handling would require the accepted transport and integration
-boundaries before adding callers, permissions or delivery.
+threshold uses a caller-provided synthetic monotonic clock.
+
+The two-resident fixture assigns fixed, distinct session IDs and agent labels to
+its M1 and M4 slots. Each slot tracks its own connection, sequence, clock and
+last observation. The tests interleave both slots and show that one resident can
+remain fresh while the other reconnects. Events carry no resident selector.
+Each slot is selected by the fixture caller. A future integration would need
+authenticated routing under the accepted transport contract before enabling
+delivery. The fixture models neither identity authentication nor durable replay.
 
 Run the isolated synthetic tests on Node 24.18.0:
 
