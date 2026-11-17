@@ -186,3 +186,36 @@ single-mount and writer-exclusion requirements remain in force, including two
 independent qualifying native AMD64 builder receipts. This documentation
 change adds no runtime configuration, migration, secrets, deployment, Lovable
 handoff or frontend publish.
+
+## Standalone OpenSSL fixture
+
+The native fixture lives under `tests/fixtures/transport`. The launcher is
+separate from the application's build and the Node test suite. On the arm64 Mac
+with macOS 26 or later and the already-installed, checksum-pinned Homebrew
+OpenSSL 3.6.4 archives, run the compiler and test as one guarded foreground job from the repository
+root.
+
+```sh
+"$HOME/.local/bin/codex-heavy" /bin/sh tests/source-only/test-offline-mtls-v1.sh
+```
+
+The launcher refuses a library mismatch and creates and removes one temporary
+executable. It runs that executable in a per-process macOS sandbox denying
+network access, file writes and process forks. The fixture generates all
+certificates and keys in memory and drives real TLS state machines through
+fixed-size memory BIOs. It checks every plaintext frame split, authenticated
+closure, certificate and negotiation rejection, a real early-data offer and
+resumed handshake rejection, session and frame binding, injected deadlines,
+and the local review gate. A separate test control issues a synthetic ticket
+in memory so the negative tests can drive actual TLS ticket and early-data
+behavior. The fixture endpoint itself disables both features.
+
+The tests use an injected clock and model local decisions. Successful admission
+returns a proposal for review and never produces an execution plan, approval,
+grant, evaluation, or application acknowledgement. The fixture does not
+exercise an installed service, device enrollment or actual LAN traffic.
+
+The guarded run passed eight native test groups on arm64 macOS 27.2.1 using
+Apple clang 16 and the two archive digests enforced by the launcher. The
+existing 12 receiver and enrollment test groups and 65 P3 source regression
+checks passed on Node 24.18.0. The readiness report remained `NO_GO`.
