@@ -167,3 +167,6 @@ Offline tests for the selector and CLI admission:
 ```sh
 node --test tests/security/supervised-fixture-handoff.test.mjs
 ```
+
+The [verified two-Mac result and offline transport proposal](../../docs/development/mac-fixture-handoff-result.md)
+record the actual receiving order and the remaining transport work.
