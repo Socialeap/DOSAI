@@ -126,3 +126,6 @@ require local approval or reject the request. It issues no approval, plan,
 grant, or execution. The receiver tests exercise byte-level framing separately.
 Real cryptographic negotiation, device enrollment, and key storage remain
 outside this evidence.
+
+The proposed [fixture protocol v1](mac-lan-mtls-protocol-v1.md) defines the exact
+TLS profile, frame and offline acceptance tests for the next reviewed increment.
