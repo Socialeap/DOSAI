@@ -17,10 +17,10 @@ if ! printf '%s  %s\n' \
 fi
 
 workdir=$(/usr/bin/mktemp -d /private/tmp/dosai-mtls-v1.XXXXXXXX)
-trap '/bin/rm -f -- "$workdir/offline-mtls-v1" "$workdir/offline-mtls-device-v1"; /bin/rmdir -- "$workdir"' EXIT
+trap '/bin/rm -f -- "$workdir/offline-mtls-v1" "$workdir/offline-mtls-device-v1" "$workdir/offline-mtls-drivers-v1"; /bin/rmdir -- "$workdir"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-for fixture in offline-mtls-v1 offline-mtls-device-v1; do
+for fixture in offline-mtls-v1 offline-mtls-device-v1 offline-mtls-drivers-v1; do
     /usr/bin/clang -mmacosx-version-min=26.0 -std=c17 -O2 -Wall -Wextra -Werror \
         -isystem "$openssl_prefix/include" "tests/fixtures/transport/$fixture.c" \
         "$ssl_archive" "$crypto_archive" -o "$workdir/$fixture"
