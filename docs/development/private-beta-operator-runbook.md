@@ -285,3 +285,11 @@ Publish or application deployment is required. Owner source review/merge is
 separate from all live and acceptance gates. Native-builder evidence remains
 the first prerequisite for critical-path advancement; this command clears none
 of those gates.
+
+## Source-only topology diagnostic
+
+See [read-only topology v1](p3-read-only-topology-diagnostic-v1.md). The proposal
+is outside the active workflow directory. Source review precedes separate
+activation review and fresh exact dispatch authorization. No host probe is
+currently authorized. Registry access is deferred to avoid automount side
+effects; output grants no qualification, writer or execution authority.
