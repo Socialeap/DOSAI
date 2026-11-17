@@ -1,0 +1,112 @@
+# Two-Mac mutual TLS device test runbook v1
+
+**Current decision — NO_GO for a device test.** This runbook is a source
+proposal. The merged reference fixture uses in-memory transport. A separate
+reviewed device-test candidate, accepted P3 evidence, and fresh owner
+authorization are required before a listener can be armed.
+
+- **Baseline** — [PR #35](https://github.com/Socialeap/DOSAI/pull/35) merged into
+  `main` at `81b4a6885b6abdc548bfad39019e3bffd159f552`. The fixture, launcher,
+  and protocol files match the tested PR head `554626b27430178a500883d66b3da3021f2d3137`.
+  That candidate passed eight native OpenSSL 3.6.4 test groups on the local
+  arm64 Mac. It supplied no evidence from a two-device TLS connection.
+- **Scope** — One attended session on a known private LAN. The M1 sends the
+  fixed synthetic `SUMMARIZE_FIXTURE` proposal and the M4 receives it.
+  Allocate at most three fresh one-shot ceremonies in a fixed order, with one
+  handshake and at most one proposal each. The session stops on the first
+  unexpected outcome. No retries or provider spend.
+- **Development role** — Unclassified assistant.
+
+The [v1 protocol](mac-lan-mtls-protocol-v1.md) sets the exact TLS profile,
+framing, time limits and authenticated closure. The
+[enrollment plan](mac-lan-peer-enrollment-plan.md) sets the two local
+confirmations, fresh in-memory keys, pinning and revocation. The
+[manual handoff evidence](mac-fixture-handoff-result.md) records the separate
+local approval proof.
+
+## Go/no-go before activation
+
+All rows must pass in order. Capture the evidence privately before sending
+the owner an activation request. A missing, stale, contradictory, or
+unverifiable row is **NO_GO**.
+
+| Gate | Evidence required |
+| --- | --- |
+| 1. Phase eligibility | The active [beta critical path](private-beta-operator-runbook.md) shows accepted BETA-CP-004 and BETA-CP-005 evidence and P3 exit. BETA-CP-004 requires two independent native Linux AMD64 builder receipts and the existing single-mount and writer-exclusion predicates. BETA-CP-005 requires formal P3 acceptance. P5 remains gated on P3. |
+| 2. Reviewed device-test candidate | Review the exact immutable source revision and SHA-256 of each device artifact. Record native arm64, OS, compiler, protocol version and exact TLS-library identity for both Macs. Verify the artifact and configuration against those values. Run the existing offline checks on the exact candidate and exercise the candidate's transport boundary, local approval interlock and teardown offline before requesting activation. Require no app integration, automatic evaluation, privilege elevation, or installation of a service. A dependency or artifact mismatch blocks the run. |
+| 3. Exact scope and cleanup | Identify the two devices, one existing private-LAN interface per device, the exact M4 unicast bind address and unprivileged port, the authorized M1 source address, operator and test window. Confirm that the reviewed candidate restricts bind and connection to those endpoints, stops on an unexpected peer, closes admission after one attempt and provides a local stop independent of transport and audit. Require the existing LAN path and free port. Stop if a permission prompt, firewall or router change, alternate interface, discovery, relay, or persistent credential setup is needed. Do not scan or try a different address or port. |
+| 4. Owner authorization for this exact test | Obtain fresh explicit authorization for the merged candidate, artifact digests, endpoints and test window, the three named ceremonies and the one temporary M4 listener per ceremony. Approval is consumed by the authorized session. The owner attends both trusted local prompts and supervises the session. Pairing consent and approval of the synthetic evaluation are separate local decisions. |
+
+BETA-CP-006 remains the representative full-beta workflow gate. A pass in
+this narrow test cannot satisfy it or qualify either Mac as a native builder.
+Today the [readiness report](private-beta-operator-runbook.md#sequential-release-gates)
+returns exit 2 and `NO_GO`, with BETA-CP-004/005/006 open and zero of two
+qualifying native builder receipts.
+
+## Attended test after GO
+
+1. **Confirm the preflight immediately before the first run.** Match the
+   verified artifacts, approved targets and window. Record scoped pre-run
+   evidence for the approved port and the exact test processes. Use the
+   reviewed candidate's commands and limits from the activation packet. This
+   runbook supplies no activation command because the candidate and targets
+   have yet to be reviewed.
+2. **Pair afresh for each scenario.** On the trusted local prompts, exchange
+   only the public leaves and compare the full role-ordered certificate
+   fingerprints, profile and fixed action. Both confirmations must be valid
+   before opening the M4's temporary one-shot listener and connecting from
+   M1. The authorized source address bounds the test. TLS still authenticates
+   by the enrolled pins and roles. The transport uses the exact v1 profile,
+   one frame, and authenticated closure, with no early data or resumption.
+   Admission closes the receive window and creates at most one local review.
+3. **Perform the scenarios in this order.** Before any new ceremony, verify
+   cleanup and fresh fingerprints and confirmations. A missed deadline or an
+   outcome different from the table ends the session.
+
+   | Scenario | Owner action on the M4 | Required evidence |
+   | --- | --- | --- |
+   | 1. Local denial | After one authenticated proposal reaches local review, deny the fresh local plan. | Exactly one proposal, one local denial, zero grants, zero evaluations and zero external effects. |
+   | 2. Local approval | Inspect the fresh plan after local preflight. Confirm it matches `SUMMARIZE_FIXTURE`, the approved data scope and zero external effects. Approve only that plan using the trusted local prompt. | Exactly one proposal and one explicitly approved synthetic evaluation. Verify the plan and local receipt correspond to the same review. Record the actual receipt assurance and `effects: NONE`. |
+   | 3. Revocation before approval | After authenticated admission, revoke the pairing while local review is pending. Check locally that the pending review cannot proceed. | Review is invalidated and transport state is closed. Zero approvals, grants, evaluations and external effects for this ceremony. |
+
+4. **Verify teardown after every scenario, including failure.** Stop the two
+   exact owned test processes if still active. Verify the expected listener
+   and connection are closed, the process identities have exited, and the
+   test-owned run files and pending review are gone. The candidate must have
+   no persistence path for credentials, pins, or session state. At session
+   end, remove only the staged candidate files listed in the activation
+   packet. Check only test-owned resources and the approved endpoint. Never
+   kill unrelated processes or clear shared state. If cleanup is uncertain,
+   end the session, preserve sanitized evidence for the owner, and skip
+   remaining scenarios.
+
+## Stop and record the decision
+
+Stop immediately on scope or identity drift, a TLS or framing error, unplanned
+prompt, pause, timeout, unintended effect, sensitive output, or uncertainty
+about teardown. Use the reviewed local stop on both devices. Never retry
+through a failure, reconnect, or switch transports within the authorized run.
+Use the [security stop-work rules](../../SECURITY.md) if a trust boundary is
+crossed or a secret is exposed.
+
+The receiver's reviewed observations establish local admission. A sender's
+clean TLS close carries no application acknowledgement or delivery claim. No
+approval, grant, generic command, result or receipt flows over this connection.
+Keep only the exact tested revision and artifact digests, device-role aliases,
+scenario labels, stage dispositions, local receipt assurance, observed effect
+count, and scoped cleanup result. Store reviewed evidence in an ignored local
+path. Exclude addresses from shared reports, and exclude raw packets, private
+keys, session identifiers, certificates, and approval transcripts from exports.
+
+A test pass requires all three expected outcomes and verified teardown for
+each ceremony. Record `NO_GO` on any missing or unexpected result. Even a
+pass concerns this one fixture and these two devices. It grants no P5 exit,
+deployment, full-beta, or production authority.
+
+## Source change classification
+
+This documentation increment requires no backend migration, secrets, runtime
+configuration, deployment, Lovable handoff, frontend publish, or device QA.
+Listener activation, host changes, workflow dispatch and paid activity are
+outside the increment. A future host or release action requires its own
+review and authorization.
