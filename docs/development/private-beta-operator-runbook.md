@@ -310,3 +310,13 @@ runners. Stop on drift or unverified cost. Fresh owner authorization is required
 for one manual run with two fixed jobs, five minutes per job, and no retry.
 Observations leave native qualification, writer exclusion, and builder receipts
 unproven. BETA-CP-004/005/006 remain open.
+
+## Topology observation result and next candidate intake
+
+[Run 44150605303](https://github.com/Socialeap/DOSAI/actions/runs/44150605303)
+completed on attempt 1. Both jobs reported stacked `autofs` and `binfmt_misc`
+mounts at the target, so the observed instances fail the single-mount gate.
+The authorization is consumed. Use the
+[sanitized result and source-only candidate intake](p3-native-builder-topology-result-and-next-step.md)
+to evaluate an already available native host pair. Require an enforceable
+writer boundary before any qualification claim. Builder receipts remain 0 of 2.
