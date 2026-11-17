@@ -134,3 +134,36 @@ Release classification: offline developer tooling, tests and documentation only.
 deployment or frontend Publish is needed. Next steps are review of this exact
 increment, owner fixture QA, and availability/acceptance of the existing execution
 prerequisites. No merge, beta release or distribution is authorized by test success.
+
+## Manual request handoff between Macs
+
+Use the same reviewed DOSAI revision and pinned Node 24.18.0 on both Macs.
+The sending Mac can generate the token with:
+
+```sh
+node tools/supervised-execution/handoff.mjs SUMMARIZE_FIXTURE
+```
+
+Copy only the token as text using an existing local handoff method. On the
+receiving Mac, enter it in a terminal:
+
+```sh
+node tools/supervised-execution/run.mjs --handoff 'dosai-fixture-handoff-v1:SUMMARIZE_FIXTURE'
+```
+
+`LIST_FIXTURE_FAILURES` is the other supported selector. The receiving CLI admits
+a fresh local request and asks for its existing plan-specific approval on that
+terminal. Approve only after checking the displayed request. Review the local
+durable receipt or the denial. The sender may repeat a selector, and each
+receiving invocation creates a new local plan requiring approval.
+
+The token is untrusted synthetic input. This path uses no listener, discovery,
+remote login, or automated transport. The authenticated P5 channel and
+two-device verification remain future work. Native-builder gates and the release
+readiness checkpoint are unchanged. Role: unclassified assistant.
+
+Offline tests for the selector and CLI admission:
+
+```sh
+node --test tests/security/supervised-fixture-handoff.test.mjs
+```
