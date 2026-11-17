@@ -4,23 +4,40 @@ import { createInterface } from 'node:readline/promises';
 import { verifyAuditJournal } from '../../native-helpers/audit/journal.ts';
 import { createLocalFixtureSession } from './runtime.mjs';
 import { createEvidenceDirectory } from './evidence-directory.ts';
+import { admitRequest } from './contracts.ts';
+import { readFixtureHandoff } from './handoff.mjs';
 
-// Fixed synthetic data only. No request file, arbitrary JSON, path or endpoint input.
-const [action = 'SUMMARIZE_FIXTURE', ...extra] = process.argv.slice(2);
+function readOperatorRequest(args) {
+  if (args.length === 2 && args[0] === '--handoff') {
+    return readFixtureHandoff(args[1]);
+  }
+  if (args.length > 1) throw new Error('ARGUMENT_COUNT');
+  return admitRequest({
+    version: 1, action: args[0] ?? 'SUMMARIZE_FIXTURE', fixture: 'beta-core-v1', generation: '1',
+  });
+}
+
+let request;
 if (process.version !== 'v24.18.0') {
   console.error('PINNED_RUNTIME_REQUIRED: use Node v24.18.0.');
   process.exitCode = 2;
-} else if (extra.length || !['SUMMARIZE_FIXTURE', 'LIST_FIXTURE_FAILURES'].includes(action)) {
-  console.error('Usage: node tools/supervised-execution/run.mjs [SUMMARIZE_FIXTURE|LIST_FIXTURE_FAILURES]');
-  process.exitCode = 2;
-} else if (!process.stdin.isTTY || !process.stdout.isTTY) {
+} else {
+  try {
+    request = readOperatorRequest(process.argv.slice(2));
+  } catch {
+    console.error('Usage: node tools/supervised-execution/run.mjs [SUMMARIZE_FIXTURE|LIST_FIXTURE_FAILURES|--handoff TOKEN]');
+    process.exitCode = 2;
+  }
+}
+
+if (request && (!process.stdin.isTTY || !process.stdout.isTTY)) {
   console.error('INTERACTIVE_OPERATOR_REQUIRED: piped approval is unavailable. Use the automated test suite for fixtures.');
   process.exitCode = 2;
-} else {
+} else if (request) {
   const directory = await createEvidenceDirectory(resolve(import.meta.dirname, '../..'), 'supervised-fixture-');
   const databasePath = join(directory, 'audit.sqlite3');
   const engine = await createLocalFixtureSession(databasePath);
-  const prepared = engine.prepare({ version: 1, action, fixture: 'beta-core-v1', generation: '1' });
+  const prepared = engine.prepare(request);
   let result = prepared;
   if (prepared.status === 'AWAITING_APPROVAL') {
     console.log('DOSAI local fixture proof — no shell, provider or external action. Synthetic test approval only.');
