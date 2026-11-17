@@ -71,3 +71,6 @@ authenticator and context mismatch, replay in a closed or different session,
 and authority-bearing payloads. Synthetic callers provide session IDs and keys.
 This fixture leaves live enrollment, fresh session creation, persistence,
 cross-process replay protection, and LAN integration to the gated transport work.
+
+The proposed [two-Mac enrollment and key lifecycle plan](mac-lan-peer-enrollment-plan.md)
+defines the next source-only increment and the evidence required before a LAN proof.
