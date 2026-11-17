@@ -1,0 +1,48 @@
+{
+  "record_type": "P3_MOUNT_TOPOLOGY_WORKFLOW_ACTIVATION_PREPARATION",
+  "record_version": 1,
+  "status": "PREPARED_FOR_REVIEW_NOT_DISPATCHED",
+  "role": "UNCLASSIFIED_ASSISTANT",
+  "based_on": "6e915173809d26f0c783573819c224d625452702",
+  "source_pr_head": "af017b426d9911874677cc448cf883ad04b11b33",
+  "workflow_path": ".github/workflows/p3-read-only-mount-topology.yml",
+  "workflow_sha256": "33c0a3e9ae0c98c302b0247cd64d9b4ebcde295eb36efc3460e64d27435361d1",
+  "runtime_status": "NO_GO",
+  "dispatch_prerequisites": {
+    "trigger": "workflow_dispatch",
+    "jobs": [
+      "host_a",
+      "host_b"
+    ],
+    "runner": "ubuntu-24.04",
+    "timeout_minutes_per_job": 5,
+    "attempt_limit": 1,
+    "retry_allowed": false,
+    "maximum_charge_usd": 0,
+    "verify_public_repository_and_zero_cost_before_dispatch": true
+  },
+  "inputs": {
+    "docs/architecture/p3-topology-diagnostic-source-record-v1.json": "b0cde4241e098a25ec36429f04c21f9595634b0ef7d9bcf7e86bdbe9c5a1e428",
+    ".github/workflows/p3-read-only-mount-topology.yml": "33c0a3e9ae0c98c302b0247cd64d9b4ebcde295eb36efc3460e64d27435361d1",
+    "scripts/p3-mount-topology-diagnostic-v1.py": "3d54ef757a98812cf681aae6caf92b58bc20b4948809114099e4b28a9ed6b920",
+    "tests/governance/p3-mount-topology-diagnostic.test.py": "9503b2164d2bd6a9d2409f44fb9c8288d240a18127a43a18976fcfd5d12b3ecf",
+    "docs/proposals/p3-mount-topology-diagnostics-v1.yml": "72ac419f1381fd95605c96b1859e26f69b73b94facef511c830418ee262faa49",
+    "scripts/p3-kernel-writer-diagnostic-v2.py": "9d1805b38d2c4fe299d86e696ae2993324bd1403e4f2dff3140bc8b560234294",
+    ".github/workflows/p3-kernel-writer-attribution-diagnostics.yml": "0b3b12bb600a67274acb8a7e211edf22cc4741539fbe8189c75da0595d2646b6",
+    "docs/architecture/p3-native-host-profile-v1.json": "c02a6e17a923a2539a4b5300a4ad315f594fa6a9093b884a90d08b6c7e5059c7",
+    ".github/workflows/p3-kernel-writer-diagnostics.yml": "4d05e479c2009693a5d20c56fa94fdef085e2b1997ad16aaa5fbda5ca1790994",
+    ".github/workflows/p3-native-builder-host-feasibility.yml": "1e8daa3e67ff54200dda1f0c587dfc1b9501341ddfb8608d4a0b52fbb03da53c"
+  },
+  "authorities": {
+    "provisioning": false,
+    "workflow_activation": false,
+    "workflow_dispatch": false,
+    "host_mutation": false,
+    "executor": false,
+    "build": false,
+    "guest_execution": false,
+    "paid_activity": false,
+    "capability_acceptance": false,
+    "merge": false
+  }
+}

@@ -293,3 +293,20 @@ is outside the active workflow directory. Source review precedes separate
 activation review and fresh exact dispatch authorization. No host probe is
 currently authorized. Registry access is deferred to avoid automount side
 effects; output grants no qualification, writer or execution authority.
+
+## Manual topology workflow activation preparation
+
+The [activation record](../architecture/p3-mount-topology-workflow-activation-record-v1.json)
+binds the PR #23 source and the manual workflow at
+`.github/workflows/p3-read-only-mount-topology.yml`. Its content matches the
+reviewed proposal except for the introductory comment. The distinct filename
+preserves the original proposal and its historical absence check. The workflow
+collects bounded mount topology and namespace observations only.
+
+Review and merge the activation PR before evaluating any run. At that point,
+verify the exact merged commit, workflow and collector SHA-256 digests, public
+repository visibility, and zero-charge eligibility of standard Ubuntu 24.04 x64
+runners. Stop on drift or unverified cost. Fresh owner authorization is required
+for one manual run with two fixed jobs, five minutes per job, and no retry.
+Observations leave native qualification, writer exclusion, and builder receipts
+unproven. BETA-CP-004/005/006 remain open.
