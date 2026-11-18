@@ -55,6 +55,9 @@ governs manual handoff.
 
 ## Go or no-go
 
+The [DOSAI sample review result](desktop-review-session-result.md) records the
+observed Mac test, the verified follow-up, and the offline regression command.
+
 - Local review proof passes when a denial exposes neither handoff, an approval
   enables two distinct handoffs, mismatched or replayed reports are rejected,
   and the second valid report produces the complete local receipt.
