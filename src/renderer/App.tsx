@@ -6,6 +6,7 @@ import {
   type ReviewReportInput, type ReviewSession, type ReviewSessionRef, type ReviewStatus, type ReviewVerdict,
 } from '../contracts/review-session';
 import type { RuntimeSnapshot } from '../contracts/runtime';
+import { createReviewSummary } from './review-summary';
 
 const STATUS: Record<ReviewStatus, string> = {
   'awaiting-approval': 'Awaiting local approval',
@@ -100,6 +101,7 @@ export function App({ runtime, initialSession }: {
   const pending = session?.status === 'awaiting-approval';
   const active = session?.status === 'active';
   const locked = pending || active;
+  const reviewSummary = createReviewSummary(session);
 
   useEffect(() => {
     if (!pending || busy || session === null) return;
@@ -243,10 +245,21 @@ export function App({ runtime, initialSession }: {
           </section>
         </div>
 
+        {reviewSummary && (
+          <details className="panel receipt">
+            <summary>Shareable review summary</summary>
+            <p className="hint">Copy the operator-recorded outcomes before closing this window or starting a new review.</p>
+            <label>
+              Summary JSON
+              <textarea className="mono" rows={8} readOnly value={JSON.stringify(reviewSummary, null, 2)}
+                onFocus={(event) => event.currentTarget.select()} spellCheck={false} />
+            </label>
+          </details>
+        )}
         {session && (
           <details className="panel receipt">
             <summary>Local session receipt</summary>
-            <p className="hint">Unsigned and held in memory. Copy it before closing this window or starting a new review.</p>
+            <p className="hint">Unsigned and held in memory. Keep this receipt local.</p>
             <label>
               Receipt JSON
               <textarea className="mono" rows={8} readOnly value={JSON.stringify(session.receipt, null, 2)}

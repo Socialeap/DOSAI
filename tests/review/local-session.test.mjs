@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { DOSAI_REVIEW_SAMPLE } from '../../src/contracts/review-session.ts';
 import { ReviewSessionEngine } from '../../src/main/review/session-engine.ts';
+import { createReviewSummary } from '../../src/renderer/review-summary.ts';
 
 const sample = DOSAI_REVIEW_SAMPLE;
 const ref = ({ plan: { sessionId, planSha256 } }) => ({ sessionId, planSha256 });
@@ -50,6 +51,44 @@ test('DOSAI sample two-reviewer flow binds approval to one plan and receipts to 
   assert.throws(() => complete.receipt.body.events.push({ type: 'prepared' }), TypeError);
   assert.equal((await engine.stop(ref(complete))).status, 'complete');
   assert.equal(pending.receipt.body.events.length, 1);
+});
+
+test('a completed review summary contains only shareable scope and report outcomes', async () => {
+  const engine = new ReviewSessionEngine();
+  assert.equal(createReviewSummary(await engine.getSession()), null);
+
+  const first = await engine.prepare(sample);
+  assert.equal(createReviewSummary(first), null);
+  const denied = await engine.requestApproval(ref(first), async () => false);
+  assert.equal(createReviewSummary(denied), null);
+
+  const second = await engine.prepare(sample);
+  const stopped = await engine.stop(ref(second));
+  assert.equal(createReviewSummary(stopped), null);
+
+  const pending = await engine.prepare(sample);
+  const active = await engine.requestApproval(ref(pending), async () => true);
+  const [correctness, coverage] = active.handoffs;
+  assert.equal(createReviewSummary(active), null);
+  const partial = await engine.recordReport(reportFor(active, correctness));
+  assert.equal(createReviewSummary(partial), null);
+  const complete = await engine.recordReport(reportFor(active, coverage, 'Incomplete', 5));
+
+  assert.deepEqual(createReviewSummary(complete), {
+    version: 1,
+    status: 'both-reports-recorded',
+    repository: sample.repository,
+    base: sample.base,
+    candidate: sample.head,
+    patchSha256: sample.patchSha256,
+    effects: 'MANUAL_REVIEW_COORDINATION_ONLY',
+    reports: [
+      { lane: 'correctness', reviewer: 'Codex', verdict: 'No findings', findings: 0,
+        provenance: 'OPERATOR_RECORDED_UNVERIFIED' },
+      { lane: 'test-coverage', reviewer: 'Claude', verdict: 'Incomplete', findings: 5,
+        provenance: 'OPERATOR_RECORDED_UNVERIFIED' },
+    ],
+  });
 });
 
 test('malformed pins, repository strings, assignments and approval fields fail closed', async () => {
