@@ -1,9 +1,9 @@
 # Two-Mac mutual TLS device test runbook v1
 
 **Current decision — NO_GO for a device test.** This runbook is a source
-proposal. The candidate below has offline evidence. A reviewed device
-transport and local operator driver, accepted P3 evidence, and fresh owner
-authorization are required before a listener can be armed.
+proposal. The endpoint and drivers below have offline evidence. A reviewed
+device activation wrapper and local policy integration, accepted P3 evidence,
+and fresh owner authorization are required before a listener can be armed.
 
 - **Baseline** — [PR #35](https://github.com/Socialeap/DOSAI/pull/35) merged into
   `main` at `81b4a6885b6abdc548bfad39019e3bffd159f552`. The fixture, launcher,
@@ -121,8 +121,8 @@ denial, exact local confirmation, expiry, stop and policy invalidation. The
 confirmation disposition has no grant or evaluation authority. The M1
 reports delivery unknown after TLS closure.
 
-From a clean checkout on the pinned arm64 OpenSSL host, run both test
-executables in the existing network-denied sandbox:
+From a clean checkout on the pinned arm64 OpenSSL host, run the reference,
+endpoint, and driver tests in the existing network-denied sandbox:
 
 ```sh
 "$HOME/.local/bin/codex-heavy" /bin/sh tests/source-only/test-offline-mtls-v1.sh
@@ -132,13 +132,50 @@ The five candidate groups exercise real TLS over in-memory transport and
 synthetic local decisions. They exercise the denial, confirmation and
 revocation sequence without running fixture evaluation. The separate eight
 reference groups cover wire-profile, replay, certificate and framing negatives.
-The candidate accepts no sockets and contains no bind, listen, connect,
-application import or durable receipt path. A future reviewed driver must
-verify actual socket metadata and teardown, enforce deadlines from trusted
-local clocks, and obtain trusted operator input. Any fixture evaluation still
-requires the existing local policy preflight, exact owner approval and
-verified local receipt. The source candidate supplies none of the pending
+The endpoint candidate has no bind, listen, connect, application import, or
+durable receipt path. The source candidate supplies none of the pending
 phase or device activation evidence.
+
+## Connected-stream and local operator drivers
+
+The [transport driver](../../tools/mtls-device-test/transport-v1.h) accepts one
+owned stream, checks the observed endpoints against the paired scope, and
+pumps bounded ciphertext in nonblocking turns. Partial writes retain their
+pending bytes. The M4 waits for authenticated TLS closure, an empty output
+buffer, and successful closure of the owned stream before offering review.
+An unexpected endpoint, I/O or clock failure, close error, or deadline breach
+ends the run. Local stop closes the owned stream and invalidates pending review.
+
+The [local operator driver](../../tools/mtls-device-test/operator-v1.h) uses a
+distinct terminal channel. It displays the exact scope and full role-ordered
+certificate fingerprints for pairing. On M4 it accepts only a plan digest
+from the trusted local policy caller. It displays the fixed synthetic action
+and requires the exact local approval line or explicit denial. EOF, expiry,
+loss of the foreground terminal, stop, policy invalidation or invalid input
+fails closed. The resulting disposition gives no grant or evaluation authority.
+No approval bytes travel through the transport.
+
+The [macOS adapters](../../tools/mtls-device-test/macos-io-v1.h) adopt
+already-open, exclusively transferred descriptors. They verify connected IPv4
+TCP metadata, close-on-exec, nonblocking and safe-close flags, or the foreground
+controlling terminal in canonical mode. They create no socket or terminal and
+change no descriptor flags or persistent settings. The elapsed clock uses
+continuous monotonic time and rejects inconsistent wall-clock samples.
+Terminal foreground checks cover the OS session and process group. They
+do not establish physical owner identity. [Apple continuous clock](https://developer.apple.com/documentation/kernel/1646199-mach_continuous_time).
+
+The four driver groups use real TLS with in-memory streams and a synthetic
+foreground terminal. They cover partial writes, backpressure, scope rejection,
+teardown and close failure, early EOF, clock and deadline failure, exact
+approval, denial, stop and revocation. The macOS adapter checks cover clock
+sampling and rejection of pipes and invalid descriptors. A connected TCP
+descriptor and physical terminal have not been exercised.
+
+Before any device run, separately review the wrapper that owns descriptor
+creation, readiness scheduling and trusted local events. It must wire the
+one-shot M4 proposal to the existing local policy and verified receipt path,
+without reusing a plan or converting the transport into approval. The
+runbook's P3 and exact owner authorization gates apply before activation.
 
 ## Source change classification
 
