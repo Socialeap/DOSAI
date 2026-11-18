@@ -47,12 +47,13 @@ governs manual handoff.
 4. When **Both reports recorded** appears, inspect **Local session receipt**.
    The SHA-256 covers the versioned receipt body serialized with
    `JSON.stringify`. The body records the plan, lifecycle events, and
-   operator-entered outcomes. It is volatile, unsigned and unanchored.
-   Copy only approved, non-sensitive metadata if a receipt needs to be kept.
-   Starting the next review replaces the receipt and closing the window clears
-   it. Use **Stop review** to close an active or pending session. Stop disables
-   further recording and clears prompts in DOSAI. Stop any exchange already
-   started manually in the separate reviewer chat as well.
+   operator-entered outcomes. The receipt is held in memory, unsigned and
+   unanchored. Keep it local. Use **Shareable review summary** for the pinned
+   scope and operator-recorded outcomes. The summary omits session and handoff
+   IDs and the local approval event history. Copy it before closing the window
+   or starting a new review. Use **Stop review** to close an active or pending
+   session. Stop disables further recording and clears prompts in DOSAI. Stop
+   any exchange already started manually in the separate reviewer chat as well.
 
 ## Go or no-go
 
