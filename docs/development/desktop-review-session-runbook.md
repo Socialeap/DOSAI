@@ -55,6 +55,22 @@ governs manual handoff.
    session. Stop disables further recording and clears prompts in DOSAI. Stop
    any exchange already started manually in the separate reviewer chat as well.
 
+## Verify a DOSAI sample summary offline
+
+Use Node **24.18.0** in the reviewed repository. Pass the JSON copied from
+**Shareable review summary** for the DOSAI sample to the verifier on stdin:
+
+```sh
+node scripts/verify-desktop-review-summary.mjs < dosai-sample-summary.json
+```
+
+Exit 0 and `DOSAI_SAMPLE_SUMMARY_MATCHED` confirm that the versioned fields and
+two reviewer assignments match the pinned sample. Exit 1 rejects malformed,
+oversized, conflicting, or extra fields. Exit 2 rejects an unsupported runtime,
+forwarded arguments, or interactive input. The tool prints a fixed message
+and retains the results' operator-recorded, unverified status. Review findings
+and local approval still require their usual checks.
+
 ## Go or no-go
 
 The [DOSAI sample review result](desktop-review-session-result.md) records the

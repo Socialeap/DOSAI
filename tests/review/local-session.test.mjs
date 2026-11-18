@@ -1,12 +1,22 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { DOSAI_REVIEW_SAMPLE } from '../../src/contracts/review-session.ts';
 import { ReviewSessionEngine } from '../../src/main/review/session-engine.ts';
 import { createReviewSummary } from '../../src/renderer/review-summary.ts';
+import { verifyDesktopReviewSummary } from '../../scripts/verify-desktop-review-summary.mjs';
 
 const sample = DOSAI_REVIEW_SAMPLE;
+const summaryVerifier = fileURLToPath(new URL('../../scripts/verify-desktop-review-summary.mjs', import.meta.url));
+
+function invokeSummaryVerifier({ args = [], input = '' } = {}) {
+  const result = spawnSync(process.execPath, [summaryVerifier, ...args], { input, encoding: 'utf8', timeout: 5_000 });
+  assert.ifError(result.error);
+  return result;
+}
 const ref = ({ plan: { sessionId, planSha256 } }) => ({ sessionId, planSha256 });
 const reportFor = (session, handoff, verdict = 'No findings', findings = 0) => ({
   ...ref(session), lane: handoff.lane, handoffId: handoff.handoffId,
@@ -74,7 +84,8 @@ test('a completed review summary contains only shareable scope and report outcom
   assert.equal(createReviewSummary(partial), null);
   const complete = await engine.recordReport(reportFor(active, coverage, 'Incomplete', 5));
 
-  assert.deepEqual(createReviewSummary(complete), {
+  const summary = createReviewSummary(complete);
+  assert.deepEqual(summary, {
     version: 1,
     status: 'both-reports-recorded',
     repository: sample.repository,
@@ -89,6 +100,53 @@ test('a completed review summary contains only shareable scope and report outcom
         provenance: 'OPERATOR_RECORDED_UNVERIFIED' },
     ],
   });
+  verifyDesktopReviewSummary(Buffer.from(JSON.stringify(summary)), sample);
+  const reversedReports = { ...summary, reports: [...summary.reports].reverse() };
+  verifyDesktopReviewSummary(Buffer.from(JSON.stringify(reversedReports)), sample);
+  const cli = invokeSummaryVerifier({ input: JSON.stringify(summary, null, 2) });
+  assert.equal(cli.status, 0, cli.stderr);
+  assert.equal(cli.stdout, 'DOSAI_SAMPLE_SUMMARY_MATCHED\n');
+  assert.equal(cli.stderr, '');
+
+  const [codex, claude] = summary.reports;
+  const invalidSummaries = [
+    { ...summary, repository: 'other/repo' },
+    { ...summary, base: sample.head },
+    { ...summary, candidate: sample.base },
+    { ...summary, patchSha256: '1'.repeat(64) },
+    { ...summary, status: 'active' },
+    { ...summary, sessionId: 'LOCAL_ONLY' },
+    { ...summary, effects: 'AUTHORIZED' },
+    { ...summary, reports: [codex] },
+    { ...summary, reports: [codex, { ...claude, lane: 'correctness' }] },
+    { ...summary, reports: [{ ...codex, reviewer: 'Claude' }, claude] },
+    { ...summary, reports: [{ ...codex, handoffId: 'LOCAL_ONLY' }, claude] },
+    { ...summary, reports: [codex, { ...claude, provenance: 'VERIFIED' }] },
+    { ...summary, reports: [codex, { ...claude, verdict: 'No findings' }] },
+    { ...summary, reports: [codex, { ...claude, findings: 100 }] },
+  ];
+  for (const raw of [
+    ...invalidSummaries.map(value => Buffer.from(JSON.stringify(value))),
+    Buffer.from(JSON.stringify(summary).replace('"version":1', '"version":1,"version":1')),
+    Buffer.from('Ship it.'),
+    Buffer.alloc(2049, 0x20),
+  ]) {
+    assert.throws(() => verifyDesktopReviewSummary(raw, sample), /DOSAI_REVIEW_SUMMARY_REJECTED/);
+  }
+});
+
+test('the sample summary verifier rejects arguments and never prints rejected input', () => {
+  const unexpected = invokeSummaryVerifier({ args: ['EXTRA_DO_NOT_ECHO'] });
+  assert.equal(unexpected.status, 2);
+  assert.equal(unexpected.stdout, '');
+  assert.equal(unexpected.stderr, 'DOSAI_REVIEW_SUMMARY_REQUIRES_PINNED_NODE_AND_STDIN\n');
+
+  for (const input of ['UNTRUSTED_INPUT_DO_NOT_ECHO', Buffer.alloc(2049, 0x21)]) {
+    const rejected = invokeSummaryVerifier({ input });
+    assert.equal(rejected.status, 1);
+    assert.equal(rejected.stdout, '');
+    assert.equal(rejected.stderr, 'DOSAI_REVIEW_SUMMARY_REJECTED\n');
+  }
 });
 
 test('malformed pins, repository strings, assignments and approval fields fail closed', async () => {
