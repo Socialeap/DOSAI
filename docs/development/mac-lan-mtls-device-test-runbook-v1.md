@@ -1,9 +1,10 @@
 # Two-Mac mutual TLS device test runbook v1
 
 **Current decision — NO_GO for a device test.** This runbook is a source
-proposal. The endpoint and drivers below have offline evidence. A reviewed
-device activation wrapper and local policy integration, accepted P3 evidence,
-and fresh owner authorization are required before a listener can be armed.
+proposal. The endpoint, drivers, activation wrapper, and local policy
+bridge below are scoped to offline validation. A reviewed device launcher,
+accepted P3 evidence, and fresh authorization for the exact devices and
+session are required before a listener can be armed.
 
 - **Baseline** — [PR #35](https://github.com/Socialeap/DOSAI/pull/35) merged into
   `main` at `81b4a6885b6abdc548bfad39019e3bffd159f552`. The fixture, launcher,
@@ -122,7 +123,7 @@ confirmation disposition has no grant or evaluation authority. The M1
 reports delivery unknown after TLS closure.
 
 From a clean checkout on the pinned arm64 OpenSSL host, run the reference,
-endpoint, and driver tests in the existing network-denied sandbox:
+endpoint, driver, and activation tests in the existing network-denied sandbox:
 
 ```sh
 "$HOME/.local/bin/codex-heavy" /bin/sh tests/source-only/test-offline-mtls-v1.sh
@@ -171,11 +172,50 @@ approval, denial, stop and revocation. The macOS adapter checks cover clock
 sampling and rejection of pipes and invalid descriptors. A connected TCP
 descriptor and physical terminal have not been exercised.
 
-Before any device run, separately review the wrapper that owns descriptor
-creation, readiness scheduling and trusted local events. It must wire the
-one-shot M4 proposal to the existing local policy and verified receipt path,
-without reusing a plan or converting the transport into approval. The
-runbook's P3 and exact owner authorization gates apply before activation.
+## Activation wrapper and M4 policy bridge
+
+The [activation wrapper](../../tools/mtls-device-test/activation-v1.h)
+coordinates pairing, one adopted transport, teardown, and local review over
+supplied resources. Only M4 can consume the resulting fixture proposal, once.
+The wrapper will not expose a terminal decision twice. Stop, policy change,
+clock failure and expiry invalidate a pending decision, including after the
+terminal accepted it and before it is taken by policy.
+
+The [local policy bridge](../../tools/mtls-device-test/local-policy-v1.mjs)
+accepts only the single synthetic proposal on a distinct trusted local
+channel. It prepares a fresh plan with the existing supervised fixture
+engine. It gives the native terminal driver the exact plan digest and
+requires the plan-bound confirmation or denial after the driver closes.
+The engine rechecks policy and consent and verifies its durable journal.
+A failure to verify the outcome withholds the result. Returned outcomes
+remain local, synthetic and no-effect. No TLS acknowledgement carries a
+decision, grant, result or receipt.
+
+With the locked dependencies and pinned Node 24.18.0 on PATH, run the
+cross-language offline proof from the repository root:
+
+```sh
+/bin/sh tests/source-only/test-offline-mtls-policy-v1.sh "$(command -v node)"
+```
+
+The launcher acquires the shared workload gate separately for the temporary
+native compile and then the SQLite tests. The proof uses real TLS over
+bounded memory buffers, synthetic terminal events and private inherited test
+channels. It does not establish device enrollment, physical owner presence,
+or socket ownership. The native fixture's synthetic inputs exist only in test
+source. The JavaScript bridge trusts the local caller that owns the channel.
+A reviewed launcher must establish that provenance for a device run. The
+offline proof passed 18 native test groups and eight cross-language policy
+tests, including approval, denial, late revocation, stale decisions, and
+audit loss. It used OpenSSL 3.6.4 and Node 24.18.0.
+
+The read-only device preflight uses the canonical readiness report and fails
+closed. The source has no device opener or live authorization verifier. It
+cannot accept a live run, grant a P3 exception, or update release readiness.
+A future release must preserve BETA-CP-004/005/006 and the native-only,
+single-mount and writer-exclusion requirements. Before requesting approval,
+review the exact device launcher, transport ownership, terminal scope and
+local receipt path together with accepted prerequisite evidence.
 
 ## Source change classification
 
