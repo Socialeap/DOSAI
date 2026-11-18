@@ -160,7 +160,7 @@ receiving invocation creates a new local plan requiring approval.
 The token is untrusted synthetic input. This path uses no listener, discovery,
 remote login, or automated transport. The authenticated P5 channel and
 two-device verification remain future work. Native-builder gates and the release
-readiness checkpoint are unchanged. Role: unclassified assistant.
+readiness checkpoint are unchanged.
 
 Offline tests for the selector and CLI admission:
 

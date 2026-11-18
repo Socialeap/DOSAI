@@ -4,18 +4,7 @@ import { createInterface } from 'node:readline/promises';
 import { verifyAuditJournal } from '../../native-helpers/audit/journal.ts';
 import { createLocalFixtureSession } from './runtime.mjs';
 import { createEvidenceDirectory } from './evidence-directory.ts';
-import { admitRequest } from './contracts.ts';
-import { readFixtureHandoff } from './handoff.mjs';
-
-function readOperatorRequest(args) {
-  if (args.length === 2 && args[0] === '--handoff') {
-    return readFixtureHandoff(args[1]);
-  }
-  if (args.length > 1) throw new Error('ARGUMENT_COUNT');
-  return admitRequest({
-    version: 1, action: args[0] ?? 'SUMMARIZE_FIXTURE', fixture: 'beta-core-v1', generation: '1',
-  });
-}
+import { readOperatorRequest } from './handoff.mjs';
 
 let request;
 if (process.version !== 'v24.18.0') {
