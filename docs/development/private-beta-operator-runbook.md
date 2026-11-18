@@ -321,6 +321,31 @@ The authorization is consumed. Use the
 to evaluate an already available native host pair. Require an enforceable
 writer boundary before any qualification claim. Builder receipts remain 0 of 2.
 
+### Offline candidate worksheet
+
+The [candidate worksheet](../proposals/p3-native-builder-intake-template-v1.json)
+indexes the existing documentary checks for the pair and each host. Use the
+fixed host aliases and keep the corresponding sanitized source references in
+the intake notes. Set `DOCUMENTED` only when the administrator or provider
+documentation supports the item for that host. Use `UNKNOWN` for an unresolved
+item and `CONTRADICTED` for one the source rules out.
+
+With Node **24.18.0**, the following screens the blank template. To check a
+filled worksheet, redirect stdin from its locally reviewed copy.
+
+```sh
+node scripts/screen-p3-native-builder-intake.mjs < docs/proposals/p3-native-builder-intake-template-v1.json
+```
+
+`DOCUMENTATION_INCOMPLETE` and `DOCUMENTATION_CONTRADICTED` list the affected
+items. `FOR_SOURCE_REVIEW` means each row was marked documented. Review the
+supporting material against the original candidate intake criteria and the
+collector before proposing any live qualification. The checker evaluates the
+worksheet entries only and always returns exit 2 for a structurally valid
+worksheet. Exit 1 rejects malformed or oversized input, an unsupported Node
+version, arguments, or interactive input. The checker adds zero receipts.
+Exact owner authorization is required before any live qualification.
+
 ## Source-only functionality regression
 
 From a clean checkout of the reviewed revision, use the repository's locked

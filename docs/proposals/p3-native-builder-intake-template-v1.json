@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "pair": {
+    "existing_availability_and_zero_incremental_cost": "UNKNOWN",
+    "distinct_hosts": "UNKNOWN",
+    "separate_writable_state_and_daemons": "UNKNOWN",
+    "accountable_administrator": "UNKNOWN"
+  },
+  "hosts": {
+    "host_a": {
+      "fresh_native_linux_x86_64": "UNKNOWN",
+      "native_docker_amd64": "UNKNOWN",
+      "single_full_root_binfmt_misc_mount": "UNKNOWN",
+      "zero_registry_submounts": "UNKNOWN",
+      "zero_effective_registrations": "UNKNOWN",
+      "effective_registry_namespace_binding": "UNKNOWN",
+      "full_interval_writer_exclusion": "UNKNOWN",
+      "dosai_registry_mutation_unavailable": "UNKNOWN",
+      "deployed_kernel_source_binding": "UNKNOWN",
+      "independent_issuer": "UNKNOWN"
+    },
+    "host_b": {
+      "fresh_native_linux_x86_64": "UNKNOWN",
+      "native_docker_amd64": "UNKNOWN",
+      "single_full_root_binfmt_misc_mount": "UNKNOWN",
+      "zero_registry_submounts": "UNKNOWN",
+      "zero_effective_registrations": "UNKNOWN",
+      "effective_registry_namespace_binding": "UNKNOWN",
+      "full_interval_writer_exclusion": "UNKNOWN",
+      "dosai_registry_mutation_unavailable": "UNKNOWN",
+      "deployed_kernel_source_binding": "UNKNOWN",
+      "independent_issuer": "UNKNOWN"
+    }
+  }
+}
