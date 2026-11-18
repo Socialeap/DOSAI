@@ -307,7 +307,7 @@ test('operator and benchmark entry points reject redirected evidence before crea
   await writeFile(join(outside, 'sentinel'), 'unchanged');
   await symlink(outside, join(repository, 'evidence'));
   await symlink(join(root, 'native-helpers'), join(repository, 'native-helpers'));
-  for (const name of ['runtime.mjs', 'evidence-directory.ts']) {
+  for (const name of ['runtime.mjs', 'evidence-directory.ts', 'contracts.ts', 'handoff.mjs']) {
     await symlink(join(root, 'tools/supervised-execution', name), join(tool, name));
   }
   for (const name of ['run.mjs', 'benchmark.mjs']) {
