@@ -10,10 +10,13 @@ if (root === null) {
 }
 
 async function bootstrap(container: HTMLElement): Promise<void> {
-  const runtime = await window.dosai.runtime.getSnapshot();
+  const [runtime, initialSession] = await Promise.all([
+    window.dosai.runtime.getSnapshot(),
+    window.dosai.review.getSession(),
+  ]);
   createRoot(container).render(
     <StrictMode>
-      <App runtime={runtime} />
+      <App runtime={runtime} initialSession={initialSession} />
     </StrictMode>,
   );
 }

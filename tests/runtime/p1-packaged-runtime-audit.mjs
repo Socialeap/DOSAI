@@ -332,9 +332,11 @@ export async function runP1PackagedRuntimeAudit() {
       }
 
       return {
-        bridgeKeysExact: JSON.stringify(Object.keys(window.dosai)) === '["runtime"]',
+        bridgeKeysExact: Object.keys(window.dosai).sort().join(',') === 'review,runtime' &&
+          Object.keys(window.dosai.review).sort().join(',') === 'getSession,prepare,recordReport,requestApproval,stop',
         frameBridgeUnavailable,
-        frozenBridge: Object.isFrozen(window.dosai) && Object.isFrozen(window.dosai.runtime),
+        frozenBridge: Object.isFrozen(window.dosai) && Object.isFrozen(window.dosai.runtime) &&
+          Object.isFrozen(window.dosai.review),
         inlineScriptBlocked: globalThis.__dosai_inline_probe === false,
         nodeGlobalsAbsent: typeof globalThis.require === 'undefined' && typeof globalThis.process === 'undefined',
         nodeImportRejected: await rejectedImport(),

@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import { join } from 'node:path';
 
 import { registerApplicationIpc } from './ipc/register-application-ipc';
+import { registerReviewIpc } from './ipc/register-review-ipc';
 import { installApplicationProtocol, registerApplicationScheme } from './security/application-protocol';
 import { configureDefaultSession } from './security/session-policy';
 import { createMainWindow } from './window/main-window';
@@ -16,6 +17,7 @@ void app.whenReady().then(async () => {
   installApplicationProtocol(join(__dirname, '../renderer'));
   configureDefaultSession(app.isPackaged);
   registerApplicationIpc(app.isPackaged);
+  registerReviewIpc(app.isPackaged);
   await createMainWindow(app.isPackaged, shouldRecoverRenderer);
 
   app.on('activate', () => {

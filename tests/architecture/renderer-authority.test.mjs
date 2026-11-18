@@ -8,9 +8,20 @@ import { collectSourceFiles } from './source-graph.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const rendererRoot = join(root, 'src/renderer');
-const policy = JSON.parse(
+const baseline = JSON.parse(
   await readFile(join(root, 'docs/architecture/renderer-authority-policy-v1.json'), 'utf8'),
 );
+
+const successor = JSON.parse(
+  await readFile(join(root, 'docs/architecture/renderer-authority-policy-v2.json'), 'utf8'),
+);
+const policy = {
+  ...baseline,
+  typed_bridge: {
+    ...baseline.typed_bridge,
+    allowed_calls: [...baseline.typed_bridge.allowed_calls, ...successor.additional_allowed_calls],
+  },
+};
 
 test('renderer authority policy is versioned and bound to the accepted architecture', () => {
   assert.equal(policy.schema_version, 1);
@@ -27,9 +38,24 @@ test('renderer authority policy is versioned and bound to the accepted architect
     'arbitrary_ipc',
     'debugger',
   ]);
-  assert.deepEqual(policy.typed_bridge.allowed_calls, [
+  assert.deepEqual(baseline.typed_bridge.allowed_calls, [
     { argument_count: 0, path: 'window.dosai.runtime.getSnapshot' },
   ]);
+});
+
+test('renderer review authority adds only the five typed session operations', () => {
+  assert.deepEqual(successor, {
+    schema_version: 2,
+    supersedes: 'docs/architecture/renderer-authority-policy-v1.json',
+    accepted_adr: baseline.accepted_adr,
+    additional_allowed_calls: [
+      { path: 'window.dosai.review.getSession', argument_count: 0 },
+      { path: 'window.dosai.review.prepare', argument_count: 1 },
+      { path: 'window.dosai.review.requestApproval', argument_count: 1 },
+      { path: 'window.dosai.review.recordReport', argument_count: 1 },
+      { path: 'window.dosai.review.stop', argument_count: 1 },
+    ],
+  });
 });
 
 test('every renderer source file satisfies the no-authority policy', async () => {
@@ -87,6 +113,11 @@ test('typed bridge rejects aliasing, computed access, unknown methods, and argum
     'window.dosai.runtime.getSnapshot("extra")',
     'window.dosai.runtime.getSnapshot.call(null)',
     'window.dosai.runtime.unknown()',
+    'window.dosai.review.approve({ granted: true })',
+    'window.dosai.review.requestApproval(ref, true)',
+    'window.dosai.review.getSession(extra)',
+    'const request = window.dosai.review.requestApproval',
+    'window.dosai.review[operation](input)',
     'globalThis.dosai.runtime.getSnapshot()',
     'self.dosai.runtime.getSnapshot()',
     'window.window.dosai.runtime.getSnapshot()',
