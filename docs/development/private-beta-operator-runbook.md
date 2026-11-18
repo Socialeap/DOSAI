@@ -320,3 +320,25 @@ The authorization is consumed. Use the
 [sanitized result and source-only candidate intake](p3-native-builder-topology-result-and-next-step.md)
 to evaluate an already available native host pair. Require an enforceable
 writer boundary before any qualification claim. Builder receipts remain 0 of 2.
+
+## Source-only functionality regression
+
+From a clean checkout of the reviewed revision, use the repository's locked
+dependencies and Node **24.18.0**:
+
+```sh
+node --version  # v24.18.0
+node --test --test-concurrency=1 tests/source-only/private-beta-functional-regression-v1.mjs tests/governance/private-beta-functional-regression.test.mjs
+```
+
+The fixed corpus covers the desktop import and renderer restrictions, simulated
+local approval and two-agent report recording, and the manual fixture handoff
+CLI's input and noninteractive rejection paths. It also runs the existing P3
+source-only regression unchanged. The entrypoint rejects other Node versions
+and forwarded arguments before loading the tests.
+
+Record the tested commit, Node version and result. Use the
+[desktop review runbook](desktop-review-session-runbook.md) for native dialog
+QA and the [observed review result](desktop-review-session-result.md) for the
+prior on-device result. Real transport, native-builder qualification and
+full functionality testing still require their own evidence and authorization.
