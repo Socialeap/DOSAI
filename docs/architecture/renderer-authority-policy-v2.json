@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "supersedes": "docs/architecture/renderer-authority-policy-v1.json",
+  "accepted_adr": "docs/decisions/0001-runtime-and-privilege-boundaries.md",
+  "additional_allowed_calls": [
+    { "path": "window.dosai.review.getSession", "argument_count": 0 },
+    { "path": "window.dosai.review.prepare", "argument_count": 1 },
+    { "path": "window.dosai.review.requestApproval", "argument_count": 1 },
+    { "path": "window.dosai.review.recordReport", "argument_count": 1 },
+    { "path": "window.dosai.review.stop", "argument_count": 1 }
+  ]
+}

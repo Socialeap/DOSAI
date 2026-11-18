@@ -1,9 +1,11 @@
 import { ipcRenderer } from 'electron';
 
 import { APPLICATION_IPC, type DosaiBridge } from '../contracts/ipc';
+import { createReviewBridge } from './review-bridge';
 
 export function createRuntimeBridge(): DosaiBridge {
   return Object.freeze({
+    review: createReviewBridge(),
     runtime: Object.freeze({
       getSnapshot: (...arguments_: unknown[]) => {
         if (arguments_.length !== 0) {
