@@ -11,6 +11,7 @@ import { admitRequest, FIXTURE, ROUTES } from '../../tools/supervised-execution/
 import { digest } from '../../tools/supervised-execution/engine.ts';
 import { createLocalFixtureSession } from '../../tools/supervised-execution/runtime.mjs';
 import { createEvidenceDirectory } from '../../tools/supervised-execution/evidence-directory.ts';
+import { createFixtureHandoff, readOperatorRequest } from '../../tools/supervised-execution/handoff.mjs';
 import { verifyAuditJournal } from '../../native-helpers/audit/journal.ts';
 import { collectFiles, importedModules } from '../architecture/source-graph.mjs';
 
@@ -79,6 +80,21 @@ test('both closed routes require exact approval, evaluate fixed data and produce
     db.close();
     for (const item of engine.receipts()) assert.ok(JSON.stringify(rows).includes(item.digest));
   }
+});
+
+test('receiving the same handoff in separate sessions prepares fresh plans awaiting local approval', async t => {
+  const token = createFixtureHandoff('LIST_FIXTURE_FAILURES');
+  const plans = [];
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { engine } = await harness(t);
+    const plan = prepare(engine, readOperatorRequest(['--handoff', token]));
+    assert.deepEqual({ ...plan.request }, request('LIST_FIXTURE_FAILURES'));
+    assert.equal(plan.route, ROUTES.LIST_FIXTURE_FAILURES.handler);
+    assert.equal(plan.approvalInstruction, `APPROVE ${plan.planDigest}`);
+    assert.deepEqual(engine.receipts().map(item => item.body.status), ['PREPARED']);
+    plans.push(plan);
+  }
+  assert.notEqual(plans[0].planDigest, plans[1].planDigest);
 });
 
 test('unknown, unsafe, provider and schema-expanding actions are denied without retaining their input', async t => {
