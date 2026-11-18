@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { registerHooks } from 'node:module';
 import test from 'node:test';
@@ -7,16 +8,20 @@ import { REVIEW_IPC } from '../../src/contracts/ipc.ts';
 import { DOSAI_REVIEW_SAMPLE } from '../../src/contracts/review-session.ts';
 
 const electronFixture = new URL('./review-electron-fixture.mjs', import.meta.url).href;
+const preloadEntry = new URL('../../src/preload/review-bridge.ts', import.meta.url);
 const hooks = registerHooks({
   resolve(specifier, context, nextResolve) {
-    return specifier === 'electron'
-      ? { url: electronFixture, shortCircuit: true }
-      : nextResolve(specifier, context);
+    if (specifier === 'electron') return { url: electronFixture, shortCircuit: true };
+    if (context.parentURL === preloadEntry.href && specifier === '../contracts/ipc') {
+      return nextResolve('../contracts/ipc.ts', context);
+    }
+    return nextResolve(specifier, context);
   },
 });
 const { registerReviewIpc } = await import('../../src/main/ipc/register-review-ipc.ts');
+const { createReviewBridge } = await import(preloadEntry.href);
 hooks.deregister();
-const { browserWindows, confirmation, handlers } = await import(electronFixture);
+const { browserWindows, confirmation, handlers, renderer } = await import(electronFixture);
 
 function makeWindow(url = 'dosai://app/') {
   const frame = { url };
@@ -99,4 +104,82 @@ test('renderer loss invalidates a native approval dialog still in flight', async
   response.resolve({ response: 1 });
   await assert.rejects(approval, /no longer current/);
   assert.equal(await invoke('getSession', event), null);
+});
+
+
+test('the desktop bridge completes a denied-then-approved review with two lane-bound reports', async t => {
+  const { event, window } = makeWindow();
+  const originalConfirmation = confirmation.respond;
+  renderer.event = event;
+  t.after(() => {
+    confirmation.respond = originalConfirmation;
+    renderer.event = null;
+    browserWindows.delete(event.sender);
+  });
+  const review = createReviewBridge();
+
+  confirmation.respond = () => ({ response: 0 });
+  const first = await review.prepare(DOSAI_REVIEW_SAMPLE);
+  const denied = await review.requestApproval(sessionRef(first));
+  assert.equal(denied.status, 'denied');
+  assert.deepEqual(denied.handoffs, []);
+  assert.deepEqual(denied.receipt.body.events.map(({ type }) => type), ['prepared', 'denied']);
+
+  const pending = await review.prepare(DOSAI_REVIEW_SAMPLE);
+  assert.equal(pending.status, 'awaiting-approval');
+  assert.deepEqual(pending.handoffs, []);
+  assert.notEqual(pending.plan.planSha256, denied.plan.planSha256);
+  await assert.rejects(review.requestApproval(sessionRef(denied)), /no longer current/);
+
+  confirmation.respond = parent => {
+    assert.equal(parent, window);
+    return { response: 1 };
+  };
+  const active = await review.requestApproval(sessionRef(pending));
+  assert.equal(active.status, 'active');
+  assert.deepEqual(active.plan.config, DOSAI_REVIEW_SAMPLE);
+  assert.deepEqual(active.handoffs.map(({ lane, agent }) => [lane, agent]), [
+    ['correctness', 'Codex'],
+    ['test-coverage', 'Claude'],
+  ]);
+  const [correctness, coverage] = active.handoffs;
+  assert.notEqual(correctness.handoffId, coverage.handoffId);
+
+  const codexReport = {
+    ...sessionRef(active), lane: correctness.lane, handoffId: correctness.handoffId,
+    verdict: 'No findings', findings: 0,
+  };
+  const claudeReport = {
+    ...sessionRef(active), lane: coverage.lane, handoffId: coverage.handoffId,
+    verdict: 'Incomplete', findings: 5,
+  };
+  await assert.rejects(review.recordReport({ ...claudeReport, handoffId: correctness.handoffId }), /outstanding/);
+  assert.deepEqual((await review.getSession()).reports, []);
+  assert.equal((await review.recordReport(codexReport)).status, 'active');
+  await assert.rejects(review.recordReport(codexReport), /outstanding/);
+  const complete = await review.recordReport(claudeReport);
+  assert.equal(complete.status, 'complete');
+  assert.deepEqual(complete.handoffs, []);
+  assert.deepEqual(await review.getSession(), complete);
+
+  const { body, sha256 } = complete.receipt;
+  assert.deepEqual(body.plan, active.plan);
+  assert.equal(body.status, 'complete');
+  assert.equal(body.assurance, 'VOLATILE_UNSIGNED');
+  assert.equal(body.effects, 'MANUAL_REVIEW_COORDINATION_ONLY');
+  assert.deepEqual(body.events.map(({ type, lane }) => [type, lane]), [
+    ['prepared', undefined],
+    ['locally-approved', undefined],
+    ['report-recorded', 'correctness'],
+    ['report-recorded', 'test-coverage'],
+    ['completed', undefined],
+  ]);
+  assert.deepEqual(body.reports.map(({ lane, verdict, findings, provenance }) => [lane, verdict, findings, provenance]), [
+    ['correctness', 'No findings', 0, 'OPERATOR_RECORDED_UNVERIFIED'],
+    ['test-coverage', 'Incomplete', 5, 'OPERATOR_RECORDED_UNVERIFIED'],
+  ]);
+  assert.equal(createHash('sha256').update(JSON.stringify(body)).digest('hex'), sha256);
+
+  window.emit('closed');
+  assert.equal(await review.getSession(), null);
 });
