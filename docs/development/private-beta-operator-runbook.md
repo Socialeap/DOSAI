@@ -353,14 +353,17 @@ dependencies and Node **24.18.0**:
 
 ```sh
 node --version  # v24.18.0
-node --test --test-concurrency=1 tests/source-only/private-beta-functional-regression-v1.mjs tests/governance/private-beta-functional-regression.test.mjs
+node --test --test-concurrency=1 tests/source-only/private-beta-functional-regression-v2.mjs tests/governance/private-beta-functional-regression.test.mjs
 ```
 
 The fixed corpus covers the desktop import and renderer restrictions, simulated
 local approval and two-agent report recording, and the manual fixture handoff
-CLI's input and noninteractive rejection paths. It also runs the existing P3
-source-only regression unchanged. The entrypoint rejects other Node versions
-and forwarded arguments before loading the tests.
+CLI's input and noninteractive rejection paths. Version 2 runs the existing
+v1 corpus unchanged and adds the native-builder intake and offline host
+observation verifier checks. The new regression confirms that a documented
+worksheet fails host observation verification and leaves all three beta gates
+open. The entrypoint rejects other Node versions and forwarded arguments
+before loading the tests.
 
 Record the tested commit, Node version and result. Use the
 [desktop review runbook](desktop-review-session-runbook.md) for native dialog

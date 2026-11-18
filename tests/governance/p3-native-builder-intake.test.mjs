@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { screenNativeBuilderIntake } from '../../scripts/screen-p3-native-builder-intake.mjs';
+import { assessPrivateBetaReadiness } from '../../scripts/report-private-beta-readiness.mjs';
+import { verifyP3NativeBuilderHostObservations } from '../../scripts/verify-p3-native-builder-host-observation.mjs';
 
 const template = new URL('../../docs/proposals/p3-native-builder-intake-template-v1.json', import.meta.url);
 const entry = fileURLToPath(new URL('../../scripts/screen-p3-native-builder-intake.mjs', import.meta.url));
@@ -39,6 +41,29 @@ test('documentary completeness permits source review only', () => {
     qualifyingBuilderReceiptsAdded: 0,
     qualificationAuthorized: false,
   });
+});
+
+test('a documented worksheet cannot pass host observation or clear the private-beta gates', async () => {
+  const candidate = documentedWorksheet();
+  const screening = screen(candidate);
+  assert.equal(screening.status, 'FOR_SOURCE_REVIEW');
+
+  const syntheticSourceSha = 'a'.repeat(40);
+  for (const records of [[candidate.hosts.host_a, candidate.hosts.host_b], [screening, screening]]) {
+    assert.throws(
+      () => verifyP3NativeBuilderHostObservations(records, syntheticSourceSha),
+      /P3_HOST_OBSERVATION_REJECTED/,
+    );
+  }
+
+  const readiness = await assessPrivateBetaReadiness();
+  assert.equal(readiness.ready, false);
+  assert.equal(readiness.release_status, 'NO_GO');
+  assert.deepEqual(readiness.blockers.map(({ id }) => id), ['BETA-CP-004', 'BETA-CP-005', 'BETA-CP-006']);
+  assert.equal(
+    readiness.blockers.find(({ id }) => id === 'BETA-CP-004').evidence,
+    'QUALIFYING_INDEPENDENT_NATIVE_AMD64_BUILDER_RECEIPTS_IN_REPOSITORY_0_OF_2',
+  );
 });
 
 test('stacked mounts and missing writer exclusion or independence stop candidate intake', () => {
