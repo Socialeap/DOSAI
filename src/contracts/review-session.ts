@@ -49,6 +49,7 @@ export interface ReviewHandoff {
 export interface ReviewReportInput extends ReviewSessionRef {
   readonly lane: ReviewLane;
   readonly handoffId: string;
+  readonly candidateSha: string;
   readonly verdict: ReviewVerdict;
   readonly findings: number;
 }

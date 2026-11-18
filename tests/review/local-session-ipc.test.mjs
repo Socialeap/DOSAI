@@ -147,13 +147,17 @@ test('the desktop bridge completes a denied-then-approved review with two lane-b
 
   const codexReport = {
     ...sessionRef(active), lane: correctness.lane, handoffId: correctness.handoffId,
-    verdict: 'No findings', findings: 0,
+    candidateSha: DOSAI_REVIEW_SAMPLE.head, verdict: 'No findings', findings: 0,
   };
   const claudeReport = {
     ...sessionRef(active), lane: coverage.lane, handoffId: coverage.handoffId,
-    verdict: 'Incomplete', findings: 5,
+    candidateSha: DOSAI_REVIEW_SAMPLE.head, verdict: 'Incomplete', findings: 5,
   };
   await assert.rejects(review.recordReport({ ...claudeReport, handoffId: correctness.handoffId }), /outstanding/);
+  await assert.rejects(
+    review.recordReport({ ...claudeReport, candidateSha: DOSAI_REVIEW_SAMPLE.base }),
+    /does not match the pinned candidate commit/,
+  );
   assert.deepEqual((await review.getSession()).reports, []);
   assert.equal((await review.recordReport(codexReport)).status, 'active');
   await assert.rejects(review.recordReport(codexReport), /outstanding/);
