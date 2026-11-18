@@ -38,6 +38,7 @@ function ReportForm({ handoff, session, busy, onRecord }: {
   onRecord: (report: ReviewReportInput) => void;
 }) {
   const [handoffId, setHandoffId] = useState('');
+  const [candidateSha, setCandidateSha] = useState('');
   const [verdict, setVerdict] = useState<ReviewVerdict>('No findings');
   const [findings, setFindings] = useState('0');
 
@@ -45,7 +46,7 @@ function ReportForm({ handoff, session, busy, onRecord }: {
     event.preventDefault();
     onRecord({
       sessionId: session.sessionId, planSha256: session.planSha256, lane: handoff.lane,
-      handoffId: handoffId.trim(), verdict, findings: Number(findings),
+      handoffId: handoffId.trim(), candidateSha, verdict, findings: Number(findings),
     });
   }
 
@@ -55,6 +56,11 @@ function ReportForm({ handoff, session, busy, onRecord }: {
         Handoff ID returned by reviewer
         <input value={handoffId} onChange={(event) => setHandoffId(event.target.value)}
           required maxLength={36} spellCheck={false} className="mono" />
+      </label>
+      <label>
+        Candidate SHA returned by reviewer
+        <input value={candidateSha} onChange={(event) => setCandidateSha(event.target.value)}
+          required pattern="[0-9a-f]{40}" spellCheck={false} className="mono" />
       </label>
       <div className="field-pair">
         <label>

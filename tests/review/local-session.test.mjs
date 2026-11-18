@@ -8,7 +8,8 @@ import { ReviewSessionEngine } from '../../src/main/review/session-engine.ts';
 const sample = DOSAI_REVIEW_SAMPLE;
 const ref = ({ plan: { sessionId, planSha256 } }) => ({ sessionId, planSha256 });
 const reportFor = (session, handoff, verdict = 'No findings', findings = 0) => ({
-  ...ref(session), lane: handoff.lane, handoffId: handoff.handoffId, verdict, findings,
+  ...ref(session), lane: handoff.lane, handoffId: handoff.handoffId,
+  candidateSha: session.plan.config.head, verdict, findings,
 });
 
 test('DOSAI sample two-reviewer flow binds approval to one plan and receipts to both reports', async () => {
@@ -123,6 +124,26 @@ test('approval expiry uses monotonic time and takes priority over a late confirm
   });
   assert.equal(expired.status, 'expired');
   assert.deepEqual(expired.handoffs, []);
+});
+
+test('a report must include the exact candidate SHA without changing the receipt on rejection', async () => {
+  const engine = new ReviewSessionEngine();
+  const pending = await engine.prepare(sample);
+  const active = await engine.requestApproval(ref(pending), async () => true);
+  const { candidateSha, ...withoutCandidate } = reportFor(active, active.handoffs[0]);
+
+  await assert.rejects(engine.recordReport(withoutCandidate), /Invalid review input/);
+  for (const invalid of [sample.base, candidateSha.slice(0, 7), candidateSha.toUpperCase(), candidateSha + ' ', null]) {
+    await assert.rejects(
+      engine.recordReport({ ...withoutCandidate, candidateSha: invalid }),
+      /does not match the pinned candidate commit/,
+    );
+  }
+  assert.deepEqual(await engine.getSession(), active);
+
+  const recorded = await engine.recordReport({ ...withoutCandidate, candidateSha });
+  assert.equal(recorded.reports[0].provenance, 'OPERATOR_RECORDED_UNVERIFIED');
+  assert.equal(recorded.receipt.body.plan.config.head, candidateSha);
 });
 
 test('wrong lane, cross-plan, duplicate and inconsistent reports do not advance the session', async () => {

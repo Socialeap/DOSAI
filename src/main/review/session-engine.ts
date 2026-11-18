@@ -156,9 +156,12 @@ export class ReviewSessionEngine {
   }
 
   async recordReport(input: unknown): Promise<ReviewSession> {
-    const report = fields(input, ['sessionId', 'planSha256', 'lane', 'handoffId', 'verdict', 'findings']);
+    const report = fields(input, ['sessionId', 'planSha256', 'lane', 'handoffId', 'candidateSha', 'verdict', 'findings']);
     const session = this.requireSession(report);
-    const { lane, handoffId, verdict, findings } = report;
+    const { lane, handoffId, candidateSha, verdict, findings } = report;
+    if (candidateSha !== session.plan.config.head) {
+      throw new Error('This report does not match the pinned candidate commit.');
+    }
     if (!choice(lane, REVIEW_LANES) || typeof handoffId !== 'string' ||
         !choice(verdict, REVIEW_VERDICTS) || typeof findings !== 'number' ||
         !Number.isSafeInteger(findings) || findings < 0 || findings > 99 ||

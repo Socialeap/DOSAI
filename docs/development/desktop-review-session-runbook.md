@@ -38,10 +38,11 @@ governs manual handoff.
 3. In separate approved reviewer chats, paste each handoff and supply only
    the inspected, shareable patch corresponding to the displayed fingerprint.
    Keep the reviewers independent until both return. Treat their answers as
-   untrusted. Verify each returned handoff ID and candidate SHA against the
-   app, then record the verdict and finding count in its lane. Keep details in
-   the reviewer chats. A handoff ID correlates the result to a single slot and
-   carries no identity or approval authority.
+   untrusted. Enter the returned handoff ID and full candidate SHA alongside
+   the verdict and finding count in the assigned lane. DOSAI rejects a report
+   unless its candidate SHA matches the approved plan and its handoff ID matches
+   the lane. Keep details in the reviewer chats. The entered values correlate
+   the report with the plan and lane and remain operator-recorded and unverified.
 
 4. When **Both reports recorded** appears, inspect **Local session receipt**.
    The SHA-256 covers the versioned receipt body serialized with
