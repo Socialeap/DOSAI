@@ -32,8 +32,7 @@ async function confirmReview(window: BrowserWindow, plan: ReviewPlan): Promise<b
   return !window.isDestroyed() && response === 1;
 }
 
-type Handler = (engine: ReviewSessionEngine, owner: BrowserWindow, input: unknown) =>
-  ReviewSession | null | Promise<ReviewSession>;
+type Handler = (engine: ReviewSessionEngine, owner: BrowserWindow, input: unknown) => Promise<ReviewSession | null>;
 
 export function registerReviewIpc(isPackaged: boolean): void {
   const sessions = new WeakMap<BrowserWindow, ReviewSessionEngine>();

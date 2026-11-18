@@ -37,7 +37,7 @@ const sessionRef = ({ plan: { sessionId, planSha256 } }) => ({ sessionId, planSh
 
 registerReviewIpc(true);
 
-test('review IPC rejects unknown frames, extra arguments and cross-window plans', () => {
+test('review IPC rejects unknown frames, extra arguments and cross-window plans', async () => {
   assert.deepEqual([...handlers.keys()], [
     'dosai:review:get-session', 'dosai:review:prepare', 'dosai:review:request-approval',
     'dosai:review:record-report', 'dosai:review:stop',
@@ -51,15 +51,15 @@ test('review IPC rejects unknown frames, extra arguments and cross-window plans'
     { ...trusted.event, sender: { id: 123 } },
   ]) assert.throws(() => invoke('getSession', event), /untrusted/);
 
-  const pending = invoke('prepare', trusted.event, DOSAI_REVIEW_SAMPLE);
+  const pending = await invoke('prepare', trusted.event, DOSAI_REVIEW_SAMPLE);
   assert.throws(() => invoke('getSession', trusted.event, 'extra'), /untrusted/);
   assert.throws(() => invoke('requestApproval', trusted.event, sessionRef(pending), true), /untrusted/);
-  assert.throws(() => invoke('stop', another.event, sessionRef(pending)), /no longer current/);
+  await assert.rejects(invoke('stop', another.event, sessionRef(pending)), /no longer current/);
 });
 
 test('actual IPC approval route requires a focused local window and the affirmative native response', async () => {
   const { event, window } = makeWindow();
-  const initial = invoke('prepare', event, DOSAI_REVIEW_SAMPLE);
+  const initial = await invoke('prepare', event, DOSAI_REVIEW_SAMPLE);
   window.focused = false;
   let dialogs = 0;
   confirmation.respond = () => { dialogs += 1; return { response: 0 }; };
@@ -69,7 +69,7 @@ test('actual IPC approval route requires a focused local window and the affirmat
   assert.deepEqual(unavailable.handoffs, []);
 
   window.focused = true;
-  const pending = invoke('prepare', event, DOSAI_REVIEW_SAMPLE);
+  const pending = await invoke('prepare', event, DOSAI_REVIEW_SAMPLE);
   await assert.rejects(invoke('requestApproval', event, { ...sessionRef(pending), approved: true }), /Invalid/);
   confirmation.respond = (parent, options) => {
     assert.equal(parent, window);
@@ -86,17 +86,17 @@ test('actual IPC approval route requires a focused local window and the affirmat
   assert.equal(active.status, 'active');
   assert.equal(active.handoffs.length, 2);
   window.emit('closed');
-  assert.equal(invoke('getSession', event), null);
+  assert.equal(await invoke('getSession', event), null);
 });
 
 test('renderer loss invalidates a native approval dialog still in flight', async () => {
   const { event } = makeWindow();
-  const pending = invoke('prepare', event, DOSAI_REVIEW_SAMPLE);
+  const pending = await invoke('prepare', event, DOSAI_REVIEW_SAMPLE);
   const response = Promise.withResolvers();
   confirmation.respond = () => response.promise;
   const approval = invoke('requestApproval', event, sessionRef(pending));
   event.sender.emit('render-process-gone');
   response.resolve({ response: 1 });
   await assert.rejects(approval, /no longer current/);
-  assert.equal(invoke('getSession', event), null);
+  assert.equal(await invoke('getSession', event), null);
 });

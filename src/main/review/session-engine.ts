@@ -1,5 +1,3 @@
-import { createHash, randomUUID } from 'node:crypto';
-
 import {
   REVIEW_AGENTS, REVIEW_LANES, REVIEW_LANE_LABELS, REVIEW_VERDICTS,
   type ReviewConfig, type ReviewEvent, type ReviewHandoff, type ReviewLane,
@@ -23,8 +21,10 @@ type Session = {
 
 type Confirm = (plan: ReviewPlan) => Promise<boolean>;
 
-function sha256(value: unknown): string {
-  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+async function sha256(value: unknown): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+  return Buffer.from(digest).toString('hex');
 }
 
 function fields(input: unknown, allowed: readonly string[]): Record<string, unknown> {
@@ -59,7 +59,7 @@ function validateConfig(input: unknown): ReviewConfig {
 function createHandoff(plan: ReviewPlan, lane: ReviewLane): ReviewHandoff {
   const { config } = plan;
   const agent = lane === 'correctness' ? config.correctness : config.testCoverage;
-  const handoffId = randomUUID();
+  const handoffId = globalThis.crypto.randomUUID();
 
   return Object.freeze({
     lane, agent, handoffId,
@@ -82,6 +82,7 @@ function createHandoff(plan: ReviewPlan, lane: ReviewLane): ReviewHandoff {
 
 export class ReviewSessionEngine {
   private current: Session | null = null;
+  private preparing: symbol | undefined;
   private readonly now: () => string;
   private readonly monotonic: () => number;
 
@@ -90,30 +91,36 @@ export class ReviewSessionEngine {
     this.monotonic = monotonic;
   }
 
-  getSession(): ReviewSession | null {
+  async getSession(): Promise<ReviewSession | null> {
     const session = this.current;
-    if (session === null) return null;
-    this.expire(session);
-    return this.snapshot(session);
+    return session === null ? null : this.snapshot(session);
   }
 
-  prepare(input: unknown): ReviewSession {
-    const existing = this.getSession();
-    if (existing?.status === 'awaiting-approval' || existing?.status === 'active') {
+  async prepare(input: unknown): Promise<ReviewSession> {
+    const existing = this.current;
+    if (existing !== null) this.expire(existing);
+    if (this.preparing !== undefined || existing?.status === 'awaiting-approval' || existing?.status === 'active') {
       throw new Error('Stop the current review before preparing another one.');
     }
 
     const config = validateConfig(input);
     const approvalExpiresAt = new Date(Date.parse(this.now()) + APPROVAL_MS).toISOString();
-    const binding = { version: 1, sessionId: randomUUID(), config, approvalExpiresAt } as const;
-    const plan = Object.freeze({ ...binding, planSha256: sha256(binding) });
-    const session: Session = {
-      plan, deadline: this.monotonic() + APPROVAL_MS, status: 'awaiting-approval',
-      confirming: false, handoffs: [], reports: [], events: [],
-    };
-    this.append(session, 'prepared');
-    this.current = session;
-    return this.snapshot(session);
+    const deadline = this.monotonic() + APPROVAL_MS;
+    const binding = { version: 1, sessionId: globalThis.crypto.randomUUID(), config, approvalExpiresAt } as const;
+    const preparation = Symbol();
+    this.preparing = preparation;
+    try {
+      const plan = Object.freeze({ ...binding, planSha256: await sha256(binding) });
+      if (this.preparing !== preparation) throw new Error('This review is no longer current.');
+      const session: Session = {
+        plan, deadline, status: 'awaiting-approval', confirming: false, handoffs: [], reports: [], events: [],
+      };
+      this.append(session, 'prepared');
+      this.current = session;
+      return this.snapshot(session);
+    } finally {
+      if (this.preparing === preparation) this.preparing = undefined;
+    }
   }
 
   async requestApproval(input: unknown, confirm: Confirm): Promise<ReviewSession> {
@@ -148,7 +155,7 @@ export class ReviewSessionEngine {
     return this.snapshot(session);
   }
 
-  recordReport(input: unknown): ReviewSession {
+  async recordReport(input: unknown): Promise<ReviewSession> {
     const report = fields(input, ['sessionId', 'planSha256', 'lane', 'handoffId', 'verdict', 'findings']);
     const session = this.requireSession(report);
     const { lane, handoffId, verdict, findings } = report;
@@ -175,7 +182,7 @@ export class ReviewSessionEngine {
     return this.snapshot(session);
   }
 
-  stop(input: unknown): ReviewSession {
+  async stop(input: unknown): Promise<ReviewSession> {
     const session = this.requireSession(fields(input, ['sessionId', 'planSha256']));
     if (session.status === 'awaiting-approval' || session.status === 'active') {
       session.status = 'stopped';
@@ -186,6 +193,7 @@ export class ReviewSessionEngine {
   }
 
   clear(): void {
+    this.preparing = undefined;
     this.current = null;
   }
 
@@ -209,7 +217,8 @@ export class ReviewSessionEngine {
     session.events.push(Object.freeze({ type, at: this.now(), ...(lane === undefined ? {} : { lane }) }));
   }
 
-  private snapshot(session: Session): ReviewSession {
+  private async snapshot(session: Session): Promise<ReviewSession> {
+    this.expire(session);
     const reports = Object.freeze([...session.reports]);
     const body: ReviewReceipt['body'] = Object.freeze({
       version: 1,
@@ -220,9 +229,15 @@ export class ReviewSessionEngine {
       assurance: 'VOLATILE_UNSIGNED',
       effects: 'MANUAL_REVIEW_COORDINATION_ONLY',
     });
+    const digest = await sha256(body);
+    this.expire(session);
+    // A stop, reload, or newer transition can invalidate a snapshot during hashing.
+    if (this.current !== session || session.events.length !== body.events.length) {
+      throw new Error('This review changed before its receipt was available.');
+    }
     return Object.freeze({
-      plan: session.plan, status: session.status, handoffs: Object.freeze([...session.handoffs]),
-      reports, receipt: Object.freeze({ body, sha256: sha256(body) }),
+      plan: body.plan, status: body.status, handoffs: Object.freeze([...session.handoffs]),
+      reports, receipt: Object.freeze({ body, sha256: digest }),
     });
   }
 }
