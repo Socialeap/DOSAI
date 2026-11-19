@@ -104,7 +104,7 @@ export function openProject(path) {
     });
   }
 
-  function forActor(actor) {
+  function forActor(actor, assertAdmitted = () => {}) {
     if (typeof actor !== 'string' || !Object.hasOwn(names, actor)) throw new Error('Unknown actor.');
     function update({ task, type, expectedRevision, note }) {
       if (typeof task !== 'string' || !Object.hasOwn(tasks, task) ||
@@ -122,6 +122,7 @@ export function openProject(path) {
             current.events.length >= maxEvents) {
           throw new Error('Task update rejected.');
         }
+        assertAdmitted(current);
         db.prepare('INSERT INTO event (task, type, actor, note) VALUES (?, ?, ?, ?)').run(task, type, actor, note.trim());
         return read();
       });
