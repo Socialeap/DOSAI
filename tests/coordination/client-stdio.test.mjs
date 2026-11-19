@@ -170,10 +170,13 @@ test('oversized or partial stdio messages abort without persisting an agent upda
   ]) {
     await t.test(name, async subtest => {
       const project = projectFixture(subtest);
-      await assert.rejects(runProtectedStdioFixture(project, ({ codex, claude }) => {
+      let malformedInputSent = false;
+      await assert.rejects(runProtectedStdioFixture(project, async ({ codex, claude }) => {
+        await Promise.all([client(codex).initialize('codex'), client(claude).initialize('claude')]);
+        malformedInputSent = true;
         codex.input.end(bytes);
-        claude.input.end();
-      }), /did not exit cleanly|bootstrap rejected|Protected frame rejected|ECONNRESET/);
+      }), /did not exit cleanly|Protected frame rejected|ECONNRESET/);
+      assert.equal(malformedInputSent, true, 'Malformed input must follow both authenticated handshakes.');
       const saved = project.snapshot();
       assert.equal(saved.phase, 'stopped');
       assert.deepEqual(saved.events, []);
