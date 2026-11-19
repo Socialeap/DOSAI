@@ -87,8 +87,8 @@ binary paths in the order below.
   "$codex_binary" "$claude_binary" "$node_binary"
 ```
 
-The manual test uses a temporary loopback listener with no upstream or model
-response. It checks allowed loopback access and denies another loopback port,
+The manual catalog test uses a temporary loopback listener with no upstream or
+model response. It checks allowed loopback access and denies another loopback port,
 reads and writes to a synthetic sibling, and a subprocess launch before either
 client probe. Each pinned client runs with an empty environment except for
 fixture settings, a private home, and a bounded first request. The report
@@ -103,12 +103,25 @@ The reported `unified_exec` flag from metadata did not correspond to an
 advertised command tool in this request. These observations apply to the pinned
 builds and profiles for the first request only.
 
+Run the remaining Codex tool denial check with the same pinned binaries.
+
+```sh
+/usr/bin/python3 -I -B tests/fixtures/coordination/offline-native-cli-probe.py \
+  --input-denial "$codex_binary" "$node_binary"
+```
+
+The loopback fixture supplies one synthetic `request_user_input` call and
+holds the headless CLI to its Default mode. The observed tool result states
+that the request is unavailable in Default mode. The fixture verifies that
+result without providing a user answer and closes the continuation with an
+error. A separate managed-review regression verifies that a worker input
+request never triggers a second approval callback, writes an assignment or
+starts the specialist, even when followed by an otherwise valid assignment.
+
 The temporary sandbox is a test fence. P3 containment and whole-capsule cleanup
-still require the accepted backend and its own evidence. The offline result
-leaves the live route on hold. Before advancing, verify a tool-free Codex
-configuration or separately review how to reject its remaining input request
-without involving the owner approval path. Live account usage and local
-approval are independent gates.
+still require the accepted backend and its own evidence. Live use still needs
+equivalence of the reviewed worker settings in subscription mode, verified
+included-only usage and fresh local approval.
 
 ## Desktop MCP proof and activation boundary
 
