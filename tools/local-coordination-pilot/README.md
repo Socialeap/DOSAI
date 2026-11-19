@@ -146,7 +146,8 @@ This standalone operator probe rehearses the account boundary of
 It has no dashboard integration, spend approval, prompt input, model turn, or
 provider transport. It pins the native binaries, denies network and Mach
 service lookup, excludes ordinary profile and workspace data, and accepts only
-fixed startup metadata over stdio. It checks both executable paths again after
+fixed startup metadata over stdio. It checks cached authentication with each
+native status command before the startup handshake. It checks both executable paths again after
 readiness, then stops the owned processes. Only status labels leave the probe.
 
 ### Offline rehearsal

@@ -37,7 +37,6 @@ CLAUDE_FLAGS = ['--safe-mode', '--restricted', '--tools', '', '--strict-mcp-conf
                 '--no-chrome', '--no-session-persistence', '--permission-prompts', 'none']
 CODEX_INIT = {'id': 1, 'method': 'initialize',
               'params': {'clientInfo': {'name': 'dosai-startup-only', 'version': '1'}}}
-CODEX_ACCOUNT = {'id': 2, 'method': 'account/read', 'params': {'refreshToken': False}}
 CLAUDE_INIT = {'type': 'control_request', 'request_id': 'dosai-startup-only',
                'request': {'subtype': 'initialize'}}
 
@@ -129,13 +128,13 @@ def sandbox_profile(binary, home):
 
 
 @contextmanager
-def scoped_process(binary, client, home, args):
+def scoped_process(binary, client, home, args, *, status_on_stderr=False):
     # Never send output to the terminal or evidence store. The supervisor reads
     # only a bounded response and reports closed status labels.
     with subprocess.Popen(['/usr/bin/sandbox-exec', '-p', sandbox_profile(binary, home),
                            str(binary), *args], cwd=home / 'work', env=local_environment(client, home),
                           stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                          stderr=subprocess.DEVNULL) as child:
+                          stderr=subprocess.STDOUT if status_on_stderr else subprocess.DEVNULL) as child:
         try:
             yield child
         finally:
@@ -153,7 +152,11 @@ def unique_json(pairs):
     return result
 
 
-def read_objects(process, *, lines):
+def read_json(data):
+    return json.loads(data, object_pairs_hook=unique_json)
+
+
+def read_messages(process, *, lines, decode=read_json):
     deadline = time.monotonic() + STARTUP_SECONDS
     pending = b''
     total = 0
@@ -165,7 +168,7 @@ def read_objects(process, *, lines):
             chunk = os.read(process.stdout.fileno(), 8192)
             if not chunk:
                 if pending and not lines:
-                    yield json.loads(pending, object_pairs_hook=unique_json)
+                    yield decode(pending)
                 elif pending:
                     raise Hold('Incomplete startup reply.')
                 return
@@ -176,7 +179,7 @@ def read_objects(process, *, lines):
             if lines:
                 while b'\n' in pending:
                     line, pending = pending.split(b'\n', 1)
-                    yield json.loads(line, object_pairs_hook=unique_json)
+                    yield decode(line)
     raise Hold('Startup reply timed out.')
 
 
@@ -208,23 +211,29 @@ def cancel_ready(child, binary, expected):
         raise Hold('Startup worker did not confirm termination.')
 
 
+def codex_auth(binary, home):
+    args = [*CODEX_CONFIG, 'login', 'status']
+    with scoped_process(binary, 'codex', home, args, status_on_stderr=True) as child:
+        child.stdin.close()
+        records = list(read_messages(child, lines=False, decode=bytes.splitlines))
+        status = child.wait(timeout=3)
+    if len(records) != 1:
+        raise Hold('Codex login status was unavailable.')
+    markers = set(records[0]) & {b'Logged in using ChatGPT', b'Not logged in'}
+    if status == 0 and markers == {b'Logged in using ChatGPT'}:
+        return 'CHATGPT'
+    if status == 1 and markers == {b'Not logged in'}:
+        return 'SIGNED_OUT'
+    raise Hold('Codex reported an unsupported authentication mode.')
+
+
 def codex_startup(binary, home):
+    mode = codex_auth(binary, home)
     with scoped_process(binary, 'codex', home, [*CODEX_CONFIG, 'app-server', '--listen', 'stdio://']) as child:
-        with closing(read_objects(child, lines=True)) as replies:
+        with closing(read_messages(child, lines=True)) as replies:
             send(child, CODEX_INIT)
             codex_reply(replies, 1)
             send(child, {'method': 'initialized'})
-            send(child, CODEX_ACCOUNT)
-            metadata = codex_reply(replies, 2)
-            if 'account' not in metadata:
-                raise Hold('Codex did not return account status.')
-            account = metadata['account']
-        if account is None:
-            mode = 'SIGNED_OUT'
-        elif account.get('type') == 'chatgpt':
-            mode = 'CHATGPT'
-        else:
-            raise Hold('Codex reported an unsupported authentication mode.')
         cancel_ready(child, binary, (0, -signal.SIGTERM))
         return mode
 
@@ -232,7 +241,7 @@ def codex_startup(binary, home):
 def claude_auth(binary, home):
     with scoped_process(binary, 'claude', home, ['--safe-mode', 'auth', 'status', '--json']) as child:
         child.stdin.close()
-        records = list(read_objects(child, lines=False))
+        records = list(read_messages(child, lines=False))
         status = child.wait(timeout=3)
         if len(records) != 1:
             raise Hold('Claude Code startup metadata was rejected.')
@@ -249,7 +258,7 @@ def claude_startup(binary, home):
     args = ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', *CLAUDE_FLAGS]
     with scoped_process(binary, 'claude', home, args) as child:
         send(child, CLAUDE_INIT)
-        with closing(read_objects(child, lines=True)) as replies:
+        with closing(read_messages(child, lines=True)) as replies:
             for reply in replies:
                 if reply.get('type') != 'control_response':
                     continue

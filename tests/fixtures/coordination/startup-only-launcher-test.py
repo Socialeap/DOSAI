@@ -6,7 +6,7 @@ import io
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 SOURCE = Path(__file__).resolve().parents[3] / 'tools/local-coordination-pilot/startup-only-launcher.py'
@@ -16,20 +16,36 @@ spec.loader.exec_module(launcher)
 
 
 class StartupLauncherTest(unittest.TestCase):
-    def test_codex_only_sends_initialization_and_cached_account_status(self):
+    def test_codex_uses_native_status_without_an_app_server_account_request(self):
         child = object()
-        replies = iter([
-            {'id': 1, 'result': {}},
-            {'id': 2, 'result': {'account': {'type': 'chatgpt', 'email': 'fixture@example.invalid'}}},
-        ])
-        with patch.object(launcher, 'scoped_process', return_value=contextlib.nullcontext(child)), \
-                patch.object(launcher, 'read_objects', return_value=(row for row in replies)), \
+        with patch.object(launcher, 'codex_auth', return_value='CHATGPT'), \
+                patch.object(launcher, 'scoped_process', return_value=contextlib.nullcontext(child)), \
+                patch.object(launcher, 'read_messages', return_value=({'id': 1, 'result': {}} for _ in range(1))), \
                 patch.object(launcher, 'send') as send, patch.object(launcher, 'cancel_ready') as cancel:
             self.assertEqual(launcher.codex_startup('/pinned/codex', Path('/isolated')), 'CHATGPT')
-        self.assertEqual([call.args[1]['method'] for call in send.call_args_list],
-                         ['initialize', 'initialized', 'account/read'])
-        self.assertEqual(send.call_args_list[-1].args[1]['params'], {'refreshToken': False})
+        self.assertEqual([call.args[1]['method'] for call in send.call_args_list], ['initialize', 'initialized'])
         cancel.assert_called_once()
+
+    def test_codex_classifies_only_exact_native_status_labels(self):
+        for code, output, expected in [
+            (0, [b'warning', b'Logged in using ChatGPT'], 'CHATGPT'),
+            (1, [b'Not logged in'], 'SIGNED_OUT'),
+            (0, [b'Logged in using an API key'], None),
+            (0, [b'prefix Logged in using ChatGPT suffix'], None),
+            (0, [b'Logged in using ChatGPT', b'Not logged in'], None),
+        ]:
+            with self.subTest(code=code, expected=expected):
+                child = Mock()
+                child.wait.return_value = code
+                with patch.object(launcher, 'scoped_process', return_value=contextlib.nullcontext(child)) as spawn, \
+                        patch.object(launcher, 'read_messages', return_value=iter([output])):
+                    if expected is None:
+                        with self.assertRaises(launcher.Hold):
+                            launcher.codex_auth('/pinned/codex', Path('/isolated'))
+                    else:
+                        self.assertEqual(launcher.codex_auth('/pinned/codex', Path('/isolated')), expected)
+                self.assertTrue(spawn.call_args.kwargs['status_on_stderr'])
+                self.assertEqual(spawn.call_args.args[-1][-2:], ['login', 'status'])
 
     def test_claude_sends_only_initialize_and_cancels_the_matching_peer(self):
         class Child:
@@ -40,7 +56,7 @@ class StartupLauncherTest(unittest.TestCase):
             'request_id': 'dosai-startup-only', 'subtype': 'success', 'response': {'pid': child.pid}}}
         with patch.object(launcher, 'claude_auth', return_value='CLAUDE_SUBSCRIPTION'), \
                 patch.object(launcher, 'scoped_process', return_value=contextlib.nullcontext(child)), \
-                patch.object(launcher, 'read_objects', return_value=(row for row in [event])), \
+                patch.object(launcher, 'read_messages', return_value=(row for row in [event])), \
                 patch.object(launcher, 'send') as send, patch.object(launcher, 'cancel_ready') as cancel:
             self.assertEqual(launcher.claude_startup('/pinned/claude', Path('/isolated')), 'CLAUDE_SUBSCRIPTION')
         send.assert_called_once_with(child, {'type': 'control_request', 'request_id': 'dosai-startup-only',
@@ -55,7 +71,7 @@ class StartupLauncherTest(unittest.TestCase):
             'request_id': 'dosai-startup-only', 'subtype': 'success', 'response': {'pid': 43}}}
         with patch.object(launcher, 'claude_auth', return_value='CLAUDE_SUBSCRIPTION'), \
                 patch.object(launcher, 'scoped_process', return_value=contextlib.nullcontext(Child())), \
-                patch.object(launcher, 'read_objects', return_value=(row for row in [event])), \
+                patch.object(launcher, 'read_messages', return_value=(row for row in [event])), \
                 patch.object(launcher, 'send'), patch.object(launcher, 'cancel_ready') as cancel:
             with self.assertRaises(launcher.Hold):
                 launcher.claude_startup('/pinned/claude', Path('/isolated'))
