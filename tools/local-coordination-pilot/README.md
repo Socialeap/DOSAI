@@ -76,6 +76,40 @@ included-only usage for the exact accounts and obtain fresh local approval.
 Native-builder admission remains separate. This source adds neither a live
 route nor a desktop MCP dependency.
 
+### Check the offline request and cancellation
+
+On Apple silicon, use the pinned binaries from preflight and the Node 24.18.0
+macOS arm64 executable from the official archive. Pass the three absolute
+binary paths in the order below.
+
+```sh
+/usr/bin/python3 -I -B tests/fixtures/coordination/offline-native-cli-probe.py \
+  "$codex_binary" "$claude_binary" "$node_binary"
+```
+
+The manual test uses a temporary loopback listener with no upstream or model
+response. It checks allowed loopback access and denies another loopback port,
+reads and writes to a synthetic sibling, and a subprocess launch before either
+client probe. Each pinned client runs with an empty environment except for
+fixture settings, a private home, and a bounded first request. The report
+retains tool names, process exit and connection closure. Request contents,
+headers, stdout and stderr are discarded.
+
+On the M4, the inspected Codex request with the GPT-5.2 configuration advertised
+`request_user_input` only after the optional image and goal tools were disabled.
+Claude Code advertised an empty tools array. Both direct CLI processes exited
+after cancellation while the sink held the request, and both connections closed.
+The reported `unified_exec` flag from metadata did not correspond to an
+advertised command tool in this request. These observations apply to the pinned
+builds and profiles for the first request only.
+
+The temporary sandbox is a test fence. P3 containment and whole-capsule cleanup
+still require the accepted backend and its own evidence. The offline result
+leaves the live route on hold. Before advancing, verify a tool-free Codex
+configuration or separately review how to reject its remaining input request
+without involving the owner approval path. Live account usage and local
+approval are independent gates.
+
 ## Desktop MCP proof and activation boundary
 
 - The two installed native CLI binaries can be checked using their local version commands. A local binary is neither evidence of the agent executor's location nor a successful MCP connection.
