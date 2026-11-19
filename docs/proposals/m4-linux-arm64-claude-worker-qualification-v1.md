@@ -105,6 +105,34 @@ no arguments, driver, or credential path. Exit code 1 means invalid invocation.
 node tools/local-coordination-pilot/m4-linux-arm64-claude-qualification-runner.mjs
 ```
 
+## Guest isolation collectors
+
+The [collector source](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-collectors.py)
+projects bounded, read-only Linux `/proc/thread-self` metadata. It checks a
+reviewed task ID, start ticks, and mount, network and user namespaces before
+and after sampling. Its report contains fixed status labels for user/group
+and restriction flags, mount review indicators, and interface inventory.
+It discards the projection if identity changes or a required input is
+unavailable or malformed. Raw records, paths, interface names and IDs stay
+out of the report.
+
+The report always holds physical qualification. Restriction flags alone
+leave effective syscall policy unverified. Mount and interface listings
+also leave host-file, device, clipboard, egress and loopback isolation
+unverified. A later approved harness must pin the VM and collector and
+check independent host configuration and effective denial with positive
+controls. The collector has no command-line entry point or runtime wiring.
+
+[Linux proc metadata](https://docs.kernel.org/filesystems/proc.html) ·
+[Mount namespace records](https://man7.org/linux/man-pages/man5/proc_pid_mountinfo.5.html)
+
+Run the offline collector fixtures from the repository root. The tests
+substitute all Linux metadata reads and require no Linux guest.
+
+```sh
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-collectors-test.py
+```
+
 ## Qualification limits
 
 A signed-in startup pass covers this Claude candidate only. An ARM64 guest
