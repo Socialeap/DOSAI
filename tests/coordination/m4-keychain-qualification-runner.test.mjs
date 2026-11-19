@@ -5,6 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { rehearseM4KeychainQualification, sourceM4QualificationStatus }
   from '../../tools/local-coordination-pilot/m4-keychain-qualification-runner.mjs';
+import { m4SystemKeychainPolicy } from '../../tools/local-coordination-pilot/m4-system-keychain-policy.mjs';
 import { m4KeychainIsolationFixture, checkM4KeychainIsolationFixture }
   from '../fixtures/coordination/m4-keychain-isolation-fixture.mjs';
 
@@ -110,6 +111,20 @@ test('live provenance, source drift, and a changed client pin cannot enter rehea
 });
 
 const cli = fileURLToPath(new URL('../../tools/local-coordination-pilot/m4-keychain-qualification-runner.mjs', import.meta.url));
+
+test('the proposed policy preserves the denied credential boundary and the physical hold', () => {
+  assert.equal(m4SystemKeychainPolicy.credentialServiceAccess, 'DENY_ALL');
+  assert.equal(m4SystemKeychainPolicy.systemCredentialDenialVerified, false);
+  assert.equal(m4SystemKeychainPolicy.nativeCollectorsActive, false);
+  assert.equal(m4SystemKeychainPolicy.hostQualified, false);
+  assert.equal(m4SystemKeychainPolicy.signInAuthorized, false);
+  assert.equal(m4SystemKeychainPolicy.liveLaunchPermitted, false);
+  assert.equal(m4SystemKeychainPolicy.qualifyingBuilderReceiptsAdded, 0);
+  const result = sourceM4QualificationStatus();
+  expectNoAuthority(result);
+  assert.equal(result.blockedStage, m4SystemKeychainPolicy.blockedStage);
+  assert.equal(result.reason, 'SYSTEM_KEYCHAIN_DENIAL_UNVERIFIED');
+});
 
 test('the CLI reports a hold even with a complete trace on stdin', () => {
   const result = spawnSync(process.execPath, [cli], { input: JSON.stringify(runFixture()), encoding: 'utf8', timeout: 3000 });

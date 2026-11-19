@@ -113,8 +113,51 @@ source revision, client pin and fictional policy scope. Missing, unavailable,
 reordered, or contradicted results stop the rehearsal at the first affected
 stage. Disposable System Keychain controls and the M4's own enforceable
 System policy are separate stages. Even a complete rehearsal stays held for
-physical qualification. A native collector, reviewed M4 credential policy,
-and separate owner authorization are prerequisites for any host run.
+physical qualification. A reviewed M4 credential boundary, authorized native
+entry point, and separate owner approval are prerequisites for any host run.
+
+### Proposed System Keychain policy and native collector source
+
+The [source policy](../../tools/local-coordination-pilot/m4-system-keychain-policy.mjs)
+keeps credential-service access at `DENY_ALL` and reports that M4 System
+Keychain denial is unverified. It adds no service allow rule. The dedicated
+user's login remains separate from the ordinary user's login, while access to
+shared System credentials still needs an independently enforceable control for
+the stock worker. Apple’s per-query Keychain search restriction is set by the
+querying executable. A supervisor’s own restricted query or a search-list
+setting cannot prove that the stock worker is similarly constrained.
+[Apple Keychain architecture](https://developer.apple.com/documentation/technotes/tn3137-on-mac-keychains?changes=latest_ma_8)
+
+The [inactive Darwin collectors](../../tools/local-coordination-pilot/m4-keychain-native-collectors.py)
+are source for three bounded observations.
+
+- Compare native architecture, Mac mini model and OS build with reviewed
+  expected values. A model match is insufficient to bind one physical Mac.
+- Compare the caller's real and effective UID, foreground console UID and
+  graphical Security session with reviewed expected identities. These facts
+  do not prove standard-account privileges, worker process identity or future
+  session continuity. No user names or numeric identities appear in the result.
+- In a matching host and login, check only whether the known System Keychain
+  appears in the default file-based search list. Recheck login identity before
+  accepting the observation. The native API reads store references and path
+  metadata without enumerating or reading items. Presence or absence carries
+  zero evidence of denied credential access and leaves the host held.
+
+There is no collector CLI or launcher wiring. The collectors take reviewed
+expectations from a future trusted supervisor. No current runner supplies
+them. The fixture tests replace all macOS calls with mocks. The existing
+startup fence keeps its full service denial. Candidate OS-level enforcement,
+a native collector invocation, a disposable negative control, and the exact
+worker binding still need separate review and authorization before any sign-in
+qualification.
+
+```sh
+/usr/bin/python3 -I -B tests/fixtures/coordination/m4-keychain-native-collectors-test.py
+node --test tests/coordination/m4-keychain-qualification-runner.test.mjs
+```
+
+[Apple Security session API](https://developer.apple.com/documentation/security/sessions) ·
+[Apple Mac mini model identifiers](https://support.apple.com/en-ie/102852)
 
 ### 3. Sign in and verify startup only after all fixture checks pass
 
