@@ -97,6 +97,25 @@ Run on Node 24.18.0.
 node --test tests/coordination/m4-keychain-isolation.test.mjs
 ```
 
+### Source-only runner
+
+The [source runner](../../tools/local-coordination-pilot/m4-keychain-qualification-runner.mjs)
+reports `HOLD` and exits 2. It accepts no operator arguments, input records,
+or profile paths and performs no host inspection. Run it on Node 24.18.0.
+
+```sh
+node tools/local-coordination-pilot/m4-keychain-qualification-runner.mjs
+```
+
+The [runner tests](../../tests/coordination/m4-keychain-qualification-runner.test.mjs)
+rehearse ordered stages against synthetic results bound to the reviewed
+source revision, client pin and fictional policy scope. Missing, unavailable,
+reordered, or contradicted results stop the rehearsal at the first affected
+stage. Disposable System Keychain controls and the M4's own enforceable
+System policy are separate stages. Even a complete rehearsal stays held for
+physical qualification. A native collector, reviewed M4 credential policy,
+and separate owner authorization are prerequisites for any host run.
+
 ### 3. Sign in and verify startup only after all fixture checks pass
 
 After fixture acceptance and owner approval of the exact session, the owner
