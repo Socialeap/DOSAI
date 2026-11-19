@@ -6,11 +6,37 @@ The broker works against one admitted SQLite fixture project. A trusted host bin
 
 The MCP handler consumes one complete message from an injected control endpoint. It supports initialization, ping, and the scoped tool list and calls. A payload field, client name, or project path cannot choose an actor. Rebinding requires a fresh in-process generation. Expiry is rechecked within the write transaction. Stop revokes endpoints and persists the project stop. A process restart restores the checklist, while any later live session must establish fresh approval and endpoint binding.
 
-## Proof and activation boundary
+## DOSAI-managed review
+
+The [local dashboard](../coordination-prototype/README.md#run-one-managed-review-offline)
+offers a one-review fixture run. The supervisor selects the roles and project,
+requests native approval, and dispatches up to three turns without polling or
+retries.
+
+| Turn | Accepted output | Saved effect |
+| --- | --- | --- |
+| Codex assigns | The fixed synthetic review ID | One assignment from lead to reviewer |
+| Claude Code reviews | One allowlisted finding ID | Progress when the supervisor observes the worker start |
+| Codex receives | The exact finding ID returned by the reviewer | The result from reviewer to lead and one completed checklist item |
+
+The turn adapter consumes bounded Codex JSONL and Claude Code structured JSON.
+It admits a closed result schema, discards process output after validation, and
+passes only fixed fixture fields or the finding ID into the next turn. A native
+approval request shows the fixture scope, $0 cost, and plan fingerprint. The
+review uses a new, local one-task database identity. A completed, stopped, or
+interrupted project cannot redispatch.
+
+Stop aborts the owned fixture worker and revokes the broker before any late
+result can schedule another turn or advance the persisted checklist. The
+offline proof does not establish native-provider process isolation or durable
+cross-provider transport. See the [Codex JSON output format](https://learn.chatgpt.com/docs/non-interactive-mode#make-output-machine-readable)
+and [Claude Code structured output format](https://code.claude.com/docs/en/headless#get-structured-output).
+
+## Desktop MCP proof and activation boundary
 
 - The two installed native CLI binaries can be checked using their local version commands. A local binary is neither evidence of the agent executor's location nor a successful MCP connection.
 - Use a dedicated control endpoint that meets [ADR 0006](../../docs/decisions/0006-authenticated-packet-transport.md). The application handler here assumes that its caller has already authenticated and authorized the peer. Native client stdout, an editable MCP command or a shared macOS UID cannot supply that proof. The test harness injects endpoints. It does not open sockets or configure either client.
-- For the exact approved synthetic project, independently verify the trusted launcher, peer process identity, bounded lifetime and revocation, and current provider terms for zero-cost use. The owner-approved [pilot scope](../../docs/proposals/local-coordination-pilot-v1.md) sets the live acceptance sequence. Treat reported MCP support as feasibility until the actual client sessions prove automatic task pickup, receipt and reconnect.
+- For the exact approved synthetic project, independently verify the trusted launcher, peer process identity, bounded lifetime and revocation, and current provider terms for zero-cost use. The proposed [pilot scope](../../docs/proposals/local-coordination-pilot-v1.md) describes the live acceptance sequence. Treat reported MCP support as feasibility until the actual client sessions prove automatic task pickup, receipt and reconnect.
 
 ## Offline verification
 
