@@ -8,6 +8,7 @@
   const run = byId('run');
   const stop = byId('stop');
   const status = byId('session-status');
+  const project = globalThis.dosaiProject;
 
   const titles = { lead: 'Lead engineer', review: 'Review specialist', test: 'Test specialist' };
   const states = {
@@ -20,6 +21,7 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 750));
   let roles = defaultRoles;
   let session;
+  let savedProject;
 
   const nodes = Object.keys(names).map(agent => {
     const card = byId('agent-' + agent);
@@ -31,13 +33,18 @@
       role.append(option);
     }
     role.addEventListener('change', () => {
-      if (session?.snapshot().phase === 'running') return;
+      if (nodeRoleLocked()) return;
       roles = assignRole(roles, agent, role.value);
       session = undefined;
-      renderIdle();
+      if (savedProject) renderProject(savedProject);
+      else renderIdle();
     });
     return { agent, card, role, state: byId('state-' + agent) };
   });
+
+  function nodeRoleLocked() {
+    return project ? graph.dataset.phase !== 'idle' : session?.snapshot().phase === 'running';
+  }
 
   function render({ phase, states: tasks, events }) {
     const running = phase === 'running';
@@ -78,10 +85,58 @@
     render({ phase: 'idle', states: {}, events: [] });
   }
 
+  function renderProject(saved) {
+    if (!saved) {
+      projectError();
+      return;
+    }
+    savedProject = saved;
+    if (saved.phase !== 'idle') roles = saved.roles;
+    render({
+      phase: saved.phase,
+      states: Object.fromEntries(Object.entries(saved.tasks).map(([task, item]) => [task, item.status])),
+      events: saved.events,
+    });
+    for (const node of nodes) node.role.disabled = saved.phase !== 'idle';
+    run.disabled = saved.active || ['complete', 'stopped'].includes(saved.phase);
+    run.textContent = saved.phase === 'running' && !saved.active ? 'Resume demo' : 'Run demo';
+    if (saved.phase === 'running' && !saved.active) status.textContent = 'Saved session ready to resume';
+    if (saved.phase === 'complete') status.textContent = 'Both results saved';
+    byId('project-revision').textContent = saved.revision ? 'Update ' + saved.revision : '';
+    for (const task of ['review', 'test']) {
+      const item = saved.tasks[task];
+      byId('done-' + task).checked = item.status === 'complete';
+      byId('note-' + task).textContent = item.note || (item.status === 'pending' ? 'Waiting for assignment' : '');
+      byId('owner-' + task).textContent = names[roles[task]];
+    }
+  }
+
+  function projectError() {
+    status.textContent = savedProject
+      ? 'Saved project unavailable. Showing the last confirmed update.'
+      : 'Saved project unavailable.';
+    run.disabled = true;
+  }
+
   run.addEventListener('click', () => {
+    if (project) {
+      run.disabled = true;
+      void project.run(roles).then(renderProject).catch(projectError);
+      return;
+    }
     session = createSession({ roles, agents: sampleAgents(roles, pause), onUpdate: render });
     void session.start();
   });
-  stop.addEventListener('click', () => session?.stop());
-  renderIdle();
+  stop.addEventListener('click', () => {
+    if (project) void project.stop().then(renderProject).catch(projectError);
+    else session?.stop();
+  });
+  if (project) {
+    document.body.dataset.mode = 'project';
+    byId('mode').textContent = 'Offline project demo';
+    byId('project-board').hidden = false;
+    run.disabled = true;
+    project.subscribe(renderProject);
+    void project.view().then(renderProject).catch(projectError);
+  } else renderIdle();
 })();

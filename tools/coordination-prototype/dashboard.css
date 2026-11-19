@@ -143,6 +143,21 @@ select {
 .graph[data-phase="complete"] .node-state { color: var(--lead); }
 .session-status { margin: 12px 0 0; color: var(--muted); font-size: .85rem; }
 
+.project-board { margin-top: 18px; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.board-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.board-header h2 { margin: 0; font-size: 1rem; }
+.board-header span, .project-board li span, .project-board p { color: var(--muted); font-size: .82rem; }
+.project-board ul { margin: 8px 0 0; padding: 0; list-style: none; }
+.project-board li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 12px 0; }
+.project-board li + li { border-top: 1px solid var(--border); }
+.project-board input { margin: 3px 0 0; accent-color: var(--lead); }
+.project-board p { margin: 4px 0 0; overflow-wrap: anywhere; }
+[data-mode="project"] .title-row { margin: 24px 0 18px; }
+[data-mode="project"] .graph { padding: clamp(12px, 3vw, 26px); }
+[data-mode="project"] .node { min-height: 0; padding: 14px; gap: 6px; }
+[data-mode="project"] .node[data-role="lead"] { align-self: stretch; }
+[data-mode="project"] .icon { width: 34px; height: 34px; }
+
 details {
   margin-top: 18px;
   border: 1px solid var(--border);
@@ -170,4 +185,6 @@ li strong { display: inline-block; margin-right: 10px; color: #e7ebe8; font-size
   .link[data-direction="lead"] i { top: auto; bottom: 0; right: -4px; transform: rotate(135deg); }
   .link[data-direction="specialist"] i { top: 0; left: -4px; transform: rotate(-45deg); }
   .link-label { min-height: 0; margin: 0; }
+  .project-board li { grid-template-columns: auto 1fr; }
+  .project-board li span { grid-column: 2; }
 }

@@ -8,16 +8,16 @@
   });
   const defaultRoles = Object.freeze({ lead: 'codex', review: 'claude', test: 'carbon' });
   const tasks = Object.freeze({
-    review: {
+    review: Object.freeze({
       assignment: 'Review the sample input handler.',
       progress: 'Checking how the handler treats empty input.',
       result: 'Review: empty input bypasses the expected validation.',
-    },
-    test: {
+    }),
+    test: Object.freeze({
       assignment: 'Check coverage for the sample input handler.',
       progress: 'Comparing the sample cases with the test list.',
       result: 'Missing test: empty input.',
-    },
+    }),
   });
   const routes = {
     assignment: { before: 'pending', after: 'assigned' },
@@ -31,12 +31,17 @@
     return Object.freeze({ ...roles, [oldRole]: roles[role], [role]: agent });
   }
 
+  function isRoleMap(roles) {
+    return roles !== null && typeof roles === 'object' &&
+      Object.keys(roles).length === 3 &&
+      Object.keys(defaultRoles).every(role => typeof roles[role] === 'string' &&
+        Object.hasOwn(names, roles[role])) &&
+      new Set(Object.values(roles)).size === 3;
+  }
+
   function createSession({ roles, agents, onUpdate }) {
     const selected = { ...roles };
-    const validRoles = Object.keys(selected).length === 3 &&
-      Object.keys(defaultRoles).every(role => typeof selected[role] === 'string' &&
-        Object.hasOwn(names, selected[role])) &&
-      new Set(Object.values(selected)).size === 3;
+    const validRoles = isRoleMap(selected);
     const states = { review: 'pending', test: 'pending' };
     const events = [];
     let phase = 'idle';
@@ -141,5 +146,7 @@
     };
   }
 
-  root.dosaiCoordinationPrototype = Object.freeze({ assignRole, createSession, defaultRoles, names, sampleAgents });
+  root.dosaiCoordinationPrototype = Object.freeze({
+    assignRole, createSession, defaultRoles, isRoleMap, names, sampleAgents, tasks,
+  });
 })(globalThis);

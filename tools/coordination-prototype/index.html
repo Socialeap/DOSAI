@@ -13,7 +13,7 @@
   <main>
     <header>
       <div class="wordmark">DOSAI</div>
-      <span class="badge">Offline simulation</span>
+      <span class="badge" id="mode">Offline simulation</span>
     </header>
     <div class="title-row">
       <div>
@@ -54,6 +54,24 @@
       </article>
     </section>
     <p class="session-status" id="session-status" role="status">Ready</p>
+    <section class="project-board" id="project-board" hidden aria-labelledby="project-title">
+      <div class="board-header">
+        <h2 id="project-title">Shared checklist</h2>
+        <span id="project-revision"></span>
+      </div>
+      <ul>
+        <li>
+          <input type="checkbox" disabled id="done-review" aria-label="Review task complete">
+          <div><strong>Review changes</strong><p id="note-review"></p></div>
+          <span id="owner-review"></span>
+        </li>
+        <li>
+          <input type="checkbox" disabled id="done-test" aria-label="Test task complete">
+          <div><strong>Check test coverage</strong><p id="note-test"></p></div>
+          <span id="owner-test"></span>
+        </li>
+      </ul>
+    </section>
     <details>
       <summary>Session activity</summary>
       <ol id="activity"></ol>
