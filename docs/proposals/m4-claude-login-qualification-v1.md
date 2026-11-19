@@ -81,6 +81,22 @@ its effective credential scope. If there is no enforceable System
 credential denial for the stock worker, stop before sign-in. Do not query,
 export, copy or inventory the owner's real Keychain items.
 
+### Offline fixture review
+
+The [test-only evidence](../../tests/fixtures/coordination/m4-keychain-isolation-fixture.mjs)
+and [negative cases](../../tests/coordination/m4-keychain-isolation.test.mjs)
+simulate the required identity, user and System Keychain, host access, Stop
+and cleanup observations. System Keychain denial requires both a disposable
+positive control and a separate policy binding for the modeled M4 scope.
+The fixtures never contact a Keychain, create users, launch a client, or
+admit a host. A modeled positive result carries zero authority.
+
+Run on Node 24.18.0.
+
+```sh
+node --test tests/coordination/m4-keychain-isolation.test.mjs
+```
+
 ### 3. Sign in and verify startup only after all fixture checks pass
 
 After fixture acceptance and owner approval of the exact session, the owner
