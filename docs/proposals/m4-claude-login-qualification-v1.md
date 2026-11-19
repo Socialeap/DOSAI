@@ -159,6 +159,10 @@ node --test tests/coordination/m4-keychain-qualification-runner.test.mjs
 [Apple Security session API](https://developer.apple.com/documentation/security/sessions) ·
 [Apple Mac mini model identifiers](https://support.apple.com/en-ie/102852)
 
+The [source enforcement design](m4-system-keychain-enforcement-v1.md)
+proposes a vendor-created scoped login file with continued full Keychain
+denial. It records the required proof and the file-backed sign-in blocker.
+
 ### 3. Sign in and verify startup only after all fixture checks pass
 
 After fixture acceptance and owner approval of the exact session, the owner
