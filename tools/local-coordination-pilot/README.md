@@ -12,10 +12,16 @@ The supervisor starts exactly two disposable Node fixture processes, one for eac
 
 The binary framing uses a fixed bounded preamble, session and endpoint IDs, HKDF-SHA-256 direction keys, ordered sequences, nonces, message and correlation IDs, SHA-256 payload digests and a constant-time HMAC comparison. Each connection has record, byte, time and lifetime limits. Invalid or incomplete frames close the channel. The supervisor cleans up its own children and key buffers. This validates the approach for fixed fixture children and does not implement the reviewed native-client bootstrap or establish full ADR 0006 acceptance.
 
+## Client-facing stdio bridge
+
+`client-stdio.mjs` accepts newline-delimited MCP messages over stdin and writes only responses to stdout. It passes bounded messages to the supervisor over an inherited Unix socket pair using the protected frame protocol. A test driver supplies stdio traffic to two launcher-owned bridge processes. The supervisor checks each process identity and assigns its role independently of the MCP client name. Fragmented or coalesced input uses the same bounds as a complete line. Empty, oversized or incomplete lines close the bridge.
+
+Codex and Claude Code document how they launch a local stdio server. Their documented command settings do not supply the DOSAI-owned descriptor to that process. Launching the command with the normal settings alone fails closed. Before client configuration, demonstrate a credential-confined bootstrap that binds the exact native executor and its bridge to the approved role and project. Verify provider process lineage, isolation from unrelated children, and revocation with the applicable ADR 0006 evidence. This source does not install a launcher, modify client settings, open a listening socket, or initiate inference. [Codex MCP](https://developers.openai.com/codex/mcp) · [Claude Code MCP](https://code.claude.com/docs/en/mcp)
+
 ## Proof and activation boundary
 
 - The two installed native CLI binaries can be checked using their local version commands. A local binary is neither evidence of the agent executor's location nor a successful MCP connection.
-- Use a dedicated control endpoint that meets [ADR 0006](../../docs/decisions/0006-authenticated-packet-transport.md). The application handler here assumes that its caller has already authenticated and authorized the peer. Native client stdout, an editable MCP command or a shared macOS UID cannot supply that proof. The test harness injects endpoints. It does not open sockets or configure either client.
+- Use a dedicated control endpoint that meets [ADR 0006](../../docs/decisions/0006-authenticated-packet-transport.md). The application handler here assumes that its caller has already authenticated and authorized the peer. Native client stdout, an editable MCP command or a shared macOS UID cannot supply that proof. The test harness uses inherited local socket pairs and isolated fixture state.
 - For the exact approved synthetic project, independently verify the trusted launcher, peer process identity, bounded lifetime and revocation, and current provider terms for zero-cost use. The owner-approved [pilot scope](../../docs/proposals/local-coordination-pilot-v1.md) sets the live acceptance sequence. Treat reported MCP support as feasibility until the actual client sessions prove automatic task pickup, receipt and reconnect.
 
 ### Zero-cost preflight
