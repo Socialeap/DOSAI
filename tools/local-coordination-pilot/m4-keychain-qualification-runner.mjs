@@ -1,6 +1,7 @@
 // Source-only staging runner for the M4 Claude Code qualification proposal.
 // Physical collectors and a reviewed credential boundary are separate work.
 import { createHash } from 'node:crypto';
+import { m4SystemKeychainPolicy } from './m4-system-keychain-policy.mjs';
 
 const revision = 'cf97bd5247ecf0158a27a28445b0b408b0e511ff';
 const claudeDigest = '21d6e7b9a6f07b4cfcb7df13760b3b72aa25e084e13a5354413382987ba832ed';
@@ -8,7 +9,7 @@ const stages = [
   'LOGIN_AND_WORKER_IDENTITY',
   'USER_KEYCHAIN_CONTROLS',
   'DISPOSABLE_SYSTEM_KEYCHAIN_CONTROL',
-  'M4_SYSTEM_KEYCHAIN_POLICY',
+  m4SystemKeychainPolicy.blockedStage,
   'HOST_AND_NETWORK_DENIAL',
   'STARTUP_STOP_AND_REVOCATION',
   'OWNED_CLEANUP',
@@ -38,7 +39,7 @@ function report(rehearsal, completedStages, blockedStage, reason) {
 }
 
 export function sourceM4QualificationStatus() {
-  return report('NOT_RUN', [], 'M4_SYSTEM_KEYCHAIN_POLICY', 'NATIVE_POLICY_AND_COLLECTORS_UNAVAILABLE');
+  return report('NOT_RUN', [], m4SystemKeychainPolicy.blockedStage, m4SystemKeychainPolicy.reason);
 }
 
 // Accept only synthetic stage results from offline tests. The digest binds
@@ -74,7 +75,7 @@ export function rehearseM4KeychainQualification(input) {
     completedStages.push(stage);
   }
 
-  return report('COMPLETE', completedStages, 'M4_SYSTEM_KEYCHAIN_POLICY', 'SYNTHETIC_RESULTS_ONLY');
+  return report('COMPLETE', completedStages, m4SystemKeychainPolicy.blockedStage, 'SYNTHETIC_RESULTS_ONLY');
 }
 
 // Operator entry point. No input stream, native driver, authentication call,
