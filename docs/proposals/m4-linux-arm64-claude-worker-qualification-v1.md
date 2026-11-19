@@ -79,7 +79,8 @@ before seeking any execution approval. Use native ARM64 with no emulation.
 Run with the repository's pinned Node 24.18.0 from the repository root.
 
 ```sh
-node --test tests/coordination/m4-linux-arm64-claude-worker.test.mjs
+node --test tests/coordination/m4-linux-arm64-claude-worker.test.mjs \
+  tests/coordination/m4-linux-arm64-claude-qualification-runner.test.mjs
 ```
 
 The fixture checks a synthetic startup trace and rejects altered guest or
@@ -87,6 +88,22 @@ worker identity, missing isolation controls, unsafe sign-in and startup
 transitions, Stop ordering and replay failures, and forged receipt authority.
 A matching trace leaves guest execution, sign-in and live launch held and
 adds zero builder receipts. This suite runs entirely in memory.
+
+The [source runner](../../tools/local-coordination-pilot/m4-linux-arm64-claude-qualification-runner.mjs)
+rehearses six ordered stages against the fixture baseline merged in #67.
+It stops at missing, contradicted, unavailable, or mismatched observations.
+An in-memory digest binds each row to the same synthetic case, guest, profile,
+file identity, distinct process starts, and pinned source and artifact digests.
+The digest is only a correlation check. A complete rehearsal still reports
+`HOLD` at `PHYSICAL_GUEST_QUALIFICATION`.
+
+To read the source-only status on Node 24.18.0, run the command below.
+The entry point reports `HOLD` with exit code 2. It reads no stdin and accepts
+no arguments, driver, or credential path. Exit code 1 means invalid invocation.
+
+```sh
+node tools/local-coordination-pilot/m4-linux-arm64-claude-qualification-runner.mjs
+```
 
 ## Qualification limits
 
