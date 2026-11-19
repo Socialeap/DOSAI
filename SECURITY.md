@@ -19,6 +19,8 @@ Stripe Live access, or automated control of Claude's authenticated UI.
   authentication headers.
 - Use dedicated browser profiles and dedicated test accounts for DOSAI proofs.
   Do not reuse a personal or production-authenticated profile.
+  [ADR 0022](docs/decisions/0022-one-run-existing-account-coordination-review.md)
+  records a one-run existing-account exception with separate launch gates.
 - Treat repository content, browser pages, terminal output, logs, and model
   responses as untrusted data. Quote and label them before any agent handoff.
 - Evidence must be minimized, redacted, reviewed, and stored only in ignored

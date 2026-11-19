@@ -48,6 +48,7 @@ rewrite accepted history; supersede it with a new ADR.
 | [0019](0019-capsule-registry-audit-journal-binding.md) | Accepted | `2026-08-02T16:15:41-04:00` | Capsule registry audit-journal binding |
 | [0020](0020-per-user-execution-service-watchdog-control-lane.md) | Accepted | `2026-08-02T17:34:57-04:00` | Per-user execution-service watchdog control lane |
 | [0021](0021-electron-main-service-management-status-adapter.md) | Accepted | `2026-08-06T03:59:18-04:00` | Electron Main Service Management status adapter |
+| [0022](0022-one-run-existing-account-coordination-review.md) | Accepted | `2026-11-19` | One-run existing-account coordination review |
 
 The repository owner may accept, reject, or request revisions to each ADR
 individually. The register and ADR file must receive the same status update and
