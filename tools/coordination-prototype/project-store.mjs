@@ -2,8 +2,6 @@ import { DatabaseSync } from 'node:sqlite';
 import './session.js';
 
 const { defaultRoles, isRoleMap, names, tasks } = globalThis.dosaiCoordinationPrototype;
-const applicationId = 0x444f5341;
-const taskIds = Object.keys(tasks);
 const nextState = { assignment: 'assigned', progress: 'reviewing', result: 'complete' };
 const priorStates = {
   assignment: ['pending'], progress: ['assigned', 'reviewing'], result: ['reviewing'],
@@ -19,34 +17,42 @@ function taskState(events, id) {
   };
 }
 
-export function openProject(path) {
+export function openProject(path, { mode = 'demo' } = {}) {
+  if (mode !== 'demo' && mode !== 'managed-review') throw new Error('Unknown coordination mode.');
+  // Bind the task scope to the database identity. Existing demo databases keep their original identity.
+  const applicationId = mode === 'demo' ? 0x444f5341 : 0x44535231;
+  const taskIds = mode === 'demo' ? Object.keys(tasks) : ['review'];
   const db = new DatabaseSync(path);
+
+  function identified() {
+    const version = db.prepare('PRAGMA application_id').get().application_id;
+    if (version === applicationId) return true;
+    if (version !== 0 || db.prepare('SELECT name FROM sqlite_master LIMIT 1').get()) {
+      throw new Error('Unexpected coordination database.');
+    }
+    return false;
+  }
+
   try {
     db.exec('PRAGMA busy_timeout=1500; PRAGMA trusted_schema=OFF;');
-    const version = db.prepare('PRAGMA application_id').get().application_id;
-    if (version !== applicationId) {
-      if (version !== 0 || db.prepare('SELECT name FROM sqlite_master LIMIT 1').get()) {
-        throw new Error('Unexpected coordination database.');
-      }
-    }
+    const initialized = identified();
     db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=EXTRA; PRAGMA fullfsync=ON;');
-    if (version === 0) {
-      db.exec(`BEGIN IMMEDIATE;
-        CREATE TABLE IF NOT EXISTS team (
+    if (!initialized) transaction('BEGIN IMMEDIATE', () => {
+      if (identified()) return;
+      db.exec(`CREATE TABLE team (
           id INTEGER PRIMARY KEY CHECK(id = 1),
           lead TEXT NOT NULL, reviewer TEXT NOT NULL, tester TEXT NOT NULL,
           stopped INTEGER NOT NULL DEFAULT 0 CHECK(stopped IN (0, 1))
         ) STRICT;
-        CREATE TABLE IF NOT EXISTS event (
+        CREATE TABLE event (
           sequence INTEGER PRIMARY KEY,
           task TEXT NOT NULL CHECK(task IN ('review', 'test')),
           type TEXT NOT NULL CHECK(type IN ('assignment', 'progress', 'result')),
           actor TEXT NOT NULL,
           note TEXT NOT NULL CHECK(length(note) BETWEEN 1 AND 160)
         ) STRICT;
-        PRAGMA application_id=${applicationId};
-        COMMIT;`);
-    }
+        PRAGMA application_id=${applicationId};`);
+    });
   } catch (error) {
     db.close();
     throw error;
@@ -73,7 +79,7 @@ export function openProject(path) {
     if (rows.length > maxEvents || (!team && rows.length)) throw new Error('Invalid saved activity.');
     const last = { review: 'pending', test: 'pending' };
     const events = rows.map((row, index) => {
-      if (!Object.hasOwn(tasks, row.task) || !Object.hasOwn(priorStates, row.type) ||
+      if (!taskIds.includes(row.task) || !Object.hasOwn(priorStates, row.type) ||
           row.sequence !== index + 1 || !priorStates[row.type].includes(last[row.task]) ||
           row.actor !== (row.type === 'assignment' ? roles.lead : roles[row.task]) || !validNote(row.note)) {
         throw new Error('Invalid saved activity.');
@@ -107,7 +113,7 @@ export function openProject(path) {
   function forActor(actor, assertAdmitted = () => {}) {
     if (typeof actor !== 'string' || !Object.hasOwn(names, actor)) throw new Error('Unknown actor.');
     function update({ task, type, expectedRevision, note }) {
-      if (typeof task !== 'string' || !Object.hasOwn(tasks, task) ||
+      if (!taskIds.includes(task) ||
           typeof type !== 'string' || !Object.hasOwn(priorStates, type) ||
           !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 ||
           !validNote(note)) {

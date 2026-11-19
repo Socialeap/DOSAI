@@ -1,6 +1,8 @@
 // Only a trusted supervisor may call bind(). It is not part of the agent API.
 const actors = ['codex', 'claude'];
 const assignment = 'Review the synthetic input handling fixture.';
+export const reviewStudy = 'synthetic-empty-input-review';
+export const reviewFixture = Object.freeze({ suppliedInput: '', expected: 'reject empty input', observed: 'accepted' });
 
 const notes = Object.freeze({
   progress: Object.freeze({
@@ -12,6 +14,7 @@ const notes = Object.freeze({
     no_issue: 'No issue found in the supplied fixture.',
   }),
 });
+export const reviewFindings = Object.freeze(Object.keys(notes.result));
 const operations = {
   dosai_assign_review: 'assignment',
   dosai_report_review: 'progress',
@@ -32,7 +35,7 @@ const schemas = {
     expectedRevision: revision, note: { enum: Object.keys(notes.progress) },
   }, ['expectedRevision', 'note']),
   dosai_complete_review: objectSchema({
-    expectedRevision: revision, note: { enum: Object.keys(notes.result) },
+    expectedRevision: revision, note: { enum: reviewFindings },
   }, ['expectedRevision', 'note']),
 };
 const tool = (name, description) => ({ name, description, inputSchema: schemas[name] });
@@ -67,11 +70,11 @@ function scopedSnapshot(project) {
 
 function projectView(saved) {
   return {
-    study: 'synthetic-empty-input-review',
+    study: reviewStudy,
     status: saved.phase === 'stopped' ? 'stopped' : saved.tasks.review.status,
     revision: saved.tasks.review.revision,
     note: saved.tasks.review.note,
-    fixture: { suppliedInput: '', expected: 'reject empty input', observed: 'accepted' },
+    fixture: { ...reviewFixture },
   };
 }
 

@@ -157,6 +157,10 @@ select {
 [data-mode="project"] .node { min-height: 0; padding: 14px; gap: 6px; }
 [data-mode="project"] .node[data-role="lead"] { align-self: stretch; }
 [data-mode="project"] .icon { width: 34px; height: 34px; }
+[data-review-mode="managed"] .node[data-role="lead"] { grid-row: 1; }
+[data-review-mode="managed"] #agent-carbon,
+[data-review-mode="managed"] .connection-test,
+[data-review-mode="managed"] #task-test { display: none; }
 
 details {
   margin-top: 18px;
@@ -187,4 +191,5 @@ li strong { display: inline-block; margin-right: 10px; color: #e7ebe8; font-size
   .link-label { min-height: 0; margin: 0; }
   .project-board li { grid-template-columns: auto 1fr; }
   .project-board li span { grid-column: 2; }
+  [data-review-mode="managed"] .graph { grid-template-columns: minmax(0, 1fr); }
 }

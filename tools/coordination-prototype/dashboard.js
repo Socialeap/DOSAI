@@ -22,6 +22,7 @@
   let roles = defaultRoles;
   let session;
   let savedProject;
+  let managed = false;
 
   const nodes = Object.keys(names).map(agent => {
     const card = byId('agent-' + agent);
@@ -43,7 +44,7 @@
   });
 
   function nodeRoleLocked() {
-    return project ? graph.dataset.phase !== 'idle' : session?.snapshot().phase === 'running';
+    return project ? managed || graph.dataset.phase !== 'idle' : session?.snapshot().phase === 'running';
   }
 
   function render({ phase, states: tasks, events }) {
@@ -61,7 +62,7 @@
       if (phase === 'idle') node.state.textContent = 'Ready';
       else if (phase === 'blocked' || phase === 'stopped') node.state.textContent = 'Stopped';
       else if (role === 'lead') node.state.textContent = phase === 'complete' ? 'Review complete' : 'Coordinating';
-      else node.state.textContent = states[tasks[role]];
+      else node.state.textContent = states[tasks[role] ?? 'pending'];
     }
 
     for (const task of ['review', 'test']) {
@@ -91,20 +92,31 @@
       return;
     }
     savedProject = saved;
-    if (saved.phase !== 'idle') roles = saved.roles;
+    managed = saved.mode === 'managed-review';
+    if (managed || saved.phase !== 'idle') roles = saved.roles;
     render({
       phase: saved.phase,
       states: Object.fromEntries(Object.entries(saved.tasks).map(([task, item]) => [task, item.status])),
       events: saved.events,
     });
-    for (const node of nodes) node.role.disabled = saved.phase !== 'idle';
+    for (const node of nodes) node.role.disabled = managed || saved.phase !== 'idle';
     run.disabled = saved.active || ['complete', 'stopped'].includes(saved.phase);
-    run.textContent = saved.phase === 'running' && !saved.active ? 'Resume demo' : 'Run demo';
-    if (saved.phase === 'running' && !saved.active) status.textContent = 'Saved session ready to resume';
-    if (saved.phase === 'complete') status.textContent = 'Both results saved';
+    if (managed) {
+      document.body.dataset.reviewMode = 'managed';
+      byId('mode').textContent = 'Offline managed review';
+      run.textContent = 'Run review';
+      run.disabled = saved.active || saved.phase !== 'idle';
+      stop.disabled = !saved.active && saved.phase !== 'running';
+      if (saved.notice) status.textContent = saved.notice;
+      else if (saved.phase === 'running' && !saved.active) status.textContent = 'Review interrupted. Stop to close.';
+      else if (saved.phase === 'complete') status.textContent = 'Review received and saved';
+    } else {
+      run.textContent = saved.phase === 'running' && !saved.active ? 'Resume demo' : 'Run demo';
+      if (saved.phase === 'running' && !saved.active) status.textContent = 'Saved session ready to resume';
+      if (saved.phase === 'complete') status.textContent = 'Both results saved';
+    }
     byId('project-revision').textContent = saved.revision ? 'Update ' + saved.revision : '';
-    for (const task of ['review', 'test']) {
-      const item = saved.tasks[task];
+    for (const [task, item] of Object.entries(saved.tasks)) {
       byId('done-' + task).checked = item.status === 'complete';
       byId('note-' + task).textContent = item.note || (item.status === 'pending' ? 'Waiting for assignment' : '');
       byId('owner-' + task).textContent = names[roles[task]];
@@ -121,7 +133,8 @@
   run.addEventListener('click', () => {
     if (project) {
       run.disabled = true;
-      void project.run(roles).then(renderProject).catch(projectError);
+      const operation = managed ? project.run() : project.run(roles);
+      void operation.then(renderProject).catch(projectError);
       return;
     }
     session = createSession({ roles, agents: sampleAgents(roles, pause), onUpdate: render });

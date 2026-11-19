@@ -1,14 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { setImmediate } from 'node:timers/promises';
 import test from 'node:test';
-import { createContext, runInContext } from 'node:vm';
 
 import '../../tools/coordination-prototype/session.js';
+import { mountDashboard } from '../fixtures/coordination/dashboard-dom.mjs';
 
 const { assignRole, createSession, defaultRoles, names, sampleAgents } = globalThis.dosaiCoordinationPrototype;
-const files = new URL('../../tools/coordination-prototype/', import.meta.url);
-const read = name => readFileSync(new URL(name, files), 'utf8');
 const noDelay = async () => {};
 
 test('all role permutations route two assignments and both results to the right identities', async () => {
@@ -103,31 +100,11 @@ test('stop discards pending progress on both assigned lanes', async () => {
   assert.deepEqual(await completion, stopped);
 });
 
-class Element {
-  dataset = {};
-  children = [];
-  textContent = '';
-  value = '';
-  disabled = false;
-  handlers = {};
-  addEventListener(type, handler) { this.handlers[type] = handler; }
-  append(...children) { this.children.push(...children); }
-  replaceChildren(...children) { this.children = children; }
-  trigger(type) { if (!this.disabled) this.handlers[type](); }
-}
-
 test('dashboard role picker and both graph edges track the automatic exchange', async () => {
-  const html = read('index.html');
-  assert.match(html, /connect-src 'none'/);
-  const nodes = new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
   const timers = [];
-  const context = createContext({
-    document: { getElementById: id => nodes.get(id), createElement: () => new Element() },
-    setTimeout: advance => timers.push(advance),
-  });
-  const scripts = [...html.matchAll(/<script src="([^"]+)" defer><\/script>/g)].map(([, src]) => src);
+  const { html, nodes, scripts } = mountDashboard({ setTimeout: advance => timers.push(advance) });
+  assert.match(html, /connect-src 'none'/);
   assert.deepEqual(scripts, ['session.js', 'dashboard.js']);
-  for (const script of scripts) runInContext(read(script), context, { filename: script });
 
   nodes.get('role-carbon').value = 'lead';
   nodes.get('role-carbon').trigger('change');
