@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>DOSAI · Coordination</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="session.js" defer></script>
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="wordmark">DOSAI</div>
+      <span class="badge">Offline simulation</span>
+    </header>
+    <div class="title-row">
+      <div>
+        <h1>Coordination</h1>
+        <p class="subtitle">Sample code review</p>
+      </div>
+      <div class="controls">
+        <button id="run" type="button">Run demo</button>
+        <button id="stop" type="button" disabled>Stop session</button>
+      </div>
+    </div>
+    <section class="graph" id="graph" data-phase="idle" aria-label="Agent coordination graph">
+      <article class="node lead">
+        <span class="icon" aria-hidden="true"><span class="lead-icon"></span></span>
+        <h2>Lead engineer</h2>
+        <p class="node-state" id="lead-state">Ready</p>
+      </article>
+      <div class="connection">
+        <div id="link" class="link" data-direction="none" aria-hidden="true"><i></i></div>
+        <p class="link-label" id="link-label" role="status">Ready to start</p>
+      </div>
+      <article class="node specialist">
+        <span class="icon" aria-hidden="true"><span class="review-icon"></span></span>
+        <h2>Review specialist</h2>
+        <p class="node-state" id="specialist-state">Ready</p>
+      </article>
+    </section>
+    <details>
+      <summary>Session activity</summary>
+      <ol id="activity"></ol>
+    </details>
+  </main>
+</body>
+</html>

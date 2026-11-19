@@ -1,0 +1,168 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #e7ebe8;
+  background: #111613;
+  --muted: #a7b2aa;
+  --border: #35423a;
+  --lead: #bbef9f;
+  --specialist: #a7d9eb;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+main {
+  width: min(980px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 30px 0 44px;
+}
+
+header, .title-row, .controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.wordmark { font-weight: 750; letter-spacing: .14em; }
+.badge { color: var(--muted); font-size: .8rem; }
+.title-row { margin: 38px 0 24px; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.05em; }
+.subtitle { margin: 5px 0 0; color: var(--muted); }
+
+button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #202821;
+  padding: 10px 13px;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#run { background: var(--lead); color: #142319; border-color: transparent; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--lead); outline-offset: 3px; }
+
+.graph {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, .72fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: radial-gradient(circle, #34443b 1px, transparent 1px) 10px 10px / 22px 22px, #171f1a;
+  padding: clamp(20px, 5vw, 56px);
+}
+
+.node {
+  --accent: var(--lead);
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 8px;
+  min-height: 168px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: 14px;
+  background: #1d2821;
+  padding: clamp(14px, 3vw, 24px);
+}
+
+.specialist { --accent: var(--specialist); }
+.node h2 { margin: 10px 0 0; font-size: 1.05rem; }
+.node-state { margin: 0; color: var(--muted); font-size: .91rem; }
+.icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--accent);
+  background: #314239;
+}
+
+.lead-icon {
+  width: 17px;
+  height: 17px;
+  transform: rotate(45deg);
+  border: 2px solid currentColor;
+  border-radius: 3px;
+}
+
+.review-icon {
+  position: relative;
+  width: 17px;
+  height: 17px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.review-icon::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  bottom: -3px;
+  width: 8px;
+  height: 2px;
+  transform: rotate(48deg);
+  background: currentColor;
+}
+
+.connection { min-width: 0; text-align: center; }
+.link { position: relative; height: 2px; background: #52655a; }
+.link-label {
+  min-height: 2.5em;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.link[data-direction="lead"] { background: var(--lead); color: var(--lead); }
+.link[data-direction="specialist"] { background: var(--specialist); color: var(--specialist); }
+.link[data-direction="lead"] i, .link[data-direction="specialist"] i {
+  position: absolute;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+.link[data-direction="lead"] i { right: 2px; transform: rotate(45deg); }
+.link[data-direction="specialist"] i { left: 2px; transform: rotate(-135deg); }
+
+.graph[data-phase="blocked"] .link-label { color: #ffc39c; }
+.graph[data-phase="complete"] .node-state { color: var(--lead); }
+
+details {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--muted);
+}
+
+summary { color: #e7ebe8; cursor: pointer; font-weight: 600; }
+ol { display: grid; gap: 8px; padding-left: 1.5rem; }
+ol:empty { display: none; }
+li strong { display: inline-block; margin-right: 10px; color: #e7ebe8; font-size: .82rem; }
+
+@media (max-width: 590px) {
+  .title-row { align-items: flex-start; flex-direction: column; }
+  .graph { grid-template-columns: 1fr; gap: 18px; }
+  .node { min-height: 0; }
+  .connection { display: flex; justify-content: center; align-items: center; gap: 12px; }
+  .link { width: 2px; height: 32px; }
+  .link[data-direction="lead"] i { top: auto; bottom: 0; right: -4px; transform: rotate(135deg); }
+  .link[data-direction="specialist"] i { top: 0; left: -4px; transform: rotate(-45deg); }
+  .link-label { min-height: 0; margin: 0; }
+}
