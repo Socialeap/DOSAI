@@ -133,6 +133,32 @@ substitute all Linux metadata reads and require no Linux guest.
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-collectors-test.py
 ```
 
+## Guest isolation canary harness
+
+The [source harness](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-harness.py)
+asks an offline fixture observer for four checks in order. It rehearses a
+synthetic host-file read, egress connection, loopback connection and
+subprocess attempt. Each uses a reachable control before and after one
+attempt from the restricted fixture identity. A failed control, unexpected
+reachability, inconclusive denial or mismatched observation stops the
+rehearsal. A refused connection, missing target or timeout is inconclusive.
+
+Each reply is bound to its position, role, process start and a challenge
+derived from the synthetic run, guest generation and configuration digest.
+This correlation can reject mismatched replies within the rehearsal. It
+provides no attestation or persistent replay protection. The report always
+holds physical qualification and adds zero builder receipts.
+
+The harness has no native observer, command-line entry point or runtime wiring.
+Any physical observer needs separate review and approval. Its control and
+restricted contexts must target the same independently identified disposable
+fixture and prove effective denial. That review must also supply a supervised
+deadline, Stop, cleanup, and independent host configuration evidence.
+
+```sh
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-harness-test.py
+```
+
 ## Qualification limits
 
 A signed-in startup pass covers this Claude candidate only. An ARM64 guest
