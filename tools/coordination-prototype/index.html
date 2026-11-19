@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file:; style-src 'self' file:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>DOSAI · Coordination</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="session.js" defer></script>
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="wordmark">DOSAI</div>
+      <span class="badge" id="mode">Offline simulation</span>
+    </header>
+    <div class="title-row">
+      <div>
+        <h1>Coordination</h1>
+        <p class="subtitle">Sample code review</p>
+      </div>
+      <div class="controls">
+        <button id="run" type="button">Run demo</button>
+        <button id="stop" type="button" disabled>Stop session</button>
+      </div>
+    </div>
+    <section class="graph" id="graph" data-phase="idle" aria-label="Agent coordination graph">
+      <article class="node" id="agent-codex" data-role="lead">
+        <span class="icon" aria-hidden="true"><span class="role-icon"></span></span>
+        <h2>GPT Codex</h2>
+        <select id="role-codex" aria-label="Role for GPT Codex"></select>
+        <p class="node-state" id="state-codex">Ready</p>
+      </article>
+      <div class="connection connection-review">
+        <div id="link-review" class="link" data-direction="none" aria-hidden="true"><i></i></div>
+        <p class="link-label" id="label-review">Waiting</p>
+      </div>
+      <article class="node" id="agent-claude" data-role="review">
+        <span class="icon" aria-hidden="true"><span class="role-icon"></span></span>
+        <h2>Claude Code</h2>
+        <select id="role-claude" aria-label="Role for Claude Code"></select>
+        <p class="node-state" id="state-claude">Ready</p>
+      </article>
+      <div class="connection connection-test">
+        <div id="link-test" class="link" data-direction="none" aria-hidden="true"><i></i></div>
+        <p class="link-label" id="label-test">Waiting</p>
+      </div>
+      <article class="node" id="agent-carbon" data-role="test">
+        <span class="icon" aria-hidden="true"><span class="role-icon"></span></span>
+        <h2>Antigravity Carbon</h2>
+        <select id="role-carbon" aria-label="Role for Antigravity Carbon"></select>
+        <p class="node-state" id="state-carbon">Ready</p>
+      </article>
+    </section>
+    <p class="session-status" id="session-status" role="status">Ready</p>
+    <section class="project-board" id="project-board" hidden aria-labelledby="project-title">
+      <div class="board-header">
+        <h2 id="project-title">Shared checklist</h2>
+        <span id="project-revision"></span>
+      </div>
+      <ul>
+        <li>
+          <input type="checkbox" disabled id="done-review" aria-label="Review task complete">
+          <div><strong>Review changes</strong><p id="note-review"></p></div>
+          <span id="owner-review"></span>
+        </li>
+        <li>
+          <input type="checkbox" disabled id="done-test" aria-label="Test task complete">
+          <div><strong>Check test coverage</strong><p id="note-test"></p></div>
+          <span id="owner-test"></span>
+        </li>
+      </ul>
+    </section>
+    <details>
+      <summary>Session activity</summary>
+      <ol id="activity"></ol>
+    </details>
+  </main>
+</body>
+</html>
