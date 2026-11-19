@@ -74,6 +74,22 @@ before seeking any execution approval. Use native ARM64 with no emulation.
    Effective tool access, provider egress, verified spend, and fresh
    explicit local owner approval remain separate gates.
 
+## Offline fixtures
+
+Run with the repository's pinned Node 24.18.0 from the repository root.
+
+```sh
+node --test tests/coordination/m4-linux-arm64-claude-worker.test.mjs
+```
+
+The fixture checks a synthetic startup trace and rejects altered guest or
+worker identity, missing isolation controls, unsafe sign-in and startup
+transitions, Stop ordering and replay failures, and forged receipt authority.
+A matching trace leaves guest execution, sign-in and live launch held and
+adds zero builder receipts. This suite runs entirely in memory.
+
+## Qualification limits
+
 A signed-in startup pass covers this Claude candidate only. An ARM64 guest
 produces zero qualifying AMD64 receipts under [ADR 0018](../decisions/0018-native-linux-independent-builders.md).
 Native-builder work continues in the [separate intake](p3-gce-native-amd64-desk-screen-v1.md).
