@@ -178,6 +178,35 @@ test('a conflicting receipt leaves the finding uncommitted and closes the review
   assert.deepEqual(result.events.map(event => event.type), ['assignment', 'progress']);
 });
 
+test('a worker input request cannot invoke owner approval or dispatch the specialist', async t => {
+  const { project } = newProject(t);
+  const calls = [];
+  const managed = createManagedReview(project, () => {}, {
+    confirm() {
+      calls.push('local-start-confirmation');
+      return approved();
+    },
+    execute(turn) {
+      calls.push(turn.step);
+      const events = [
+        { type: 'thread.started' },
+        { type: 'turn.started' },
+        { type: 'item.completed', item: { type: 'function_call', name: 'request_user_input' } },
+        { type: 'item.completed', item: {
+          type: 'agent_message', text: '{"assignment":"synthetic-empty-input-review"}',
+        } },
+        { type: 'turn.completed' },
+      ];
+      return Buffer.from(events.map(event => JSON.stringify(event) + '\n').join(''));
+    },
+  });
+  const result = await managed.run();
+  assert.equal(result.phase, 'stopped');
+  assert.deepEqual(result.events, []);
+  assert.deepEqual(await managed.run(), result);
+  assert.deepEqual(calls, ['local-start-confirmation', 'assign']);
+});
+
 test('a persisted unfinished review requires Stop and cannot redispatch after restart', async t => {
   const { project } = newProject(t);
   project.start({ lead: 'codex', review: 'claude', test: 'carbon' });

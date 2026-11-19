@@ -1,4 +1,4 @@
-"""One offline observation per pinned native CLI. No upstream, model response or live launch."""
+"""Bounded offline probes for pinned native CLIs with no upstream or live launch."""
 
 import hashlib
 import http.server
@@ -58,23 +58,76 @@ class Sink(http.server.BaseHTTPRequestHandler):
                 self.send_error(404)
                 return
             raw = self.rfile.read(size)
-            if b'Classify this synthetic fixture' not in raw or self.server.received.is_set():
+            if b'Classify this synthetic fixture' not in raw and not self.server.received.is_set():
                 raise ValueError()
-            body = json.loads(raw)
-            tools = body.get('tools', [])
-            if not isinstance(tools, list) or len(tools) > 100:
-                raise ValueError()
-            names = [item.get('name') or item.get('type') for item in tools]
-            if not all(isinstance(name, str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,80}', name) for name in names):
-                raise ValueError()
-            self.server.catalog = names
-            self.server.tools_field_present = 'tools' in body
-            self.server.received.set()
-            self.server.disconnected = not self.connection.recv(1)
+            self.handle_fixture(json.loads(raw))
         except (ValueError, TypeError, AttributeError, OSError):
             self.server.failed = True
-        finally:
             self.server.finished.set()
+
+    def observe_catalog(self, body):
+        if self.server.received.is_set():
+            raise ValueError()
+        tools = body.get('tools', [])
+        if not isinstance(tools, list) or len(tools) > 100:
+            raise ValueError()
+        names = [item.get('name') or item.get('type') for item in tools]
+        if not all(isinstance(name, str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,80}', name) for name in names):
+            raise ValueError()
+        self.server.catalog = names
+        self.server.tools_field_present = 'tools' in body
+        self.server.received.set()
+
+    def handle_fixture(self, body):
+        self.observe_catalog(body)
+        self.server.disconnected = not self.connection.recv(1)
+        self.server.finished.set()
+
+
+class InputDenialSink(Sink):
+    """Send one harmless synthetic question, then stop at the tool result."""
+
+    call_id = 'call_dosai_fixture'
+    response_id = 'resp_dosai_fixture'
+
+    def handle_fixture(self, body):
+        if not self.server.received.is_set():
+            self.observe_catalog(body)
+            if self.server.catalog != ['request_user_input']:
+                raise ValueError()
+            question = {
+                'id': 'fixture-label', 'header': 'Fixture', 'question': 'Which synthetic label?',
+                'options': [
+                    {'label': 'Ready', 'description': 'Choose ready.'},
+                    {'label': 'Pending', 'description': 'Choose pending.'},
+                ],
+            }
+            events = [
+                {'type': 'response.created', 'response': {'id': self.response_id}},
+                {'type': 'response.output_item.done', 'item': {
+                    'id': 'fc_dosai_fixture', 'type': 'function_call', 'call_id': self.call_id,
+                    'name': 'request_user_input', 'arguments': json.dumps({'questions': [question]}),
+                }},
+                {'type': 'response.completed', 'response': {'id': self.response_id, 'usage': {
+                    'input_tokens': 1, 'output_tokens': 1, 'total_tokens': 2,
+                }}},
+            ]
+            data = ''.join(f"event: {event['type']}\ndata: {json.dumps(event)}\n\n" for event in events).encode()
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/event-stream')
+            self.send_header('Content-Length', str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
+        if self.server.finished.is_set():
+            raise ValueError()
+        outputs = [item.get('output') for item in body.get('input', [])
+                   if item.get('type') == 'function_call_output' and item.get('call_id') == self.call_id]
+        self.server.input_denied = outputs == ['request_user_input is unavailable in Default mode']
+        # The fixture never supplies a subsequent model response or accepts an answer.
+        self.send_error(400)
+        self.server.finished.set()
 
 def env_for(root):
     return {'HOME': str(root), 'TMPDIR': str(root), 'PATH': '/usr/bin:/bin'}
@@ -120,8 +173,9 @@ def test_fence(scratch, sink, canary, node):
                    '-e', CANARY, str(sink.server_port), str(blocked.getsockname()[1]), str(canary)]
         subprocess.run(command, cwd=scratch, env=env_for(scratch), check=True, timeout=8)
 
-def run(name, binary, scratch, canary, node):
-    with http.server.HTTPServer(('127.0.0.1', 0), Sink) as sink:
+def run(name, binary, scratch, canary, node, *, input_denial=False):
+    handler = InputDenialSink if input_denial else Sink
+    with http.server.HTTPServer(('127.0.0.1', 0), handler) as sink:
         prefix = '/' + secrets.token_hex(16)
         sink.path = prefix + ('/v1/responses' if name == 'codex' else '/v1/messages')
         sink.received = threading.Event()
@@ -130,6 +184,7 @@ def run(name, binary, scratch, canary, node):
         sink.tools_field_present = None
         sink.disconnected = False
         sink.failed = False
+        sink.input_denied = False
         reader = threading.Thread(target=sink.serve_forever, daemon=True)
         reader.start()
         proc = None
@@ -161,9 +216,15 @@ def run(name, binary, scratch, canary, node):
             proc = subprocess.Popen([SANDBOX, '-p', profile(binary, scratch, sink.server_port), str(binary), *args],
                                     cwd=scratch, env=env, stdin=subprocess.DEVNULL,
                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            for _ in range(32):
-                if sink.received.wait(0.25) or proc.poll() is not None:
-                    break
+            if input_denial:
+                try:
+                    proc.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    pass
+            else:
+                for _ in range(32):
+                    if sink.received.wait(0.25) or proc.poll() is not None:
+                        break
             pending = proc.poll() is None
             if pending:
                 proc.terminate()
@@ -175,6 +236,11 @@ def run(name, binary, scratch, canary, node):
             if sink.received.is_set():
                 sink.finished.wait(3)
 
+            if input_denial:
+                return {'worker': name, 'fence_canaries': 'PASS', 'catalog': sink.catalog,
+                        'input_denied': sink.input_denied and not sink.failed,
+                        'timed_out': pending, 'exit_code': proc.returncode,
+                        'live_launch_permitted': False}
             return {'worker': name, 'fence_canaries': 'PASS', 'catalog': sink.catalog,
                     'tools_field_present': sink.tools_field_present, 'pending_at_stop': pending,
                     'exit_code': proc.returncode, 'live_launch_permitted': False,
@@ -205,19 +271,29 @@ def pinned_path(argument, pin):
 
 
 def main(arguments):
-    if sys.platform != 'darwin' or platform.machine() != 'arm64' or len(arguments) != 3:
+    if sys.platform != 'darwin' or platform.machine() != 'arm64':
         raise ValueError()
-    codex, claude, node = [pinned_path(path, identity) for path, identity in zip(arguments, PINS)]
+    input_denial = arguments[:1] == ['--input-denial']
+    if len(arguments) != 3:
+        raise ValueError()
+    if input_denial:
+        clients = [('codex', pinned_path(arguments[1], PINS[0]))]
+    else:
+        clients = [(name, pinned_path(argument, pin))
+                   for name, argument, pin in zip(('codex', 'claude'), arguments, PINS)]
+    node = pinned_path(arguments[-1], PINS[2])
     complete = True
     with tempfile.TemporaryDirectory(prefix='dosai-fixture-', dir='/private/tmp') as directory:
         root = Path(directory)
         canary = root / 'outside.txt'
         canary.write_text('synthetic')
-        for name, binary in (('codex', codex), ('claude', claude)):
+        for name, binary in clients:
             scratch = root / name
             scratch.mkdir(mode=0o700)
-            result = run(name, binary, scratch, canary, node)
+            result = run(name, binary, scratch, canary, node, input_denial=input_denial)
             print(json.dumps(result), flush=True)
+            if input_denial:
+                return 0 if result['input_denied'] and not result['timed_out'] and result['exit_code'] == 1 else 2
             complete &= (result['catalog'] is not None and result['pending_at_stop']
                          and result['connection_closed'] and not result['sink_error'])
     return 0 if complete else 2
