@@ -6,101 +6,100 @@ import { createContext, runInContext } from 'node:vm';
 
 import '../../tools/coordination-prototype/session.js';
 
-const { createSession, sample, sampleAgents } = globalThis.dosaiCoordinationPrototype;
-const repositoryFiles = new URL('../../tools/coordination-prototype/', import.meta.url);
-const read = name => readFileSync(new URL(name, repositoryFiles), 'utf8');
+const { assignRole, createSession, defaultRoles, names, sampleAgents } = globalThis.dosaiCoordinationPrototype;
+const files = new URL('../../tools/coordination-prototype/', import.meta.url);
+const read = name => readFileSync(new URL(name, files), 'utf8');
 const noDelay = async () => {};
 
-test('lead and specialist exchange three role-bound messages automatically', async () => {
-  const updates = [];
-  const delivered = [];
-  const agents = sampleAgents(noDelay);
-  const session = createSession({
-    lead: {
-      start: agents.lead.start,
-      async receive(event) {
-        delivered.push(event);
-        await agents.lead.receive(event);
-      },
-    },
-    specialist: {
-      async receive(event, send) {
-        delivered.push(event);
-        await agents.specialist.receive(event, send);
-      },
-    },
-    onUpdate: value => updates.push(value.phase),
-  });
+test('all role permutations route two assignments and both results to the right identities', async () => {
+  const identities = Object.keys(names);
+  for (const lead of identities) {
+    for (const review of identities.filter(agent => agent !== lead)) {
+      const roles = { lead, review, test: identities.find(agent => agent !== lead && agent !== review) };
+      const updates = [];
+      const session = createSession({
+        roles, agents: sampleAgents(roles, noDelay), onUpdate: update => updates.push(update),
+      });
 
-  const final = await session.start();
-  assert.equal(final.phase, 'complete');
-  assert.deepEqual(updates, ['ready', 'assigned', 'reviewing', 'delivered', 'complete']);
-  assert.deepEqual(final.events, delivered);
-  assert.deepEqual(final.events.map(({ sequence, type, from, to }) => [sequence, type, from, to]), [
-    [1, 'assignment', 'lead', 'specialist'],
-    [2, 'progress', 'specialist', 'lead'],
-    [3, 'result', 'specialist', 'lead'],
-  ]);
-  assert.ok(final.events.every(event => event.taskId === sample.id && Object.isFrozen(event)));
-  assert.equal(final.events.at(-1).text, 'Missing test: empty input.');
-  assert.deepEqual(await session.start(), final);
+      const final = await session.start();
+      assert.equal(final.phase, 'complete');
+      assert.deepEqual(final.roles, roles);
+      assert.deepEqual(final.events.map(event => event.sequence), [1, 2, 3, 4, 5, 6]);
+      assert.deepEqual(final.events.slice(0, 2).map(event => event.type), ['assignment', 'assignment']);
+      for (const task of ['review', 'test']) {
+        const events = final.events.filter(event => event.task === task);
+        assert.deepEqual(events.map(event => [event.type, event.from, event.to]), [
+          ['assignment', lead, roles[task]],
+          ['progress', roles[task], lead],
+          ['result', roles[task], lead],
+        ]);
+      }
+      assert.ok(updates.some(({ states }) => states.review === 'assigned' && states.test === 'assigned'));
+      assert.ok(final.events.every(Object.isFrozen));
+      assert.deepEqual(await session.start(), final);
+    }
+  }
 });
 
-test('invalid messages stop the session before any further delivery', async t => {
-  const rejected = [
-    ['an execution request', 'execute', sample.id],
-    ['the wrong sender', 'progress', sample.id],
-    ['the wrong task', 'assignment', 'unknown-task'],
-  ];
-  for (const [name, type, id] of rejected) {
-    await t.test(name, async () => {
-      let deliveries = 0;
-      const session = createSession({
-        lead: {
-          async start(send) {
-            assert.equal(await send(type, id, 'Unadmitted message'), false);
-            assert.equal(await send('assignment', sample.id, 'Late retry'), false);
-          },
-        },
-        specialist: { receive: () => deliveries++ },
-        onUpdate() {},
-      });
-      assert.deepEqual(await session.start(), { phase: 'blocked', events: [] });
-      assert.equal(deliveries, 0);
+test('role changes swap identities and invalid duplicate roles block before assigning', async () => {
+  assert.deepEqual(assignRole(defaultRoles, 'carbon', 'lead'), { lead: 'carbon', review: 'claude', test: 'codex' });
+  assert.deepEqual(defaultRoles, { lead: 'codex', review: 'claude', test: 'carbon' });
+  const session = createSession({
+    roles: { lead: 'codex', review: 'codex', test: 'carbon' }, agents: {}, onUpdate() {},
+  });
+  const final = await session.start();
+  assert.equal(final.phase, 'blocked');
+  assert.equal(final.events.length, 0);
+});
+
+test('unsupported operations and a specialist crossing lanes are rejected', async t => {
+  for (const type of ['execute', 'progress']) {
+    await t.test(type, async () => {
+      const roles = defaultRoles;
+      const agents = sampleAgents(roles, noDelay);
+      agents.claude.receive = async (event, send) => {
+        const task = type === 'progress' ? 'test' : event.task;
+        assert.equal(await send(type, task, 'Unadmitted message'), false);
+        assert.equal(await send('progress', event.task, 'Late retry'), false);
+      };
+      const session = createSession({ roles, agents, onUpdate() {} });
+      const final = await session.start();
+      assert.equal(final.phase, 'blocked');
+      assert.ok(final.events.every(event => event.type === 'assignment'));
     });
   }
 });
 
-test('completion requires the lead to receive the result successfully', async () => {
-  const agents = sampleAgents(noDelay);
-  agents.lead.receive = event => {
-    if (event.type === 'result') throw new Error('Injected recipient failure');
+test('completion requires the lead to consume both results', async () => {
+  const roles = defaultRoles;
+  const agents = sampleAgents(roles, noDelay);
+  agents.codex.receive = event => {
+    if (event.type === 'result' && event.task === 'test') throw new Error('Injected recipient failure');
   };
-  const session = createSession({ ...agents, onUpdate() {} });
+  const session = createSession({ roles, agents, onUpdate() {} });
   assert.equal((await session.start()).phase, 'blocked');
 });
 
-test('stop rejects messages held by an asynchronous adapter', async () => {
+test('stop discards pending progress on both assigned lanes', async () => {
   const { promise, resolve } = Promise.withResolvers();
-  const reachedSpecialist = Promise.withResolvers();
-  const agents = sampleAgents(noDelay);
-  const session = createSession({
-    ...agents,
-    specialist: {
-      async receive(event, send) {
-        reachedSpecialist.resolve();
-        await promise;
-        assert.equal(await send('progress', event.taskId, 'Delayed progress'), false);
-      },
-    },
-    onUpdate() {},
-  });
+  const reached = Promise.withResolvers();
+  const roles = defaultRoles;
+  const agents = sampleAgents(roles, noDelay);
+  let arrivals = 0;
+  for (const agent of [roles.review, roles.test]) {
+    agents[agent].receive = async (event, send) => {
+      if (++arrivals === 2) reached.resolve();
+      await promise;
+      assert.equal(await send('progress', event.task, 'Delayed progress'), false);
+    };
+  }
+  const session = createSession({ roles, agents, onUpdate() {} });
   const completion = session.start();
-  await reachedSpecialist.promise;
+  await reached.promise;
   const stopped = session.stop();
   resolve();
   assert.equal(stopped.phase, 'stopped');
-  assert.deepEqual(stopped.events.map(event => event.type), ['assignment']);
+  assert.deepEqual(stopped.events.map(event => event.type), ['assignment', 'assignment']);
   assert.deepEqual(await completion, stopped);
 });
 
@@ -108,66 +107,44 @@ class Element {
   dataset = {};
   children = [];
   textContent = '';
+  value = '';
   disabled = false;
   handlers = {};
-
-  addEventListener(type, handler) {
-    this.handlers[type] = handler;
-  }
-
-  append(...children) {
-    this.children.push(...children);
-  }
-
-  replaceChildren(...children) {
-    this.children = children;
-  }
-
-  click() {
-    if (!this.disabled) this.handlers.click();
-  }
+  addEventListener(type, handler) { this.handlers[type] = handler; }
+  append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; }
+  trigger(type) { if (!this.disabled) this.handlers[type](); }
 }
 
-test('the file-based dashboard follows broker events and keeps details on demand', async () => {
+test('dashboard role picker and both graph edges track the automatic exchange', async () => {
   const html = read('index.html');
+  assert.match(html, /connect-src 'none'/);
   const nodes = new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
   const timers = [];
   const context = createContext({
     document: { getElementById: id => nodes.get(id), createElement: () => new Element() },
     setTimeout: advance => timers.push(advance),
   });
-  assert.match(html, /connect-src 'none'/);
-  assert.match(html, /<details>\s*<summary>Session activity<\/summary>/);
   const scripts = [...html.matchAll(/<script src="([^"]+)" defer><\/script>/g)].map(([, src]) => src);
   assert.deepEqual(scripts, ['session.js', 'dashboard.js']);
   for (const script of scripts) runInContext(read(script), context, { filename: script });
 
-  nodes.get('run').click();
-  assert.equal(nodes.get('run').disabled, true);
-  assert.equal(nodes.get('stop').disabled, false);
-  for (const [phase, sender, messages] of [
-    ['assigned', 'lead', 1],
-    ['reviewing', 'specialist', 2],
-    ['delivered', 'specialist', 3],
-    ['complete', 'specialist', 3],
-  ]) {
-    assert.equal(timers.length, 1);
-    timers.shift()();
+  nodes.get('role-carbon').value = 'lead';
+  nodes.get('role-carbon').trigger('change');
+  assert.equal(nodes.get('agent-carbon').dataset.role, 'lead');
+  assert.equal(nodes.get('role-codex').value, 'test');
+  nodes.get('run').trigger('click');
+  assert.equal(nodes.get('role-carbon').disabled, true);
+
+  for (const [direction, messages] of [['lead', 2], ['specialist', 4], ['specialist', 6], ['specialist', 6]]) {
+    assert.notEqual(timers.length, 0);
+    for (const advance of timers.splice(0)) advance();
     await setImmediate();
-    assert.equal(nodes.get('graph').dataset.phase, phase);
-    assert.equal(nodes.get('link').dataset.direction, sender);
+    for (const role of ['review', 'test']) assert.equal(nodes.get('link-' + role).dataset.direction, direction);
     assert.equal(nodes.get('activity').children.length, messages);
   }
-  assert.equal(nodes.get('link-label').textContent, 'Result received');
-  assert.equal(nodes.get('activity').children[2].children[1], 'Missing test: empty input.');
-  assert.equal(nodes.get('stop').disabled, true);
-  assert.equal(nodes.get('run').disabled, false);
-
-  nodes.get('run').click();
-  nodes.get('stop').click();
-  assert.equal(timers.length, 1);
-  timers.shift()();
-  await setImmediate();
-  assert.equal(nodes.get('link-label').textContent, 'Session stopped');
-  assert.equal(nodes.get('activity').children.length, 0);
+  assert.equal(nodes.get('session-status').textContent, 'Both results received');
+  assert.equal(nodes.get('activity').children[0].children[0].textContent, 'Antigravity Carbon → Claude Code');
+  assert.equal(nodes.get('activity').children[5].children[0].textContent, 'GPT Codex → Antigravity Carbon');
+  assert.equal(nodes.get('role-carbon').disabled, false);
 });

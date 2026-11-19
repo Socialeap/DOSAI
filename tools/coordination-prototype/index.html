@@ -26,21 +26,34 @@
       </div>
     </div>
     <section class="graph" id="graph" data-phase="idle" aria-label="Agent coordination graph">
-      <article class="node lead">
-        <span class="icon" aria-hidden="true"><span class="lead-icon"></span></span>
-        <h2>Lead engineer</h2>
-        <p class="node-state" id="lead-state">Ready</p>
+      <article class="node" id="agent-codex" data-role="lead">
+        <span class="icon" aria-hidden="true"><span class="role-icon"></span></span>
+        <h2>GPT Codex</h2>
+        <select id="role-codex" aria-label="Role for GPT Codex"></select>
+        <p class="node-state" id="state-codex">Ready</p>
       </article>
-      <div class="connection">
-        <div id="link" class="link" data-direction="none" aria-hidden="true"><i></i></div>
-        <p class="link-label" id="link-label" role="status">Ready to start</p>
+      <div class="connection connection-review">
+        <div id="link-review" class="link" data-direction="none" aria-hidden="true"><i></i></div>
+        <p class="link-label" id="label-review">Waiting</p>
       </div>
-      <article class="node specialist">
-        <span class="icon" aria-hidden="true"><span class="review-icon"></span></span>
-        <h2>Review specialist</h2>
-        <p class="node-state" id="specialist-state">Ready</p>
+      <article class="node" id="agent-claude" data-role="review">
+        <span class="icon" aria-hidden="true"><span class="role-icon"></span></span>
+        <h2>Claude Code</h2>
+        <select id="role-claude" aria-label="Role for Claude Code"></select>
+        <p class="node-state" id="state-claude">Ready</p>
+      </article>
+      <div class="connection connection-test">
+        <div id="link-test" class="link" data-direction="none" aria-hidden="true"><i></i></div>
+        <p class="link-label" id="label-test">Waiting</p>
+      </div>
+      <article class="node" id="agent-carbon" data-role="test">
+        <span class="icon" aria-hidden="true"><span class="role-icon"></span></span>
+        <h2>Antigravity Carbon</h2>
+        <select id="role-carbon" aria-label="Role for Antigravity Carbon"></select>
+        <p class="node-state" id="state-carbon">Ready</p>
       </article>
     </section>
+    <p class="session-status" id="session-status" role="status">Ready</p>
     <details>
       <summary>Session activity</summary>
       <ol id="activity"></ol>

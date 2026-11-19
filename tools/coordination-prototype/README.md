@@ -1,8 +1,8 @@
 # Offline coordination dashboard
 
-Open [index.html](index.html) directly in a browser and click **Run demo**. The simulated lead assigns a coverage review. The specialist automatically reports progress and returns the missing test identified in a fixed fixture. The lead receives the result. **Session activity** shows all three messages in order. **Stop session** prevents further messages from the current run.
+Open [index.html](index.html) directly in a browser. GPT Codex, Claude Code, and Antigravity Carbon are the three display identities. Use the role menus to swap any two roles before clicking **Run demo**. The lead assigns separate review and testing tasks. Both specialists report progress and return their fixture results automatically. **Session activity** shows all six messages and their senders and recipients. **Stop session** prevents further messages from the current run.
 
-This source-only prototype uses a fixed task, two in-memory role adapters, and a broker that admits three message types in order. It has no DOSAI runtime or service integration, provider access, storage, network listener, shell, or approval authority. The synthetic result is a fixture outcome. Existing native approval and builder gates apply to live use.
+This source-only prototype uses three independent in-memory adapter instances over two fixed fixture tasks. The broker binds roles for the life of a session and admits only three ordered message types per task. The labels represent simulated agents. They do not connect to native clients or identify the models those clients are running. Existing native approval, transport, provider, and builder gates apply to live use.
 
 Run the focused tests using Node 24.18.0:
 
