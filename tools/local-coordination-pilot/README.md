@@ -32,6 +32,50 @@ offline proof does not establish native-provider process isolation or durable
 cross-provider transport. See the [Codex JSON output format](https://learn.chatgpt.com/docs/non-interactive-mode#make-output-machine-readable)
 and [Claude Code structured output format](https://code.claude.com/docs/en/headless#get-structured-output).
 
+### Native worker preflight
+
+The merged offline review flow remains the entry point. The next live-candidate
+check is to verify the effective tool catalog and process boundary on the exact
+installed binaries. Version output, help text, and Codex feature rows provide
+limited offline evidence. This preflight has no launcher or approval interface.
+
+On the M4, Codex `0.169.0-alpha.11.1` in an empty profile reported
+`shell_tool` off and `unified_exec` on after explicit disable requests.
+The listing leaves the effective command tool surface unresolved. Claude Code
+`2.1.314` advertises restricted mode, safe mode, an empty built-in tool list,
+and strict MCP configuration. Restricted mode still admits managed settings.
+Verify the effective configuration before a model request. [Codex CLI
+reference](https://learn.chatgpt.com/docs/cli/reference) · [Claude Code CLI
+reference](https://code.claude.com/docs/en/cli-reference)
+
+Use absolute paths to the native binaries and disposable, empty profile and
+working directories for metadata capture. Create `$probe_dir/codex` before
+probing and use a separate empty `CLAUDE_CONFIG_DIR` for Claude Code. Use only `--version`, Codex
+`exec --help`, Claude Code `--help`, and the Codex feature listing below.
+Record each binary's SHA-256 with `shasum -a 256`. Never read the provider's
+auth files or use the signed-in home for this probe.
+
+```sh
+/usr/bin/env -i HOME="$probe_dir" CODEX_HOME="$probe_dir/codex" PATH=/usr/bin:/bin \
+  "$codex_binary" --disable shell_tool --disable unified_exec --disable unified_exec_tty \
+  --disable hooks --disable plugins --disable apps --disable multi_agent \
+  -c 'web_search="disabled"' -c 'mcp_servers={}' features list
+```
+
+Provide a strict ASCII JSON object with `codex` and `claude` observations to
+`node tools/local-coordination-pilot/native-review-preflight.mjs` on stdin.
+Encode Unicode in help output as JSON escapes.
+Both records contain `version`, `sha256` and `help` strings. The Codex record
+also contains the `features` string from the command above. The report emits
+sanitized findings and returns status `HOLD` (exit 2) even when all reported
+settings match. Malformed observations exit 1.
+
+Before connecting clients, require reviewed evidence of the exact per-turn tool
+surface, startup configuration, process isolation and cancellation. Then verify
+included-only usage for the exact accounts and obtain fresh local approval.
+Native-builder admission remains separate. This source adds neither a live
+route nor a desktop MCP dependency.
+
 ## Desktop MCP proof and activation boundary
 
 - The two installed native CLI binaries can be checked using their local version commands. A local binary is neither evidence of the agent executor's location nor a successful MCP connection.
