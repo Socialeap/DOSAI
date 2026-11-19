@@ -4,7 +4,7 @@ const magic = Buffer.from('DCPF');
 const domain = Buffer.from('DOSAI/protected-local-pilot/v1\0');
 const headerLength = 118;
 const tagLength = 32;
-const maxPayload = 4096;
+export const maxProtectedPayloadBytes = 4096;
 const maxFrames = 64;
 const maxPayloadTotal = 96 * 1024;
 const frameTimeoutMs = 4000;
@@ -38,7 +38,7 @@ export function frameCodec(context, direction) {
   const tag = (header, payload) => createHmac('sha256', key).update(domain).update(header).update(payload).digest();
 
   function counters(type, correlation, length, next) {
-    if (closed || next !== sequence + 1 || next > maxFrames || length > maxPayload ||
+    if (closed || next !== sequence + 1 || next > maxFrames || length > maxProtectedPayloadBytes ||
         total + length > maxPayloadTotal || !Number.isSafeInteger(correlation) ||
         correlation < 0 || correlation > maxFrames || !Object.values(frameType).includes(type) ||
         (direction === 1 && type !== frameType.response) || (direction === 2 && type === frameType.response) ||

@@ -10,8 +10,8 @@ import { frameCodec, frameType, protectedPipe } from './protected-frame.mjs';
 
 const helper = fileURLToPath(new URL('inspect-macos-peer.py', import.meta.url));
 const fixture = fileURLToPath(new URL('protected-fixture-child.mjs', import.meta.url));
+const stdioBridge = fileURLToPath(new URL('client-stdio.mjs', import.meta.url));
 const env = { PATH: '/usr/bin:/bin' };
-const hello = Buffer.from('dosai-protected-fixture-ready-v1');
 const actors = ['codex', 'claude'];
 
 function readIdentity(pid, executable) {
@@ -30,7 +30,7 @@ function readIdentity(pid, executable) {
   return JSON.stringify(values);
 }
 
-async function exchange(worker, broker, executable) {
+async function exchange(worker, broker, executable, hello) {
   const { child, pipe, actor } = worker;
   if (!(await pipe.bootstrap(1)).equals(Buffer.from('R'))) throw new Error('Peer bootstrap rejected.');
   const identity = readIdentity(child.pid, executable);
@@ -83,49 +83,65 @@ async function exchange(worker, broker, executable) {
   }
 }
 
-// Fixed disposable fixture children. No client paths, arbitrary commands, or live provider entry point.
-export async function runProtectedFixture(project) {
+async function runFixture(project, exercise) {
   if (process.platform !== 'darwin' || typeof process.getuid !== 'function') {
     throw new Error('The protected launcher fixture requires macOS.');
   }
   const executable = realpathSync(process.execPath);
   const broker = createPilotBroker(project, { lifetimeMs: 12_000 });
+  const hello = Buffer.from(exercise ? 'dosai-protected-stdio-ready-v1' : 'dosai-protected-fixture-ready-v1');
   const children = [];
+  const exchanges = [];
   function terminate() {
     for (const { child, pipe } of children) {
       pipe.close();
       if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     }
   }
-  const deadline = setTimeout(terminate, 12_000);
+  const expiry = Promise.withResolvers();
+  const deadline = setTimeout(() => expiry.reject(new Error('Protected fixture timed out.')), 12_000);
   try {
     for (const actor of actors) {
-      const child = spawn(executable, [fixture, actor], {
-        env, stdio: ['ignore', 'ignore', 'ignore', 'pipe'],
+      const child = spawn(executable, exercise ? [stdioBridge] : [fixture, actor], {
+        env, stdio: [exercise ? 'pipe' : 'ignore', exercise ? 'pipe' : 'ignore', 'ignore', 'pipe'],
       });
       const exited = once(child, 'close');
       // A failed spawn can settle before the handshake finishes.
       void exited.catch(() => {});
       children.push({ child, actor, exited, pipe: protectedPipe(child.stdio[3]) });
     }
-    const exchanges = children.map(worker => exchange(worker, broker, executable));
-    try {
-      await Promise.all(exchanges);
-    } catch (error) {
-      terminate();
-      await Promise.allSettled(exchanges);
-      broker.stop();
-      throw error;
+    for (const worker of children) exchanges.push(exchange(worker, broker, executable, hello));
+    const work = [...exchanges];
+    if (exercise) {
+      const clients = Object.fromEntries(children.map(({ actor, child }) => [actor, {
+        input: child.stdin, output: child.stdout,
+      }]));
+      work.push(Promise.resolve().then(() => exercise(clients)));
     }
+    await Promise.race([Promise.all(work), expiry.promise]);
     const saved = project.snapshot();
     if (saved.tasks.review.status !== 'complete') {
-      broker.stop();
       throw new Error('The protected fixture did not complete its review.');
     }
     return saved;
+  } catch (error) {
+    broker.stop();
+    throw error;
   } finally {
     clearTimeout(deadline);
     terminate();
+    await Promise.allSettled(exchanges);
     await Promise.allSettled(children.map(worker => worker.exited));
   }
+}
+
+// Both paths spawn fixed disposable children. The stdio fixture hands only MCP
+// streams to test clients. The two protected descriptors stay with the bridges.
+export function runProtectedFixture(project) {
+  return runFixture(project);
+}
+
+export function runProtectedStdioFixture(project, exercise) {
+  if (typeof exercise !== 'function') throw new Error('MCP fixture driver required.');
+  return runFixture(project, exercise);
 }
