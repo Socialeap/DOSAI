@@ -138,3 +138,74 @@ Use Node 24.18.0. The suite opens disposable SQLite projects under the Mac workl
 ```
 
 This source increment requires no backend migration, deployment, secret configuration, Lovable action or change to native-builder admission.
+
+## Startup-only check for existing subscriptions
+
+This standalone operator probe rehearses the account boundary of
+[ADR 0022](../../docs/decisions/0022-one-run-existing-account-coordination-review.md).
+It has no dashboard integration, spend approval, prompt input, model turn, or
+provider transport. It pins the native binaries, denies network and Mach
+service lookup, excludes ordinary profile and workspace data, and accepts only
+fixed startup metadata over stdio. It checks both executable paths again after
+readiness, then stops the owned processes. Only status labels leave the probe.
+
+### Offline rehearsal
+
+On the M4, use the canonical paths of the verified Codex
+`0.169.0-alpha.11.1`, Claude Code `2.1.314`, and Node `24.18.0` binaries.
+Assign them to the shell variables below. A binary update holds the probe until
+the new digest is reviewed.
+
+```sh
+/usr/bin/python3 -I -B tests/fixtures/coordination/startup-only-launcher-test.py
+/usr/bin/python3 -I -B tools/local-coordination-pilot/startup-only-launcher.py \
+  --rehearse "$codex_binary" "$claude_binary" "$node_binary"
+```
+
+The rehearsal requires two `SIGNED_OUT` results with `startup_cancelled` true.
+The macOS test fence is limited to this startup proof. It grants no native
+builder, P3 capsule, or live subscription worker authority.
+
+### Signed-in startup check
+
+After source review, the owner creates a new isolated profile and authenticates
+directly through the stock vendor clients. Use the existing ADR 0022
+subscriptions and a separate browser profile. Keep billing settings as
+configured. Run the sign-in commands only from the associated empty working
+directory.
+
+```sh
+qa_profile="$(/usr/bin/python3 -I -B tools/local-coordination-pilot/startup-only-launcher.py --prepare)"
+printf '%s\n' "$qa_profile"
+(
+  cd "$qa_profile/codex/work" &&
+  /usr/bin/env -i HOME="$qa_profile/codex" CODEX_HOME="$qa_profile/codex/config" \
+    TMPDIR="$qa_profile/codex/tmp" PATH=/usr/bin:/bin \
+    "$codex_binary" -c 'forced_login_method="chatgpt"' \
+      -c 'cli_auth_credentials_store="file"' login
+)
+(
+  cd "$qa_profile/claude/work" &&
+  /usr/bin/env -i HOME="$qa_profile/claude" CLAUDE_CONFIG_DIR="$qa_profile/claude/config" \
+    TMPDIR="$qa_profile/claude/tmp" PATH=/usr/bin:/bin \
+    "$claude_binary" --safe-mode auth login --claudeai
+)
+```
+
+Claude Code normally uses macOS Keychain. The probe supports only a
+vendor-created, owner-only file cache within the isolated profile. A
+Keychain-only sign-in remains on hold until a scoped credential boundary is
+reviewed. Keep the shared Keychain and credentials untouched. Share only the
+profile path and sanitized receipt, never login links, codes, or file contents.
+[Claude Code credential storage](https://code.claude.com/docs/en/authentication#credential-management)
+
+```sh
+/usr/bin/python3 -I -B tools/local-coordination-pilot/startup-only-launcher.py \
+  --check "$qa_profile" "$codex_binary" "$claude_binary" "$node_binary"
+```
+
+A signed-in pass requires `CHATGPT`, `CLAUDE_SUBSCRIPTION`, successful
+cancellation, zero inference requests, and `live_launch_permitted` false.
+This check establishes local startup authentication mode only. The exact
+signed-in runtime tool surface, provider egress, spend, and explicit local
+approval still gate a live review.
