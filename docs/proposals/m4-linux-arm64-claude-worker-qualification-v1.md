@@ -306,6 +306,28 @@ full reference coverage before reporting either resource absent.
 [Linux unmount behavior](https://man7.org/linux/man-pages/man2/umount.2.html) ·
 [Linux unlink behavior](https://man7.org/linux/man-pages/man2/unlink.2.html)
 
+The source-only temporary-file observer covers one fixed fixture entry,
+`fixture-canary.tmp`, and one pre-enrolled descriptor table. It binds the
+private file directory, original regular file, and process's procfs
+descriptor directory by device and inode. It checks the slot without
+following links, opens a fresh read-only view of the pinned descriptor
+directory and follows only enumerated numeric procfs descriptor links for
+metadata. It reads no file contents. Each matching descriptor retains a
+reference even after the fixed entry disappears. A replaced entry, a changed
+pin, a descriptor that disappears mid-scan, or more than 256 entries
+leaves cleanup held.
+
+The source requires independent proof that the capsule is revoked, the
+trusted owner has pinned the exact procfs descriptor directory, and the
+file's only possible references are in that table. Before physical use,
+enforce that no other process can acquire a reference, and exclude alternate
+names, descriptor transfers, file mappings and kernel-held references.
+Check the same coverage before and after observation. Selection, pinning, and
+enforcement of that ownership boundary are still held for physical review.
+The offline suite substitutes kernel operations and covers the registry
+and watchdog transition from pending to verified on the final close.
+[Linux process descriptor entries](https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html)
+
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.
 
@@ -343,6 +365,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-wat
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-inventory-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-registry-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-resource-absence-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-temp-file-test.py
 ```
 
 ## Qualification limits

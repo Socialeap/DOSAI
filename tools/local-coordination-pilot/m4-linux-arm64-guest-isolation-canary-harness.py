@@ -238,6 +238,12 @@ class FixtureResourceInventorySnapshot(NamedTuple):
     references: tuple
 
 
+class FixtureTempFileCoverage(NamedTuple):
+    probe: FixtureResourceProbe
+    observation_digest: bytes
+    policy: str
+
+
 class _FixtureResourceEntry(NamedTuple):
     kind: str
     settled: bool
@@ -683,6 +689,58 @@ def _resource_inventory_table(rows):
         return None
     table = dict(rows)
     return table if len(table) == len(rows) else None
+
+
+def prepare_fixture_temp_file_inventory_source(template, binding, observation_digest, monotonic_ns,
+                                               read_coverage, observe_file):
+    """Project one pinned descriptor-only file into the resource inventory."""
+    if (not _valid_cleanup_scope(template) or template.fence_ns != 0
+            or not _valid_resource_binding(binding) or binding.kind != 'temporary_files'
+            or binding.capsule_generation != template.plan.capsule_generation
+            or type(observation_digest) is not bytes or len(observation_digest) != 32
+            or not all(callable(port) for port in (monotonic_ns, read_coverage, observe_file))):
+        raise ValueError('Invalid synthetic temporary file inventory source.')
+
+    def descriptor_only(probe):
+        record = read_coverage(probe)
+        return (type(record) is FixtureTempFileCoverage and record.probe is probe
+                and type(record.observation_digest) is bytes and record.observation_digest == observation_digest
+                and type(record.policy) is str and record.policy == 'REVOKED_EXCLUSIVE_DESCRIPTOR_ONLY')
+
+    def snapshot(probe):
+        if (type(probe) is not FixtureResourceProbe or not _valid_cleanup_scope(probe.scope)
+                or probe.scope._replace(fence_ns=0) != template
+                or not _valid_resource_binding(probe.binding) or probe.binding != binding):
+            return None
+        try:
+            if not descriptor_only(probe):
+                return None
+            result = observe_file(observation_digest)
+            if type(result) is not tuple or len(result) != 2 or not descriptor_only(probe):
+                return None
+            observed = monotonic_ns()
+        except Exception:
+            return None
+        state, count = result
+        if (type(state) is not str or state not in ('VACANT', 'PRESENT', 'REPLACED')
+                or type(count) is not int or not 0 <= count <= MAX_RESOURCE_INVENTORY_ROWS
+                or not _tick(observed) or not probe.scope.fence_ns <= observed < template.plan.cleanup_deadline_ns):
+            return None
+        slots = ()
+        if state == 'PRESENT':
+            slots = (FixtureResourceInventoryRow(binding.slot_id, binding.instance_id),)
+        elif state == 'REPLACED':
+            replacement = 'fixture-replacement' if binding.instance_id != 'fixture-replacement' else 'fixture-other'
+            slots = (FixtureResourceInventoryRow(binding.slot_id, replacement),)
+        references = tuple(
+            FixtureResourceInventoryRow(f'fixture-temp-ref-{index}', binding.instance_id) for index in range(count)
+        )
+        return FixtureResourceInventorySnapshot(
+            probe, probe.scope, binding.kind, binding.source_generation, binding.authority_id,
+            observed, True, True, slots, references,
+        )
+
+    return FixtureResourceInventorySource(binding.kind, binding.source_generation, binding.authority_id, snapshot)
 
 
 def prepare_fixture_resource_absence_readers(plan, cgroup_digest, resource_generation, sources):

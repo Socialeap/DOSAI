@@ -1,4 +1,4 @@
-"""Inactive Linux ARM64 capsule termination and read-only population primitives."""
+"""Inactive Linux ARM64 capsule termination and read-only kernel observations."""
 
 from contextlib import ExitStack, contextmanager
 import ctypes as c
@@ -16,8 +16,11 @@ from typing import NamedTuple
 ORIGIN = 'SYNTHETIC_ONLY'
 CGROUP2_MAGIC = 0x63677270
 PIDFS_MAGIC = 0x50494446
+PROCFS_MAGIC = 0x9FA0
 MAX_GRACEFUL_MEMBERS = 16
 MAX_CGROUP_EVENTS_BYTES = 4096
+MAX_TEMP_FILE_FDS = 256
+TEMP_FILE_NAME = 'fixture-canary.tmp'
 
 
 class FixtureHandlePin(NamedTuple):
@@ -90,6 +93,27 @@ class CgroupReadOps(NamedTuple):
     describe: object
     stat_events: object
     pread: object
+
+
+class FixtureTempFilePin(NamedTuple):
+    directory: FixtureHandlePin
+    directory_filesystem: int
+    file: FixtureHandlePin
+    descriptor_table: FixtureHandlePin
+
+
+class FixtureTempFileHandles(NamedTuple):
+    directory_fd: int
+    descriptor_table_fd: int
+
+
+class TempFileReadOps(NamedTuple):
+    duplicate: object
+    close: object
+    describe: object
+    stat_entry: object
+    open_table: object
+    list_slots: object
 
 
 def _uint(value, limit):
@@ -264,6 +288,112 @@ def prepare_fixture_cgroup_population_reader(pin, handles, *, ops=None):
             return None
 
     return read_population
+
+
+def fixture_temp_file_observation_digest(pin):
+    if (type(pin) is not FixtureTempFilePin or not all(
+            _valid_pin(identity) for identity in (pin.directory, pin.file, pin.descriptor_table))
+            or len({pin.directory, pin.file, pin.descriptor_table}) != 3
+            or pin.directory.device != pin.file.device or not _uint(pin.directory_filesystem, 2**32)
+            or pin.directory_filesystem in (0, PROCFS_MAGIC)):
+        raise ValueError('Invalid synthetic temporary file observation pin.')
+    payload = json.dumps(('DOSAI_LINUX_ARM64_TEMP_FILE_V1', TEMP_FILE_NAME, pin), separators=(',', ':')).encode('ascii')
+    return sha256(payload).digest()
+
+
+def _linux_arm64_temp_file_read_ops():
+    describe = _linux_arm64_descriptor_reader()
+
+    def stat_entry(directory_fd, name, follow):
+        info = os.stat(name, dir_fd=directory_fd, follow_symlinks=follow)
+        return FixtureHandlePin(info.st_dev, info.st_ino), info.st_mode
+
+    def open_table(directory_fd):
+        # A fresh open file description starts its directory scan at offset zero.
+        return os.open('.', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=directory_fd)
+
+    def list_slots(directory_fd):
+        slots = []
+        with os.scandir(directory_fd) as entries:
+            for entry in entries:
+                if len(slots) >= MAX_TEMP_FILE_FDS:
+                    raise ValueError('Temporary file descriptor census exceeded its bound.')
+                slots.append(entry.name)
+        return tuple(slots)
+
+    return TempFileReadOps(os.dup, os.close, describe, stat_entry, open_table, list_slots)
+
+
+def _require_readable_directory(ops, fd, pin, filesystem):
+    facts = _describe_bound(ops, fd, pin, filesystem)
+    if not stat.S_ISDIR(facts.mode) or facts.flags & os.O_ACCMODE != os.O_RDONLY:
+        raise ValueError('Temporary file observation directory rejected.')
+
+
+def _temp_file_slot(ops, directory, file_pin):
+    try:
+        identity, mode = ops.stat_entry(directory, TEMP_FILE_NAME, False)
+    except FileNotFoundError as exc:
+        if exc.errno != errno.ENOENT:
+            raise
+        return 'VACANT'
+    if not _valid_pin(identity) or type(mode) is not int:
+        raise ValueError('Temporary file slot metadata rejected.')
+    return 'PRESENT' if identity == file_pin and stat.S_ISREG(mode) else 'REPLACED'
+
+
+def _temp_file_descriptor_count(ops, directory, file_pin):
+    slots = ops.list_slots(directory)
+    if (type(slots) is not tuple or len(slots) > MAX_TEMP_FILE_FDS or not all(
+            type(name) is str and re.fullmatch(r'0|[1-9][0-9]{0,9}', name) and int(name) < 2**31
+            for name in slots) or len(set(slots)) != len(slots)):
+        raise ValueError('Temporary file descriptor census rejected.')
+    count = 0
+    for name in slots:
+        link, mode = ops.stat_entry(directory, name, False)
+        if not _valid_pin(link) or type(mode) is not int or not stat.S_ISLNK(mode):
+            raise ValueError('Temporary file descriptor link rejected.')
+        identity, mode = ops.stat_entry(directory, name, True)
+        if not _valid_pin(identity) or type(mode) is not int:
+            raise ValueError('Temporary file descriptor target rejected.')
+        if identity == file_pin:
+            if not stat.S_ISREG(mode):
+                raise ValueError('Temporary file descriptor target type changed.')
+            count += 1
+    return count
+
+
+def prepare_fixture_temp_file_observer(pin, handles, *, ops=None):
+    """Observe one fixed directory entry and one exhaustively owned proc fd table."""
+    digest = fixture_temp_file_observation_digest(pin)
+    if (type(handles) is not FixtureTempFileHandles or not all(_uint(fd, 2**31) and fd >= 3 for fd in handles)
+            or handles.directory_fd == handles.descriptor_table_fd
+            or (ops is not None and (type(ops) is not TempFileReadOps or not all(callable(port) for port in ops)))):
+        raise ValueError('Invalid synthetic temporary file observation handles.')
+
+    def observe(expected_digest):
+        if type(expected_digest) is not bytes or expected_digest != digest:
+            return None
+        try:
+            reader = _linux_arm64_temp_file_read_ops() if ops is None else ops
+            with ExitStack() as copies:
+                directory = copies.enter_context(_owned_copy(reader, handles.directory_fd))
+                table_root = copies.enter_context(_owned_copy(reader, handles.descriptor_table_fd))
+                _require_readable_directory(reader, directory, pin.directory, pin.directory_filesystem)
+                _require_readable_directory(reader, table_root, pin.descriptor_table, PROCFS_MAGIC)
+                table = reader.open_table(table_root)
+                copies.callback(reader.close, table)
+                _require_readable_directory(reader, table, pin.descriptor_table, PROCFS_MAGIC)
+                before = _temp_file_slot(reader, directory, pin.file)
+                references = _temp_file_descriptor_count(reader, table, pin.file)
+                after = _temp_file_slot(reader, directory, pin.file)
+                _require_readable_directory(reader, table, pin.descriptor_table, PROCFS_MAGIC)
+                _require_readable_directory(reader, directory, pin.directory, pin.directory_filesystem)
+                return (before, references) if before == after else None
+        except Exception:
+            return None
+
+    return observe
 
 
 def _graceful(ops, handles, plan, require_revoked):
