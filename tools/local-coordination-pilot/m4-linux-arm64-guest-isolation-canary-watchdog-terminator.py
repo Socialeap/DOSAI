@@ -8,8 +8,10 @@ from hashlib import sha256
 import json
 import os
 import re
+import select
 import signal
 import stat
+from threading import Lock
 from typing import NamedTuple
 
 
@@ -17,11 +19,14 @@ ORIGIN = 'SYNTHETIC_ONLY'
 CGROUP2_MAGIC = 0x63677270
 PIDFS_MAGIC = 0x50494446
 PROCFS_MAGIC = 0x9FA0
+PIPEFS_MAGIC = 0x50495045
 MAX_GRACEFUL_MEMBERS = 16
 MAX_CGROUP_EVENTS_BYTES = 4096
 MAX_TEMP_FILE_FDS = 256
 MAX_PROC_STAT_BYTES = 4096
 MAX_PROC_STATUS_BYTES = 8192
+TEMP_SETUP_MAGIC = b'DOSAITF1'
+TEMP_SETUP_FRAME_BYTES = 112
 TEMP_FILE_NAME = 'fixture-canary.tmp'
 
 
@@ -131,6 +136,14 @@ class TempFileEnrollmentOps(NamedTuple):
     read_stat: object
     lookup_table: object
     read_status: object
+
+
+class TempFileSetupPipeOps(NamedTuple):
+    duplicate: object
+    close: object
+    describe: object
+    poll: object
+    read: object
 
 
 def _uint(value, limit):
@@ -529,6 +542,87 @@ def prepare_fixture_temp_file_status_reader(file_pin, process_pin, process_fd, *
             return None
 
     return read
+
+
+def _linux_arm64_temp_file_setup_pipe_ops():
+    describe = _linux_arm64_descriptor_reader()
+
+    def poll_pipe(fd):
+        poller = select.poll()
+        poller.register(fd, select.POLLIN)
+        events = poller.poll(0)
+        if not events:
+            return 0
+        if len(events) != 1 or events[0][0] != fd:
+            raise ValueError('Unexpected temporary setup pipe poll result.')
+        return events[0][1]
+
+    return TempFileSetupPipeOps(os.dup, os.close, describe, poll_pipe, os.read)
+
+
+def _require_setup_pipe_reader(ops, fd, pin):
+    facts = _describe_bound(ops, fd, pin, PIPEFS_MAGIC)
+    if (not stat.S_ISFIFO(facts.mode) or facts.flags & os.O_ACCMODE != os.O_RDONLY
+            or not facts.flags & os.O_NONBLOCK or facts.flags & getattr(os, 'O_PATH', 0)):
+        raise ValueError('Temporary setup pipe reader flags rejected.')
+
+
+def _drain_setup_frame(ops, fd):
+    frame = bytearray()
+    for _ in range(TEMP_SETUP_FRAME_BYTES + 1):
+        limit = TEMP_SETUP_FRAME_BYTES + 1 - len(frame)
+        chunk = ops.read(fd, limit)
+        if type(chunk) is not bytes or len(chunk) >= limit:
+            return None
+        if not chunk:
+            return bytes(frame) if len(frame) == TEMP_SETUP_FRAME_BYTES else None
+        frame.extend(chunk)
+    return None
+
+
+def prepare_fixture_temp_file_setup_pipe_capture(pin, read_fd, nonce, *, ops=None):
+    """Poll one exclusive, preopened setup reader and capture one frame after EOF."""
+    if (not _valid_pin(pin) or not _uint(read_fd, 2**31) or read_fd < 3
+            or type(nonce) is not bytes or len(nonce) != 32
+            or (ops is not None and (type(ops) is not TempFileSetupPipeOps or not all(callable(port) for port in ops)))):
+        raise ValueError('Invalid synthetic temporary setup pipe registration.')
+    lock = Lock()
+    consumed = False
+
+    def poll_once():
+        try:
+            reader = _linux_arm64_temp_file_setup_pipe_ops() if ops is None else ops
+            with _owned_copy(reader, read_fd) as fd:
+                _require_setup_pipe_reader(reader, fd, pin)
+                events = reader.poll(fd)
+                accepted = select.POLLIN | select.POLLHUP
+                if type(events) is not int or events & ~accepted:
+                    return 'REJECTED', None
+                if not events & select.POLLHUP:
+                    return 'PENDING', None
+                frame = _drain_setup_frame(reader, fd)
+                _require_setup_pipe_reader(reader, fd, pin)
+                if frame is not None and frame.startswith(TEMP_SETUP_MAGIC + nonce):
+                    return 'READY', frame
+        except Exception:
+            return 'REJECTED', None
+        return 'REJECTED', None
+
+    def capture(expected_nonce, expected_pipe):
+        nonlocal consumed
+        if (type(expected_nonce) is not bytes or expected_nonce != nonce
+                or type(expected_pipe) is not tuple or len(expected_pipe) != 2
+                or not all(_uint(value, 2**64) for value in expected_pipe) or expected_pipe != tuple(pin)):
+            return 'REJECTED', None
+        with lock:
+            if consumed:
+                return 'REJECTED', None
+            result = poll_once()
+            if result[0] != 'PENDING':
+                consumed = True
+            return result
+
+    return capture
 
 
 def _graceful(ops, handles, plan, require_revoked):

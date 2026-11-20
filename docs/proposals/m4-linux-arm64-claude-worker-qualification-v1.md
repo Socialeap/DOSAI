@@ -377,6 +377,18 @@ and uses only the existing close, exit, and one-byte control-read rules.
 [Linux descriptor-table separation](https://man7.org/linux/man-pages/man2/close_range.2.html) ·
 [Linux pipe EOF semantics](https://man7.org/linux/man-pages/man7/pipe.7.html)
 
+The source-only setup collector uses a preopened, exclusively owned anonymous
+pipe read end. It checks the pinned device and inode, pipe filesystem, read
+access, and nonblocking flags. A zero-timeout poll leaves the stream untouched
+until hangup. After hangup, the collector requires precisely 112 bytes and a
+zero-byte read, then rechecks the descriptor. A short frame, extra byte,
+wrong launch nonce, poll error, or unavailable read leaves setup unverified.
+The adapter checks every field against the registered frame, holds it within
+the monotonic deadline, and releases it once to the same registration.
+The trusted launcher must keep read ownership exclusive and prevent other
+processes from duplicating or changing the pipe handles.
+[Linux poll and pipe hangup](https://man7.org/linux/man-pages/man2/poll.2.html)
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
@@ -384,10 +396,10 @@ result from early exit. The issuer checks active filter status on the same
 enrolled process, confirms the original file is present with one holder
 descriptor, and rechecks enrollment and launch evidence before the
 monotonic deadline. Only then does it issue the existing filter receipt.
-Offline tests exercise the issuer with substituted ports and check the
-ordering in the C source. The native holder has no launcher. Physical
-launch admission, setup-pipe reading, trusted launch evidence, external
-reference exclusion, and ARM64 compile and kernel validation remain held.
+Offline tests exercise the collector and issuer with substituted operations
+and check the ordering in the C source. The native holder has no launcher.
+Physical launch admission, trusted launch evidence, external reference
+exclusion, and ARM64 compile and kernel validation remain held.
 
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.

@@ -1,10 +1,14 @@
 """Offline holder bootstrap and installation receipt checks."""
 
 import importlib.util
+import os
 from pathlib import Path
 import re
+import select
+import stat
+from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
 
 TOOLS = Path(__file__).resolve().parents[3] / 'tools/local-coordination-pilot'
@@ -12,6 +16,10 @@ SOURCE = TOOLS / 'm4-linux-arm64-guest-isolation-canary-harness.py'
 spec = importlib.util.spec_from_file_location('canary_harness', SOURCE)
 harness = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(harness)
+NATIVE_SOURCE = TOOLS / 'm4-linux-arm64-guest-isolation-canary-watchdog-terminator.py'
+native_spec = importlib.util.spec_from_file_location('canary_native', NATIVE_SOURCE)
+native = importlib.util.module_from_spec(native_spec)
+native_spec.loader.exec_module(native)
 
 REQUEST = harness.CanaryRequest('HOST_FILE_READ', 'CONTROL_BEFORE', 1, 'a' * 64, 'fixture-control')
 BINDING = harness.FixtureAttemptBinding(REQUEST, 'fixture-supervisor', 'b' * 64, 300)
@@ -184,6 +192,150 @@ class HolderBootstrapTests(unittest.TestCase):
         self.calls.monotonic_ns.side_effect = [100, 101]
         self.calls.read_setup.side_effect = OSError('unavailable')
         self.assertIsNone(harness.prepare_fixture_temp_file_receipt_issuer(REGISTRATION, self.ports)())
+
+
+class HolderSetupPipeTests(unittest.TestCase):
+    def setUp(self):
+        self.calls = Mock()
+        self.pin = native.FixtureHandlePin(*PINS.setup)
+        self.facts = native.DescriptorFacts(
+            self.pin, stat.S_IFIFO, native.PIPEFS_MAGIC, False, os.O_RDONLY | os.O_NONBLOCK,
+        )
+        self.calls.duplicate.return_value = 17
+        self.calls.describe.return_value = self.facts
+        self.calls.poll.return_value = select.POLLIN | select.POLLHUP
+        self.calls.read.side_effect = [FRAME, b'']
+        self.ops = native.TempFileSetupPipeOps(*(
+            getattr(self.calls, name) for name in native.TempFileSetupPipeOps._fields
+        ))
+        self.clock = Mock(return_value=100)
+
+    def capture(self):
+        return native.prepare_fixture_temp_file_setup_pipe_capture(self.pin, 7, REGISTRATION.nonce, ops=self.ops)
+
+    def test_registration_and_wrong_scope_perform_no_io(self):
+        for pin, fd, nonce in ((self.pin, 2, REGISTRATION.nonce), (self.pin, 7, bytearray(REGISTRATION.nonce)),
+                               (self.pin._replace(inode=0), 7, REGISTRATION.nonce)):
+            with self.subTest(pin=pin, fd=fd), self.assertRaises(ValueError):
+                native.prepare_fixture_temp_file_setup_pipe_capture(pin, fd, nonce, ops=self.ops)
+        capture = self.capture()
+        self.assertEqual(capture(b'x' * 32, PINS.setup), ('REJECTED', None))
+        self.assertEqual(capture(REGISTRATION.nonce, PINS.control), ('REJECTED', None))
+        self.assertEqual(self.calls.mock_calls, [])
+
+    def test_only_the_pinned_nonblocking_anonymous_read_end_is_polled(self):
+        for facts in (
+            self.facts._replace(pin=self.pin._replace(inode=99)), self.facts._replace(mode=stat.S_IFSOCK),
+            self.facts._replace(filesystem=0), self.facts._replace(inheritable=True),
+            self.facts._replace(flags=os.O_RDONLY), self.facts._replace(flags=os.O_WRONLY | os.O_NONBLOCK),
+            self.facts._replace(flags=os.O_RDWR | os.O_NONBLOCK),
+        ):
+            with self.subTest(facts=facts):
+                self.calls.describe.return_value = facts
+                self.assertEqual(self.capture()(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+        self.calls.poll.assert_not_called()
+        self.calls.read.assert_not_called()
+
+    def test_buffered_data_waits_for_hangup_and_eof_is_read_once(self):
+        capture = self.capture()
+        self.calls.poll.side_effect = [0, select.POLLIN, select.POLLIN | select.POLLHUP]
+        for _ in range(2):
+            self.assertEqual(capture(REGISTRATION.nonce, PINS.setup), ('PENDING', None))
+        self.calls.read.assert_not_called()
+        self.assertEqual(capture(REGISTRATION.nonce, PINS.setup), ('READY', FRAME))
+        self.assertEqual(self.calls.read.call_args_list, [call(17, 113), call(17, 1)])
+        self.assertEqual(capture(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+        self.assertEqual(self.calls.close.call_args_list, [call(17)] * 3)
+
+    def test_poll_errors_and_partial_extra_or_unterminated_streams_fail_closed(self):
+        for event in (select.POLLERR | select.POLLHUP, select.POLLNVAL, -1, True):
+            with self.subTest(event=event):
+                self.calls.poll.return_value = event
+                self.assertEqual(self.capture()(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+        self.calls.read.assert_not_called()
+        self.calls.poll.return_value = select.POLLHUP
+        for parts in (
+            [b''], [FRAME[:-1], b''], [FRAME + b'x'], [FRAME, b'x'],
+            [FRAME, BlockingIOError('writer open')], [FRAME, InterruptedError('interrupted')],
+            [bytearray(FRAME)], [FRAME[:8] + b'x' * 32 + FRAME[40:], b''],
+        ):
+            with self.subTest(parts=repr(parts)[:90]):
+                self.calls.read.side_effect = parts
+                capture = self.capture()
+                self.assertEqual(capture(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+                observed = self.calls.read.call_count
+                self.assertEqual(capture(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+                self.assertEqual(self.calls.read.call_count, observed)
+
+    def test_fragmentation_is_bounded_and_pipe_identity_is_rechecked(self):
+        self.calls.read.side_effect = [bytes((byte,)) for byte in FRAME] + [b'']
+        self.assertEqual(self.capture()(REGISTRATION.nonce, PINS.setup), ('READY', FRAME))
+        self.assertEqual(self.calls.read.call_count, 113)
+        self.assertEqual(self.calls.read.call_args_list[0], call(17, 113))
+        self.assertEqual(self.calls.read.call_args_list[-1], call(17, 1))
+        self.calls.describe.side_effect = [self.facts, self.facts._replace(flags=os.O_RDONLY)]
+        self.calls.read.side_effect = [FRAME, b'']
+        self.assertEqual(self.capture()(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+        self.calls.describe.side_effect = None
+        self.calls.close.side_effect = OSError('unavailable')
+        self.calls.read.side_effect = [FRAME, b'']
+        self.assertEqual(self.capture()(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+
+    def test_native_poll_uses_zero_timeout_and_rejects_another_descriptor(self):
+        poller = Mock()
+        poller.poll.return_value = [(17, select.POLLIN | select.POLLHUP)]
+        with patch.object(native, '_linux_arm64_descriptor_reader', return_value=Mock()), \
+                patch.object(native.select, 'poll', return_value=poller):
+            ops = native._linux_arm64_temp_file_setup_pipe_ops()
+            self.assertEqual(ops.poll(17), select.POLLIN | select.POLLHUP)
+            poller.register.assert_called_once_with(17, select.POLLIN)
+            poller.poll.assert_called_once_with(0)
+            poller.poll.return_value = [(18, select.POLLHUP)]
+            with self.assertRaises(ValueError):
+                ops.poll(17)
+        with patch.object(native.os, 'uname', return_value=SimpleNamespace(sysname='Linux', machine='x86_64')), \
+                patch.object(native.os, 'dup') as duplicate:
+            capture = native.prepare_fixture_temp_file_setup_pipe_capture(self.pin, 7, REGISTRATION.nonce)
+            self.assertEqual(capture(REGISTRATION.nonce, PINS.setup), ('REJECTED', None))
+            duplicate.assert_not_called()
+
+    def test_ready_frame_is_delivered_only_to_exact_issuer_once(self):
+        self.calls.poll.side_effect = [select.POLLIN, select.POLLIN | select.POLLHUP]
+        reader = harness.prepare_fixture_temp_file_setup_reader(REGISTRATION, self.clock, self.capture())
+        challenge = harness.FixtureTempFileBootstrapChallenge(REGISTRATION)
+        self.assertEqual(reader.poll(), 'PENDING')
+        self.assertIsNone(reader.read_setup(challenge))
+        self.calls.read.assert_not_called()
+        self.assertEqual(reader.poll(), 'READY')
+        self.assertIsNone(reader.read_setup(challenge._replace(registration=REGISTRATION._replace())))
+        ports = harness.FixtureTempFileBootstrapPorts(
+            self.clock, launch_record, reader.read_setup, Mock(return_value=True),
+            Mock(return_value=STATUS), Mock(return_value=('PRESENT', 1)),
+        )
+        receipt = harness.prepare_fixture_temp_file_receipt_issuer(REGISTRATION, ports)()
+        self.assertTrue(receipt.installed)
+        self.assertEqual(reader.poll(), 'CONSUMED')
+        self.assertIsNone(reader.read_setup(challenge))
+        self.assertEqual(self.calls.poll.call_args_list, [call(17), call(17)])
+
+    def test_bad_frame_timeout_and_clock_rollback_never_release_readback(self):
+        challenge = harness.FixtureTempFileBootstrapChallenge(REGISTRATION)
+        for result, ticks in (
+            (('READY', FRAME[:40] + (42).to_bytes(8, 'little') + FRAME[48:]), [100, 101]),
+            (('PENDING', FRAME), [100, 101]), (('READY', FRAME), [100, 99]),
+            (('READY', FRAME), [100, REGISTRATION.deadline_ns]), (None, [100, 101]),
+        ):
+            with self.subTest(result=repr(result)[:90], ticks=ticks):
+                reader = harness.prepare_fixture_temp_file_setup_reader(
+                    REGISTRATION, Mock(side_effect=ticks), Mock(return_value=result),
+                )
+                self.assertEqual(reader.poll(), 'REJECTED')
+                self.assertIsNone(reader.read_setup(challenge))
+        reader = harness.prepare_fixture_temp_file_setup_reader(REGISTRATION, self.clock, self.capture())
+        self.assertEqual(reader.poll(), 'READY')
+        self.clock.return_value = REGISTRATION.deadline_ns
+        self.assertIsNone(reader.read_setup(challenge))
+        self.assertEqual(reader.poll(), 'REJECTED')
 
 
 if __name__ == '__main__':
