@@ -234,6 +234,12 @@ class LinuxArm64TerminationTransport:
                 return phase, result
         return None
 
+    def receive_bound_priority(self, binding_digest):
+        if (not _bytes_of_size(binding_digest, 32)
+                or not hmac.compare_digest(binding_digest, self._binding_digest)):
+            raise ValueError('Watchdog termination binding rejected.')
+        return self.receive_priority()
+
     def retire(self):
         self._sent.update(_PHASES)
         self._received.update(_PHASES)
