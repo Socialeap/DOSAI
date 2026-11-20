@@ -425,8 +425,8 @@ The manifest's SHA-256 is
 The offline validator requires the exact reviewed manifest digest and
 source revision as inputs. It independently hashes both supplied sources
 and encodes the filter words from C. Only the held declaration can pass
-this validator. The entry shim, pinned toolchain closure, and artifact
-receipt remain unset.
+this validator. Its entry-input, pinned toolchain closure, and artifact
+receipt fields remain unset.
 
 A future reviewed build receipt must bind the source manifest digest,
 source revision, complete build-input digest, executable digest and size,
@@ -436,6 +436,28 @@ compiler, assembler, linker, sysroot, and exact offline recipe. A separate
 review verifies these inputs and the linked artifact before the launch
 evidence collector can use its image digest. No builder qualification or
 launch authority follows from the source manifest.
+
+The [holder entry shim](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-entry.c)
+is a source candidate for the future reviewed build. Its SHA-256 is
+`d74a9a47f6479fe9141678ff885544f729919f16d4bfc9d2a99d6531546b38cf`.
+It accepts the fixed holder program name with no additional arguments and
+an empty environment. It reads one read-only sealed plan from descriptor
+6, checks the 96-byte size and EOF, and closes the descriptor. The
+little-endian plan carries the `DOSAIE01` marker, launch nonce, PID, and
+directory, control-pipe, and setup-pipe pins. The encoder uses the existing
+fixture launch plan, and the offline ABI test compares the entry and
+bootstrap C declarations.
+[Linux memory-file seals](https://man7.org/linux/man-pages/man2/memfd_create.2.html) ·
+[Linux positional reads](https://man7.org/linux/man-pages/man2/pread.2.html)
+
+The shim verifies the expected process leader and pins the blocking
+anonymous control-pipe read end. It waits for one `B` byte before entering
+bootstrap. The trusted launcher must supply the sealed plan, the empty
+environment, and the exclusive writer, and it must hold the startup
+deadline outside the holder. It sends `B` only after the parked process
+baseline and all launch approvals are accepted. The later `C` byte retains
+its existing close role. Failed admission or pipe EOF exits the shim before
+bootstrap. The shim and offline encoder supply no launch authority.
 
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
@@ -452,7 +474,7 @@ manifest, external reference exclusion, and ARM64 kernel validation remain held.
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.
 
-The source has no command-line entry point or runtime caller. Physical
+The qualification tooling has no runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
 independent policy evidence. Physical watchdog use requires an independent
@@ -490,6 +512,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-tem
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-bootstrap-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-launch-evidence-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-build-manifest-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-entry-test.py
 ```
 
 ## Qualification limits
