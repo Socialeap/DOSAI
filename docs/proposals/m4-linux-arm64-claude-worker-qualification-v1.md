@@ -158,16 +158,28 @@ that attempt, target and configuration. Other errors remain inconclusive.
 Out-of-order or replayed requests and failed probes close the observer
 for that rehearsal.
 
-The harness and observer have no native probe driver, command-line entry
-point or runtime wiring. The offline records model evidence and supply no
-physical provenance. A separately reviewed and approved physical driver must
-bind both contexts to an independently identified disposable target, verify
-effective denial and supply a supervised deadline, Stop, cleanup, and
-independent host configuration evidence.
+The [source probe driver](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-probe-driver.py)
+implements the four fixed probes through injected system operations. It
+checks the owner-only file identity before reading and checks it again after
+the bounded read. It uses fixed numeric IPv4 peers and checks the exact marker
+within one deadline per probe. The subprocess check asks for a supervisor-owned
+observation bound to the pinned executable and deadline, with cleanup verified.
+The driver accepts no command, path, address, or environment from a canary
+request. Permission errors remain raw outcomes for the observer to evaluate.
+
+The source has no native operation bindings, command-line entry point or
+runtime wiring. A physical integration needs separate review and approval for
+its fixture directory, non-forwarded network peers, owned subprocess probe and
+independent policy evidence. The supervisor must enforce the deadline and
+verify Stop and cleanup. Offline results leave physical qualification held.
+
+[Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
+[IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml)
 
 ```sh
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-harness-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-observer-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-probe-driver-test.py
 ```
 
 ## Qualification limits
