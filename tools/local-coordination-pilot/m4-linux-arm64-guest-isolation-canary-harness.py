@@ -477,6 +477,13 @@ def verify_fixture_canary_cleanup(plan, inventory, fence_ns, now_ns):
     return FixtureCleanupReadback(ORIGIN, plan.binding, 'VERIFIED' if verified else 'UNCERTAIN')
 
 
+def fixture_watchdog_binding_digest(plan):
+    if not _valid_watchdog_plan(plan):
+        raise ValueError('Invalid synthetic canary watchdog plan.')
+    encoded = json.dumps((WATCHDOG_SCHEMA, plan), separators=(',', ':')).encode('ascii')
+    return sha256(encoded).digest()
+
+
 class FixtureCanaryWatchdog:
     """Reduce-only watchdog state driven by independent, serialized fixture pulses."""
 
@@ -509,6 +516,15 @@ class FixtureCanaryWatchdog:
         return FixtureCleanupReadback(ORIGIN, self._plan.binding,
                                       'VERIFIED' if self._state == 'STOPPED' else 'UNCERTAIN')
 
+    def next_deadline_ns(self):
+        if self._state == 'ACTIVE':
+            return self._plan.binding.deadline_ns
+        if self._state == 'STOPPING':
+            if self._forced:
+                return self._plan.cleanup_deadline_ns
+            return min(self._fence + WATCHDOG_GRACE_NS, self._plan.cleanup_deadline_ns)
+        return None
+
     def stop(self, binding, tick):
         if not _matches_binding(binding, self._plan.binding):
             return self._snapshot('WATCHDOG_BINDING_REJECTED')
@@ -516,6 +532,11 @@ class FixtureCanaryWatchdog:
 
     def poll(self, tick, *, inventory=None):
         return self._advance(tick, None, inventory)
+
+    def timer_unavailable(self):
+        if self._state in ('STOPPED', 'QUARANTINED'):
+            return self._snapshot()
+        return self._quarantine('WATCHDOG_TIMER_UNAVAILABLE')
 
     def _force(self, tick=None):
         if self._forced:

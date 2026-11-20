@@ -204,17 +204,32 @@ stale or mismatched evidence keeps cleanup uncertain. Expiry quarantines the
 rehearsal and closes it to late evidence. The existing supervisor rehearsal
 can consume the verified cleanup readback and still discard results after Stop.
 
+The [timer and transport source](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-watchdog-transport.py)
+adds an absolute, one-shot Linux ARM64 monotonic timer. The dispatcher consumes
+one expiration and samples the current clock before advancing the watchdog and
+arming the next attempt, grace, or cleanup deadline. Timer failures revoke the
+attempt and request force through the watchdog's existing quarantine path.
+
+The transport uses separate, preconnected Unix sequenced-packet lanes for
+graceful and force requests. A fixed authenticated frame binds the operation,
+session nonce, direction and registered attempt digest. Each lane submits at
+most one frame without blocking. The receiver checks force first and rejects
+truncation, ancillary data, tampering and stale bindings. An accepted frame
+requests termination. Cleanup still requires the independent inventory.
+
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
-independent policy evidence. A separately reviewed watchdog must supply the
-independent timer and priority termination transport. Physical cleanup needs
-an independent inventory source. Offline results leave physical qualification
-held.
+independent policy evidence. Physical watchdog use requires an independent
+dispatcher, owned endpoint and session enrollment, a fresh ephemeral MAC key,
+a release-reviewed terminator, and independent inventory. Offline results
+leave physical qualification held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
 [IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
-[Python socket operations](https://docs.python.org/3/library/socket.html)
+[Python socket operations](https://docs.python.org/3/library/socket.html) ·
+[Linux timer descriptors](https://man7.org/linux/man-pages/man2/timerfd_create.2.html) ·
+[Unix sequenced-packet sockets](https://man7.org/linux/man-pages/man7/unix.7.html)
 
 ```sh
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-harness-test.py
@@ -223,6 +238,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-pro
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-native-bindings-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-supervisor-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-transport-test.py
 ```
 
 ## Qualification limits
