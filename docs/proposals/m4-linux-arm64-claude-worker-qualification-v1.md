@@ -411,6 +411,32 @@ supplies the filter's identity.
 [Linux file seals](https://man7.org/linux/man-pages/man2/F_GET_SEALS.2const.html) ·
 [ELF program headers](https://man7.org/linux/man-pages/man5/elf.5.html)
 
+The [holder build manifest](m4-linux-arm64-holder-build-manifest-v1.json)
+pins the bootstrap and filter C sources from the PR #88 merge and the
+encoded filter words. It records an offline native Linux ARM64 build
+contract for this temporary-file fixture. The output must conform to the
+launch reader's static ELF, size, and sealing checks. The proposed C
+compile and link flags select a static, non-PIE executable. The reviewed
+recipe must preserve the filter symbol for independent inspection.
+[GCC link options](https://gcc.gnu.org/onlinedocs/gcc/Link-Options.html)
+
+The manifest's SHA-256 is
+`5d115ca42e5d514db5ead1ff56310a52af6d8a4aa97ffe533bba9c0cf257ad4a`.
+The offline validator requires the exact reviewed manifest digest and
+source revision as inputs. It independently hashes both supplied sources
+and encodes the filter words from C. Only the held declaration can pass
+this validator. The entry shim, pinned toolchain closure, and artifact
+receipt remain unset.
+
+A future reviewed build receipt must bind the source manifest digest,
+source revision, complete build-input digest, executable digest and size,
+and digest of the embedded `reference_filter` bytes independently extracted
+from the image. The build-input digest must cover the admitted entry shim,
+compiler, assembler, linker, sysroot, and exact offline recipe. A separate
+review verifies these inputs and the linked artifact before the launch
+evidence collector can use its image digest. No builder qualification or
+launch authority follows from the source manifest.
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
@@ -463,6 +489,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-res
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-temp-file-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-bootstrap-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-launch-evidence-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-build-manifest-test.py
 ```
 
 ## Qualification limits

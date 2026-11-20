@@ -1,0 +1,66 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-build-manifest:1",
+  "schema_version": 1,
+  "scope": "TEMPORARY_FILE_FIXTURE_HOLDER",
+  "status": "SOURCE_ONLY_HOLD",
+  "source_revision": "db4cd588f0b579116c833edd0341e2d1fa9fbdfb",
+  "sources": [
+    {
+      "role": "HOLDER_BOOTSTRAP",
+      "path": "tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-bootstrap.c",
+      "sha256": "31200fca7d5c31d2ccec39e964c9f804c8afff5adf7778f61a999255131ea43d"
+    },
+    {
+      "role": "REFERENCE_FILTER",
+      "path": "tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-reference-filter.c",
+      "sha256": "cb3b6a600594b6dd987a7cf36b327b5729507d322503a3950ed407d32e5db0f4"
+    }
+  ],
+  "reference_filter": {
+    "symbol": "reference_filter",
+    "encoding": "LINUX_SOCK_FILTER_LITTLE_ENDIAN",
+    "size_bytes": 136,
+    "sha256": "be419653d0a20d09847ce283e1d0226ad751670257a57cc2ac42caf3135b8813"
+  },
+  "build_contract": {
+    "host": "NATIVE_LINUX_ARM64",
+    "target": "aarch64-linux-gnu",
+    "network": "DISABLED",
+    "compile_flags": ["-std=c11", "-fno-pie", "-fno-lto"],
+    "link_flags": ["-static", "-no-pie", "-fno-lto"],
+    "required_input_digests": [
+      "entry_source",
+      "compiler",
+      "assembler",
+      "linker",
+      "sysroot_tree",
+      "build_recipe"
+    ]
+  },
+  "output_contract": {
+    "name": "dosai-temp-file-holder",
+    "elf_class": 64,
+    "elf_machine": "AARCH64",
+    "byte_order": "LITTLE_ENDIAN",
+    "elf_type": "ET_EXEC",
+    "allow_interpreter": false,
+    "allow_dynamic_segment": false,
+    "max_bytes": 4194304,
+    "required_image_seal_mask": 15,
+    "required_receipt_fields": [
+      "source_manifest_sha256",
+      "source_revision",
+      "build_inputs_sha256",
+      "executable_sha256",
+      "executable_size_bytes",
+      "embedded_reference_filter_sha256"
+    ]
+  },
+  "entry_input": null,
+  "toolchain_closure": null,
+  "artifact_receipt": null,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}
