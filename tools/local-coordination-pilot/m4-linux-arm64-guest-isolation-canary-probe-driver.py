@@ -1,11 +1,15 @@
-"""Source-only driver for fixed canaries. All system operations are injected."""
+"""Fixed canary driver and inactive Linux ARM64 bindings."""
 
 from contextlib import contextmanager
 import errno
+import os
 from os import O_CLOEXEC, O_DIRECTORY, O_NOFOLLOW, O_NONBLOCK, O_RDONLY
 import re
+import socket
 from socket import AF_INET, SOCK_STREAM
 from stat import S_IMODE, S_ISREG
+from threading import current_thread
+from time import monotonic_ns
 from typing import NamedTuple
 
 
@@ -47,6 +51,13 @@ class OwnedExecObservation(NamedTuple):
     executable_digest: str
     result: str
     cleanup_verified: bool
+
+
+class _SocketOperations(NamedTuple):
+    settimeout: object
+    connect: object
+    getpeername: object
+    recv: object
 
 
 def _valid_pins(pins):
@@ -189,3 +200,60 @@ def make_fixture_probe_driver(pins, ops):
             return 'UNAVAILABLE'
 
     return probe
+
+
+def prepare_linux_arm64_canary_attempt(pins, canary, scope_active, observe_owned_exec):
+    """Prepare one native attempt for a separately authorized, in-process supervisor."""
+    if (not _valid_pins(pins) or type(canary) is not str
+            or canary not in ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
+            or not callable(scope_active) or not callable(observe_owned_exec)):
+        raise ValueError('Invalid native canary binding configuration.')
+    platform = os.uname()
+    if (platform.sysname, platform.machine) != ('Linux', 'aarch64'):
+        raise OSError('Linux ARM64 is required for native canaries.')
+
+    owner = current_thread()
+
+    def require_scope():
+        try:
+            active = current_thread() is owner and scope_active(canary) is True
+        except Exception:
+            active = False
+        if not active:
+            # The driver's permission outcome is reserved for the actual probe syscall.
+            raise OSError(errno.ECANCELED, 'Canary supervisor scope unavailable.')
+
+    def guarded(operation):
+        def invoke(*args, **kwargs):
+            require_scope()
+            return operation(*args, **kwargs)
+        return invoke
+
+    @contextmanager
+    def open_socket(family, kind):
+        require_scope()
+        with socket.socket(family, kind, socket.IPPROTO_TCP) as connection:
+            yield _SocketOperations(guarded(connection.settimeout), guarded(connection.connect),
+                                    guarded(connection.getpeername), guarded(connection.recv))
+
+    ops = ProbePrimitives(
+        open_file=guarded(os.open),
+        stat_file=guarded(os.fstat),
+        read_file=guarded(os.read),
+        # Owned cleanup remains available after the scope is revoked.
+        close_file=os.close,
+        open_socket=open_socket,
+        observe_owned_exec=guarded(observe_owned_exec),
+        monotonic_ns=guarded(monotonic_ns),
+    )
+    probe = make_fixture_probe_driver(pins, ops)
+    used = False
+
+    def attempt():
+        nonlocal used
+        if used or current_thread() is not owner:
+            return 'UNAVAILABLE'
+        used = True
+        return probe(canary)
+
+    return attempt

@@ -167,19 +167,30 @@ observation bound to the pinned executable and deadline, with cleanup verified.
 The driver accepts no command, path, address, or environment from a canary
 request. Permission errors remain raw outcomes for the observer to evaluate.
 
-The source has no native operation bindings, command-line entry point or
-runtime wiring. A physical integration needs separate review and approval for
-its fixture directory, non-forwarded network peers, owned subprocess probe and
-independent policy evidence. The supervisor must enforce the deadline and
-verify Stop and cleanup. Offline results leave physical qualification held.
+The driver module also defines inactive Linux ARM64 bindings for the fixed
+file and TCP operations. Preparation checks the platform and binds one
+canary to the preparing thread for one attempt. Before the clock read, file
+operation, socket operation or exec observation, the binding requires an
+active scope from the trusted in-process supervisor. Descriptor and socket
+cleanup stays available after revocation. The binding passes the pinned
+executable digest and deadline to the supervisor-owned subprocess probe.
+
+The bindings have no command-line entry point or runtime caller. Physical
+integration requires separate review and approval for the guest and scope
+source, fixture directory, non-forwarded peers, owned subprocess probe, and
+independent policy evidence. The external supervisor must enforce the
+deadline and verify Stop and cleanup, including when an operation is already
+in progress. Offline results leave physical qualification held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
-[IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml)
+[IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
+[Python socket operations](https://docs.python.org/3/library/socket.html)
 
 ```sh
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-harness-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-observer-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-probe-driver-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-native-bindings-test.py
 ```
 
 ## Qualification limits
