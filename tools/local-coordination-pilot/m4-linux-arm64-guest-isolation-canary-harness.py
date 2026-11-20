@@ -306,6 +306,36 @@ class FixtureTempFileLaunchReadback(NamedTuple):
     exclusive_bootstrap: bool
 
 
+class FixtureTempFileLaunchPlan(NamedTuple):
+    template: FixtureCleanupScope
+    binding: FixtureResourceBinding
+    policy_generation: str
+    executable_digest: bytes
+    program_digest: bytes
+    nonce: bytes
+    pid: int
+    directory: tuple
+    control: tuple
+    setup: tuple
+    deadline_ns: int
+
+
+class FixtureTempFileLaunchCustodyChallenge(NamedTuple):
+    plan: FixtureTempFileLaunchPlan
+    phase: str
+
+
+class FixtureTempFileLaunchCustodyReadback(NamedTuple):
+    challenge: FixtureTempFileLaunchCustodyChallenge
+    state: str
+    held_since_ns: int
+
+
+class FixtureTempFileLaunchCollector(NamedTuple):
+    capture_baseline: object
+    read_launch: object
+
+
 class FixtureTempFileSetupReadback(NamedTuple):
     challenge: FixtureTempFileBootstrapChallenge
     pipe_pin: tuple
@@ -781,10 +811,14 @@ def _resource_inventory_table(rows):
     return table if len(table) == len(rows) else None
 
 
-def _valid_temp_file_source(template, binding, observation_digest):
+def _valid_temp_file_scope_binding(template, binding):
     return (_valid_cleanup_scope(template) and template.fence_ns == 0
             and _valid_resource_binding(binding) and binding.kind == 'temporary_files'
-            and binding.capsule_generation == template.plan.capsule_generation
+            and binding.capsule_generation == template.plan.capsule_generation)
+
+
+def _valid_temp_file_source(template, binding, observation_digest):
+    return (_valid_temp_file_scope_binding(template, binding)
             and type(observation_digest) is bytes and len(observation_digest) == 32)
 
 
@@ -794,14 +828,16 @@ def _matches_temp_file_probe(probe, template, binding):
             and _valid_resource_binding(probe.binding) and probe.binding == binding)
 
 
-def _matches_temp_file_filter_status(raw, pid):
+def _matches_temp_file_filter_status(raw, pid, *, installed=True):
     if (type(raw) is not bytes or not 0 < len(raw) <= MAX_REFERENCE_STATUS_BYTES
             or not raw.endswith(b'\n') or b'\x00' in raw):
         return False
     pid_bytes = str(pid).encode('ascii')
     required = {
-        b'Pid': pid_bytes, b'Tgid': pid_bytes, b'TracerPid': b'0', b'Threads': b'1',
-        b'NoNewPrivs': b'1', b'Seccomp': b'2', b'Seccomp_filters': b'1',
+        b'Pid': (pid_bytes,), b'Tgid': (pid_bytes,), b'TracerPid': (b'0',), b'Threads': (b'1',),
+        b'NoNewPrivs': (b'1',) if installed else (b'0', b'1'),
+        b'Seccomp': (b'2',) if installed else (b'0',),
+        b'Seccomp_filters': (b'1',) if installed else (b'0',),
     }
     seen = set()
     for line in raw[:-1].split(b'\n'):
@@ -809,7 +845,7 @@ def _matches_temp_file_filter_status(raw, pid):
         if not separator or not key or key != key.strip():
             return False
         if key in required:
-            if key in seen or value.strip(b' \t') != required[key]:
+            if key in seen or value.strip(b' \t') not in required[key]:
                 return False
             seen.add(key)
     return seen == required.keys()
@@ -817,6 +853,27 @@ def _matches_temp_file_filter_status(raw, pid):
 
 def _bootstrap_handle_pin(pin):
     return (type(pin) is tuple and len(pin) == 2 and all(_tick(value) for value in pin) and pin[1] > 0)
+
+
+def _valid_temp_file_launch_plan(plan):
+    if (type(plan) is not FixtureTempFileLaunchPlan or not _valid_temp_file_scope_binding(plan.template, plan.binding)
+            or type(plan.executable_digest) is not bytes or len(plan.executable_digest) != 32
+            or type(plan.program_digest) is not bytes or plan.program_digest != TEMP_REFERENCE_FILTER_DIGEST
+            or not _fixture_id(plan.policy_generation)
+            or type(plan.nonce) is not bytes or len(plan.nonce) != 32
+            or type(plan.pid) is not int or not 0 < plan.pid < 2**31
+            or not _tick(plan.deadline_ns) or not 0 < plan.deadline_ns <= plan.template.plan.binding.deadline_ns):
+        return False
+    pins = (plan.directory, plan.control, plan.setup)
+    return all(_bootstrap_handle_pin(pin) for pin in pins) and len(set(pins)) == len(pins)
+
+
+def _launch_plan_for_bootstrap(registration, program_digest):
+    return FixtureTempFileLaunchPlan(
+        registration.template, registration.binding, registration.policy_generation,
+        registration.executable_digest, program_digest, registration.nonce, registration.pid,
+        registration.pins.directory, registration.pins.control, registration.pins.setup, registration.deadline_ns,
+    )
 
 
 def _valid_temp_file_bootstrap(registration):
@@ -840,6 +897,81 @@ def _expected_temp_file_setup_frame(registration):
     return TEMP_HOLDER_SETUP_FRAME.pack(
         b'DOSAITF1', registration.nonce, registration.pid, *pins.directory, *pins.file, *pins.control, *pins.setup,
     )
+
+
+def prepare_fixture_temp_file_launch_evidence(plan, monotonic_ns, read_custody, read_process):
+    """Bind a fenced pre-bootstrap sample and live filter evidence to one reviewed launch."""
+    if (not _valid_temp_file_launch_plan(plan)
+            or not all(callable(port) for port in (monotonic_ns, read_custody, read_process))):
+        raise ValueError('Invalid synthetic holder launch evidence plan.')
+    lock = Lock()
+    attempted = False
+    baseline = None
+    last_ns = 0
+
+    def read_time():
+        nonlocal last_ns
+        value = monotonic_ns()
+        if not _tick(value) or not last_ns <= value < plan.deadline_ns:
+            raise ValueError('Holder launch evidence time rejected.')
+        last_ns = value
+        return value
+
+    def custody_start(phase, now_ns):
+        challenge = FixtureTempFileLaunchCustodyChallenge(plan, phase)
+        record = read_custody(challenge)
+        expected = 'BOOTSTRAP_BLOCKED_EXCLUSIVE' if phase == 'BASELINE' else 'EXCLUSIVE_SINCE_BASELINE'
+        if (type(record) is not FixtureTempFileLaunchCustodyReadback or record.challenge is not challenge
+                or type(record.state) is not str or record.state != expected
+                or not _tick(record.held_since_ns) or record.held_since_ns > now_ns):
+            raise ValueError('Holder launch custody rejected.')
+        return record.held_since_ns
+
+    def observe(installed):
+        evidence = read_process(plan.nonce, plan.pid)
+        return (type(evidence) is tuple and len(evidence) == 2 and type(evidence[0]) is bytes
+                and evidence[0] == plan.executable_digest
+                and _matches_temp_file_filter_status(evidence[1], plan.pid, installed=installed))
+
+    def capture_baseline():
+        nonlocal attempted, baseline
+        with lock:
+            if attempted:
+                return False
+            attempted = True
+            try:
+                held_since = custody_start('BASELINE', read_time())
+                if not observe(False) or custody_start('BASELINE', read_time()) != held_since:
+                    return False
+                read_time()
+            except Exception:
+                return False
+            baseline = held_since
+            return True
+
+    def read_launch(challenge):
+        nonlocal baseline
+        if (type(challenge) is not FixtureTempFileBootstrapChallenge
+                or not _valid_temp_file_bootstrap(challenge.registration)
+                or _launch_plan_for_bootstrap(challenge.registration, plan.program_digest) != plan):
+            return None
+        with lock:
+            if baseline is None:
+                return None
+            try:
+                if (custody_start('INSTALLED', read_time()) != baseline or not observe(True)
+                        or custody_start('INSTALLED', read_time()) != baseline):
+                    baseline = None
+                    return None
+                read_time()
+            except Exception:
+                baseline = None
+                return None
+        return FixtureTempFileLaunchReadback(
+            challenge, plan.executable_digest, plan.program_digest, 0, True,
+        )
+
+    return FixtureTempFileLaunchCollector(capture_baseline, read_launch)
 
 
 def prepare_fixture_temp_file_setup_reader(registration, monotonic_ns, capture):

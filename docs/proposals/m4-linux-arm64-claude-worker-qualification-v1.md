@@ -389,6 +389,28 @@ The trusted launcher must keep read ownership exclusive and prevent other
 processes from duplicating or changing the pipe handles.
 [Linux poll and pipe hangup](https://man7.org/linux/man-pages/man2/poll.2.html)
 
+The source-only launch evidence collector keeps a baseline while the
+trusted launcher blocks bootstrap and holds exclusive custody of the
+empty fixture slot, directory, and two pipes. The baseline requires the
+registered process to have one thread, no tracer, and zero active filters.
+After bootstrap, each receipt-side read checks that the same custody
+interval still covers the launch and the same process has one active filter
+and `no_new_privs`. A missing baseline, custody change, replay, stale clock,
+or process drift withholds evidence. The collector cannot release bootstrap.
+
+The Linux ARM64 process reader checks the pinned proc directory and start
+time, then resolves only the fixed procfs `exe` entry for metadata. It
+matches that target to a preopened, read-only sealed image and hashes the
+complete admitted bytes with a 4 MiB cap. This candidate admits a static
+little-endian ARM64 ELF without an interpreter or dynamic program segment.
+It rechecks process and executable identity after the status sample. A
+separately trusted build manifest must bind the executable digest to the
+reviewed filter digest. Status supplies mode and count, and the manifest
+supplies the filter's identity.
+[Linux process executable link](https://man7.org/linux/man-pages/man5/proc_pid_exe.5.html) ·
+[Linux file seals](https://man7.org/linux/man-pages/man2/F_GET_SEALS.2const.html) ·
+[ELF program headers](https://man7.org/linux/man-pages/man5/elf.5.html)
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
@@ -396,10 +418,10 @@ result from early exit. The issuer checks active filter status on the same
 enrolled process, confirms the original file is present with one holder
 descriptor, and rechecks enrollment and launch evidence before the
 monotonic deadline. Only then does it issue the existing filter receipt.
-Offline tests exercise the collector and issuer with substituted operations
+Offline tests exercise the collectors and issuer with substituted operations
 and check the ordering in the C source. The native holder has no launcher.
-Physical launch admission, trusted launch evidence, external reference
-exclusion, and ARM64 compile and kernel validation remain held.
+Physical launch admission and custody evidence, the admitted native build
+manifest, external reference exclusion, and ARM64 kernel validation remain held.
 
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.
@@ -440,6 +462,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cle
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-resource-absence-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-temp-file-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-bootstrap-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-launch-evidence-test.py
 ```
 
 ## Qualification limits
