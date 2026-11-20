@@ -259,19 +259,36 @@ Linux reports live processes recursively through `populated`. The six other
 resource classes each require their own counts from the registered inventory
 source. A termination receipt supplies no inventory evidence. A nonzero count
 keeps cleanup uncertain. Missing, stale, inconsistent, or out-of-deadline
-readbacks produce no inventory. The trusted owner must supply the resource
-source and hold the admission fence against new processes and resource
-writers across the snapshot and through verification.
+readbacks produce no inventory.
+
+The source-only cleanup registry supplies separate owner and read-only verifier
+ports for the collector. The trusted owner creates one registry, with a fresh
+generation for the exact pinned capsule, before any resource effect. Every
+resource writer reserves one of 64 slots before beginning. Stop closes new
+admission under the same lock, including when its timestamp is invalid. The
+fence becomes readable only after every reserved writer has finished. All
+finished reservations count toward cleanup, including failed or partial
+acquisitions whose absence has yet to be verified.
+
+The owner clears a reservation only with an absence observation tied to its
+exact ticket and the current quiescence readback. The observation must follow
+that readback and precede the cleanup deadline. An advanced force fence
+invalidates older readbacks. The registry never reopens for the capsule.
+Physical integration must enforce exclusive admission for resource writers and
+new processes through verification, bind every reservation to its actual
+resource, and verify absence independently. The fixture registry is in memory.
+Losing it leaves cleanup uncertain and requires reconciliation.
 
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
 independent policy evidence. Physical watchdog use requires an independent
 dispatcher, trusted enrollment and retirement wiring, delegated capsule-only
-control handles, and trusted fence and resource inventory sources. Before
-activation, verify live role ownership at connection establishment, distinct owned socket pairs, and
-the exact guest kernel's peer credentials, pidfd identity and cgroup v2
-behavior. Offline results leave physical qualification held.
+control handles, and verified physical writer admission and resource accounting.
+Before activation, verify live role ownership at connection establishment,
+distinct owned socket pairs, and the exact guest kernel's peer credentials,
+pidfd identity and cgroup v2 behavior. Offline results leave physical
+qualification held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
 [IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
@@ -294,6 +311,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-wat
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-enrollment-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-terminator-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-inventory-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-registry-test.py
 ```
 
 ## Qualification limits
