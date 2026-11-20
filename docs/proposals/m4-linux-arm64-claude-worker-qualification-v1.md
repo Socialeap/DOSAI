@@ -175,12 +175,25 @@ active scope from the trusted in-process supervisor. Descriptor and socket
 cleanup stays available after revocation. The binding passes the pinned
 executable digest and deadline to the supervisor-owned subprocess probe.
 
-The bindings have no command-line entry point or runtime caller. Physical
+The supervised rehearsal in the harness binds each attempt to its sequence,
+supervisor generation, target, process start, and monotonic deadline. It checks
+the same scope before preparation, before the attempt, during guarded
+operations, and before consuming evidence. The native binding uses the earlier
+of the driver's budget and the supervisor deadline. Stop, scope drift, or an
+expired result prevents subsequent attempts and policy reads.
+
+The rehearsal revokes the attempt's local guard before requesting cleanup,
+including after partial preparation or failure. It accepts canary evidence
+only after cleanup matches the attempt binding. Missing or uncertain cleanup
+produces a quarantined rehearsal and holds the result. Tests exercise the
+supervisor and native binding together with substituted operations.
+
+The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
-independent policy evidence. The external supervisor must enforce the
-deadline and verify Stop and cleanup, including when an operation is already
-in progress. Offline results leave physical qualification held.
+independent policy evidence. The external supervisor must enforce Stop and
+deadlines for calls already in progress and verify physical cleanup. Offline
+results leave physical qualification held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
 [IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
@@ -191,6 +204,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-har
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-observer-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-probe-driver-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-native-bindings-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-supervisor-test.py
 ```
 
 ## Qualification limits

@@ -8,6 +8,8 @@ from typing import NamedTuple
 
 SOURCE_REVISION = '4913c5aa6004c11e3593ce8287344d1f2f4a5a94'
 SCHEMA = 'DOSAI_LINUX_ARM64_GUEST_CANARY_V1'
+SUPERVISOR_SCHEMA = 'DOSAI_LINUX_ARM64_GUEST_CANARY_SUPERVISION_V1'
+ATTEMPT_BUDGET_NS = 250_000_000
 ORIGIN = 'SYNTHETIC_ONLY'
 CANARIES = ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
 LEGS = ('CONTROL_BEFORE', 'RESTRICTED', 'CONTROL_AFTER')
@@ -67,6 +69,33 @@ class FixturePolicyDenial(NamedTuple):
     target_digest: str
     configuration_digest: str
     decision: str
+
+
+class FixtureAttemptBinding(NamedTuple):
+    request: CanaryRequest
+    supervisor_generation: str
+    target_digest: str
+    deadline_ns: int
+
+
+class FixtureScopeReadback(NamedTuple):
+    origin: str
+    binding: FixtureAttemptBinding
+    state: str
+
+
+class FixtureCleanupReadback(NamedTuple):
+    origin: str
+    binding: FixtureAttemptBinding
+    state: str
+
+
+class FixtureSupervisorPorts(NamedTuple):
+    monotonic_ns: object
+    read_scope: object
+    prepare_attempt: object
+    cleanup_attempt: object
+    read_policy_denial: object
 
 
 def _valid_scope(scope):
@@ -217,3 +246,150 @@ def rehearse_guest_canaries(scope, observe_fixture):
         completed.append(canary)
 
     return _report('SYNTHETIC_RESULTS_ONLY', completed)
+
+
+def _matches_binding(actual, expected):
+    return (type(actual) is FixtureAttemptBinding and _same_request(actual.request, expected.request)
+            and type(actual.supervisor_generation) is str
+            and actual.supervisor_generation == expected.supervisor_generation
+            and type(actual.target_digest) is str and actual.target_digest == expected.target_digest
+            and type(actual.deadline_ns) is int and actual.deadline_ns == expected.deadline_ns)
+
+
+def _matches_readback(record, record_type, binding):
+    return (type(record) is record_type and type(record.origin) is str and record.origin == ORIGIN
+            and _matches_binding(record.binding, binding) and type(record.state) is str)
+
+
+def _supervised_report(report, cleanup, failure):
+    reason = report['reason'] if failure is None else failure
+    if cleanup == 'UNCERTAIN':
+        state = 'QUARANTINED'
+    elif reason == 'SYNTHETIC_RESULTS_ONLY':
+        state = 'REHEARSED'
+    else:
+        state = 'HELD'
+    return {**report, 'schema': SUPERVISOR_SCHEMA, 'reason': reason,
+            'supervisorState': state, 'supervisorCleanup': cleanup}
+
+
+def rehearse_supervised_guest_canaries(scope, targets, generation, ports, *, deadline_ns=None):
+    """Wire the canary rehearsal to synchronous fixture supervision ports."""
+    if (type(generation) is not str or not re.fullmatch(r'fixture-[a-z0-9-]{1,48}', generation)
+            or type(ports) is not FixtureSupervisorPorts or not all(callable(port) for port in ports)
+            or (deadline_ns is not None and (type(deadline_ns) is not int or not 0 <= deadline_ns < 2**64))):
+        return _supervised_report(_report('INVALID_SYNTHETIC_SCOPE'), 'NOT_REQUIRED', None)
+
+    failure = None
+    cleanup = 'NOT_REQUIRED'
+    last_tick = None
+    run_deadline = None
+    observed_binding = None
+
+    def now():
+        nonlocal last_tick
+        tick = ports.monotonic_ns()
+        if type(tick) is not int or not 0 <= tick < 2**64 or (last_tick is not None and tick < last_tick):
+            raise ValueError('Invalid fixture supervisor clock.')
+        last_tick = tick
+        return tick
+
+    def check_scope(binding):
+        nonlocal failure
+        if failure is not None:
+            return False
+        try:
+            if now() >= binding.deadline_ns:
+                failure = 'SUPERVISOR_DEADLINE_EXPIRED'
+            else:
+                view = ports.read_scope(binding)
+                if not _matches_readback(view, FixtureScopeReadback, binding):
+                    failure = 'SUPERVISOR_SCOPE_REJECTED'
+                elif view.state in ('STOPPING', 'STOPPED', 'REVOKED'):
+                    failure = 'SUPERVISOR_STOP_REQUESTED'
+                elif view.state != 'ACTIVE':
+                    failure = 'SUPERVISOR_SCOPE_REJECTED'
+                elif now() >= binding.deadline_ns:
+                    failure = 'SUPERVISOR_DEADLINE_EXPIRED'
+        except Exception:
+            failure = 'SUPERVISOR_SCOPE_UNAVAILABLE'
+        return failure is None
+
+    def read_attempt(request):
+        nonlocal failure, cleanup, run_deadline, observed_binding
+        observed_binding = None
+        try:
+            started = now()
+        except Exception:
+            failure = 'SUPERVISOR_SCOPE_UNAVAILABLE'
+            return None
+        if run_deadline is None:
+            run_deadline = min(started + len(CANARIES) * len(LEGS) * ATTEMPT_BUDGET_NS, 2**64 - 1)
+            if deadline_ns is not None:
+                run_deadline = min(run_deadline, deadline_ns)
+        target = targets[CANARIES.index(request.canary)]
+        binding = FixtureAttemptBinding(request, generation, target,
+                                        min(started + ATTEMPT_BUDGET_NS, run_deadline))
+        if not check_scope(binding):
+            return None
+
+        running = False
+        scope_checked = False
+
+        def scope_active(canary):
+            nonlocal failure, scope_checked
+            if not running:
+                return False
+            if type(canary) is not str or canary != request.canary:
+                if failure is None:
+                    failure = 'SUPERVISOR_SCOPE_REJECTED'
+                return False
+            if not check_scope(binding):
+                return False
+            scope_checked = True
+            return True
+
+        result = None
+        try:
+            prepared = ports.prepare_attempt(binding, scope_active)
+            if not callable(prepared):
+                failure = 'SUPERVISOR_ATTEMPT_UNAVAILABLE'
+            elif check_scope(binding):
+                running = True
+                result = prepared()
+                if failure is None and not scope_checked:
+                    failure = 'SUPERVISOR_SCOPE_UNCHECKED'
+                check_scope(binding)
+        except Exception:
+            if failure is None:
+                failure = 'SUPERVISOR_ATTEMPT_UNAVAILABLE'
+        finally:
+            # Close the operation guard even if preparation only partially succeeded.
+            running = False
+            cleanup = 'UNCERTAIN'
+            try:
+                record = ports.cleanup_attempt(binding)
+                if _matches_readback(record, FixtureCleanupReadback, binding) and record.state == 'VERIFIED':
+                    cleanup = 'VERIFIED'
+            except Exception:
+                pass
+            if cleanup == 'UNCERTAIN':
+                failure = 'SUPERVISOR_CLEANUP_UNVERIFIED'
+
+        if not check_scope(binding):
+            return None
+        observed_binding = binding
+        return result
+
+    def read_policy_denial(request):
+        binding = observed_binding
+        if binding is None or not _same_request(request, binding.request) or not check_scope(binding):
+            return None
+        record = ports.read_policy_denial(binding)
+        return record if check_scope(binding) else None
+
+    try:
+        observer = make_fixture_canary_observer(scope, targets, read_attempt, read_policy_denial)
+    except ValueError:
+        return _supervised_report(_report('INVALID_SYNTHETIC_SCOPE'), cleanup, failure)
+    return _supervised_report(rehearse_guest_canaries(scope, observer), cleanup, failure)
