@@ -317,16 +317,26 @@ reference even after the fixed entry disappears. A replaced entry, a changed
 pin, a descriptor that disappears mid-scan, or more than 256 entries
 leaves cleanup held.
 
-The source requires independent proof that the capsule is revoked, the
-trusted owner has pinned the exact procfs descriptor directory, and the
-file's only possible references are in that table. Before physical use,
-enforce that no other process can acquire a reference, and exclude alternate
-names, descriptor transfers, file mappings and kernel-held references.
-Check the same coverage before and after observation. Selection, pinning, and
-enforcement of that ownership boundary are still held for physical review.
-The offline suite substitutes kernel operations and covers the registry
-and watchdog transition from pending to verified on the final close.
-[Linux process descriptor entries](https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html)
+Descriptor-table enrollment takes a preopened, pinned procfs process directory
+and the preopened descriptor directory. It checks the same device and inode
+at the fixed `fd` child of the process directory. A bounded read of its
+`stat` record verifies the registered PID and start time. Both checks repeat
+before enrollment is accepted. They reject PID reuse, a replaced table, a
+retired process, and unavailable or malformed procfs evidence.
+[Linux process descriptor entries](https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html) ·
+[Linux process stat fields](https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html)
+
+Before and after every temporary-file inventory read, the coverage verifier
+requires fresh readback from the registered policy authority. Admission must
+be revoked, the enrolled table must have been the only possible descriptor
+owner since file creation, and alternate names, descriptor transfer, file
+mappings, and kernel holds must have been excluded. Each policy readback is
+bound to its own challenge and the exact enrollment. Coverage is withheld if
+any control is unknown, a readback is replayed, or the kernel identity changes.
+The offline suite substitutes kernel operations and policy readbacks and checks
+the watchdog transition on the last close. Physical process enrollment,
+enforcement of the reference exclusions, and the independent policy source
+remain prerequisites to an authorized guest test.
 
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.

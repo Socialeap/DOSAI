@@ -20,6 +20,7 @@ PROCFS_MAGIC = 0x9FA0
 MAX_GRACEFUL_MEMBERS = 16
 MAX_CGROUP_EVENTS_BYTES = 4096
 MAX_TEMP_FILE_FDS = 256
+MAX_PROC_STAT_BYTES = 4096
 TEMP_FILE_NAME = 'fixture-canary.tmp'
 
 
@@ -114,6 +115,20 @@ class TempFileReadOps(NamedTuple):
     stat_entry: object
     open_table: object
     list_slots: object
+
+
+class FixtureTempFileProcessPin(NamedTuple):
+    directory: FixtureHandlePin
+    pid: int
+    start_ticks: int
+
+
+class TempFileEnrollmentOps(NamedTuple):
+    duplicate: object
+    close: object
+    describe: object
+    read_stat: object
+    lookup_table: object
 
 
 def _uint(value, limit):
@@ -394,6 +409,89 @@ def prepare_fixture_temp_file_observer(pin, handles, *, ops=None):
             return None
 
     return observe
+
+
+def fixture_temp_file_enrollment_digest(file_pin, process_pin):
+    observation_digest = fixture_temp_file_observation_digest(file_pin)
+    if (type(process_pin) is not FixtureTempFileProcessPin or not _valid_pin(process_pin.directory)
+            or process_pin.directory.device != file_pin.descriptor_table.device
+            or process_pin.directory == file_pin.descriptor_table
+            or not _uint(process_pin.pid, 2**31) or process_pin.pid == 0
+            or not _uint(process_pin.start_ticks, 2**64) or process_pin.start_ticks == 0):
+        raise ValueError('Invalid synthetic temporary file process pin.')
+    identity = ('DOSAI_LINUX_ARM64_TEMP_FILE_ENROLLMENT_V1', observation_digest.hex(), process_pin)
+    return sha256(json.dumps(identity, separators=(',', ':')).encode('ascii')).digest()
+
+
+def _registered_process_stat(raw, process_pin):
+    if type(raw) is not bytes or len(raw) > MAX_PROC_STAT_BYTES or not raw.endswith(b'\n'):
+        return False
+    head, delimiter, tail = raw[:-1].rpartition(b') ')
+    prefix = str(process_pin.pid).encode('ascii') + b' ('
+    if not delimiter or not head.startswith(prefix):
+        return False
+    fields = tail.split(b' ')
+    # Linux places state at field 3 and starttime at field 22. The comm
+    # field can contain spaces, parentheses and newlines.
+    return (len(fields) >= 50 and fields[0] in (b'R', b'S', b'D', b'T', b't', b'I')
+            and fields[19] == str(process_pin.start_ticks).encode('ascii')
+            and all(re.fullmatch(rb'0|-?[1-9][0-9]{0,19}', field) for field in fields[1:]))
+
+
+def _linux_arm64_temp_file_enrollment_ops():
+    describe = _linux_arm64_descriptor_reader()
+
+    def read_stat(process_fd):
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
+        fd = os.open('stat', flags, dir_fd=process_fd)
+        try:
+            facts = describe(fd)
+            if (facts.filesystem != PROCFS_MAGIC or not stat.S_ISREG(facts.mode) or facts.inheritable
+                    or facts.flags & os.O_ACCMODE != os.O_RDONLY):
+                raise ValueError('Temporary file process stat rejected.')
+            return os.read(fd, MAX_PROC_STAT_BYTES + 1)
+        finally:
+            os.close(fd)
+
+    def lookup_table(process_fd):
+        info = os.stat('fd', dir_fd=process_fd, follow_symlinks=False)
+        return FixtureHandlePin(info.st_dev, info.st_ino), info.st_mode
+
+    return TempFileEnrollmentOps(os.dup, os.close, describe, read_stat, lookup_table)
+
+
+def prepare_fixture_temp_file_enrollment(file_pin, handles, process_pin, process_fd, *, ops=None):
+    """Verify the process instance and exact descriptor directory pinned by the owner."""
+    enrollment = fixture_temp_file_enrollment_digest(file_pin, process_pin)
+    observation = fixture_temp_file_observation_digest(file_pin)
+    if (type(handles) is not FixtureTempFileHandles
+            or not all(_uint(fd, 2**31) and fd >= 3 for fd in (*handles, process_fd))
+            or len({*handles, process_fd}) != 3
+            or (ops is not None and (type(ops) is not TempFileEnrollmentOps or not all(callable(port) for port in ops)))):
+        raise ValueError('Invalid synthetic temporary file enrollment handles.')
+
+    def verify(expected_enrollment, expected_observation):
+        if (type(expected_enrollment) is not bytes or expected_enrollment != enrollment
+                or type(expected_observation) is not bytes or expected_observation != observation):
+            return False
+        try:
+            reader = _linux_arm64_temp_file_enrollment_ops() if ops is None else ops
+            with _owned_copy(reader, process_fd) as process, _owned_copy(reader, handles.descriptor_table_fd) as table:
+                for _ in range(2):
+                    _require_readable_directory(reader, process, process_pin.directory, PROCFS_MAGIC)
+                    _require_readable_directory(reader, table, file_pin.descriptor_table, PROCFS_MAGIC)
+                    if not _registered_process_stat(reader.read_stat(process), process_pin):
+                        return False
+                    identity, mode = reader.lookup_table(process)
+                    if not _valid_pin(identity) or identity != file_pin.descriptor_table or type(mode) is not int:
+                        return False
+                    if not stat.S_ISDIR(mode):
+                        return False
+                return True
+        except Exception:
+            return False
+
+    return verify
 
 
 def _graceful(ops, handles, plan, require_revoked):

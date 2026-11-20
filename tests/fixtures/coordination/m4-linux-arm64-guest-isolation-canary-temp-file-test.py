@@ -40,7 +40,20 @@ LINK = native.FixtureHandlePin(12, 24)
 PIN = native.FixtureTempFilePin(DIRECTORY, 0x01021994, FILE, TABLE)
 DIGEST = native.fixture_temp_file_observation_digest(PIN)
 HANDLES = native.FixtureTempFileHandles(7, 8)
+PROCESS = native.FixtureTempFileProcessPin(native.FixtureHandlePin(12, 25), 41, 987)
+ENROLLMENT = native.fixture_temp_file_enrollment_digest(PIN, PROCESS)
+POLICY_GENERATION = 'fixture-reference-policy'
 ABSENT = FileNotFoundError(errno.ENOENT, 'fixture absent')
+
+
+def stat_record(pid=41, started=987, state=b'S'):
+    fields = [b'0'] * 49
+    fields[18] = str(started).encode('ascii')
+    return str(pid).encode('ascii') + b' (fixture ) name\n)) ' + state + b' ' + b' '.join(fields) + b'\n'
+
+
+def policy_report(challenge):
+    return harness.FixtureTempFilePolicyReadback(challenge, POLICY_GENERATION, True, True, True, True, True, True)
 
 
 class TempFileObservationTests(unittest.TestCase):
@@ -70,9 +83,24 @@ class TempFileObservationTests(unittest.TestCase):
     def coverage_for(self, probe):
         return harness.FixtureTempFileCoverage(probe, DIGEST, 'REVOKED_EXCLUSIVE_DESCRIPTOR_ONLY')
 
-    def prepare_source(self, observer):
+    def prepare_source(self, observer, coverage=None):
         return harness.prepare_fixture_temp_file_inventory_source(
-            TEMPLATE, RESOURCE, DIGEST, self.clock, self.coverage, observer,
+            TEMPLATE, RESOURCE, DIGEST, self.clock, self.coverage if coverage is None else coverage, observer,
+        )
+
+    def prepare_enrollment(self):
+        operations = Mock()
+        operations.duplicate.side_effect = lambda fd: fd + 10
+        process_facts = self.table_facts._replace(pin=PROCESS.directory)
+        operations.describe.side_effect = {18: self.table_facts, 20: process_facts}.__getitem__
+        operations.read_stat.return_value = stat_record()
+        operations.lookup_table.return_value = (TABLE, stat.S_IFDIR)
+        ops = native.TempFileEnrollmentOps(*(getattr(operations, name) for name in native.TempFileEnrollmentOps._fields))
+        return native.prepare_fixture_temp_file_enrollment(PIN, HANDLES, PROCESS, 10, ops=ops), operations, ops
+
+    def prepare_coverage(self, policy, verify):
+        return harness.prepare_fixture_temp_file_reference_coverage(
+            TEMPLATE, RESOURCE, DIGEST, ENROLLMENT, POLICY_GENERATION, policy, verify,
         )
 
     def test_registration_is_inert_and_rejects_wrong_digest_and_invalid_pins(self):
@@ -182,8 +210,131 @@ class TempFileObservationTests(unittest.TestCase):
         self.assertIsNone(source.snapshot(PROBE))
         observed.assert_called_once_with(DIGEST)
 
+    def test_enrollment_binds_read_only_proc_table_to_registered_process(self):
+        verify, ops, _ = self.prepare_enrollment()
+        self.assertFalse(verify(b'x' * 32, DIGEST))
+        self.assertFalse(verify(ENROLLMENT, b'x' * 32))
+        self.assertEqual(ops.mock_calls, [])
+        self.assertTrue(verify(ENROLLMENT, DIGEST))
+        self.assertEqual(ops.mock_calls, [
+            call.duplicate(10), call.duplicate(8),
+            call.describe(20), call.describe(18), call.read_stat(20), call.lookup_table(20),
+            call.describe(20), call.describe(18), call.read_stat(20), call.lookup_table(20),
+            call.close(18), call.close(20),
+        ])
+
+    def test_enrollment_rejects_bad_pins_without_reading(self):
+        _, operations, ops = self.prepare_enrollment()
+        for process, process_fd in (
+            (PROCESS._replace(directory=TABLE), 10),
+            (PROCESS._replace(directory=PROCESS.directory._replace(device=99)), 10),
+            (PROCESS._replace(pid=True), 10),
+            (PROCESS._replace(start_ticks=0), 10),
+            (PROCESS, HANDLES.descriptor_table_fd),
+            (PROCESS, False),
+        ):
+            with self.subTest(process=process, fd=process_fd), self.assertRaises(ValueError):
+                native.prepare_fixture_temp_file_enrollment(PIN, HANDLES, process, process_fd, ops=ops)
+        self.assertEqual(operations.mock_calls, [])
+
+    def test_missing_malformed_reused_or_retired_process_holds_enrollment(self):
+        verify, ops, _ = self.prepare_enrollment()
+        for raw in (
+            stat_record(pid=42), stat_record(started=988), stat_record(state=b'Z'),
+            stat_record()[:-1], stat_record().replace(b' 987 ', b' 0987 '),
+            stat_record().replace(b' 0 ', b' 0\t0 ', 1),
+            b'41 (fixture) S 0 0 0\n',
+            stat_record().replace(b'fixture', b'x' * native.MAX_PROC_STAT_BYTES),
+            ABSENT,
+        ):
+            with self.subTest(record=repr(raw)[:100]):
+                ops.read_stat.side_effect = [stat_record(), raw]
+                self.assertFalse(verify(ENROLLMENT, DIGEST))
+
+    def test_lookup_and_handle_drift_withhold_enrollment(self):
+        verify, ops, _ = self.prepare_enrollment()
+        for entry in ((TABLE._replace(inode=99), stat.S_IFDIR), (TABLE, stat.S_IFLNK), ABSENT):
+            with self.subTest(entry=entry):
+                ops.lookup_table.side_effect = [(TABLE, stat.S_IFDIR), entry]
+                self.assertFalse(verify(ENROLLMENT, DIGEST))
+        ops.lookup_table.side_effect = None
+        ops.describe.side_effect = [
+            self.table_facts._replace(pin=PROCESS.directory), self.table_facts,
+            self.table_facts._replace(pin=PROCESS.directory, filesystem=0),
+        ]
+        self.assertFalse(verify(ENROLLMENT, DIGEST))
+
+    def test_native_enrollment_reads_fixed_entries_with_bounded_proc_stat(self):
+        stat_facts = self.table_facts._replace(mode=stat.S_IFREG)
+        table_info = SimpleNamespace(st_dev=TABLE.device, st_ino=TABLE.inode, st_mode=stat.S_IFDIR)
+        describe = Mock(return_value=stat_facts)
+        with patch.object(native, '_linux_arm64_descriptor_reader', return_value=describe), \
+                patch.object(native.os, 'open', return_value=21) as open_entry, \
+                patch.object(native.os, 'read', return_value=stat_record()) as read_entry, \
+                patch.object(native.os, 'close') as close, \
+                patch.object(native.os, 'stat', return_value=table_info) as stat_entry:
+            ops = native._linux_arm64_temp_file_enrollment_ops()
+            self.assertEqual(ops.read_stat(20), stat_record())
+            flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
+            open_entry.assert_called_once_with('stat', flags, dir_fd=20)
+            read_entry.assert_called_once_with(21, native.MAX_PROC_STAT_BYTES + 1)
+            close.assert_called_once_with(21)
+            self.assertEqual(ops.lookup_table(20), (TABLE, stat.S_IFDIR))
+            stat_entry.assert_called_once_with('fd', dir_fd=20, follow_symlinks=False)
+            describe.return_value = stat_facts._replace(filesystem=0)
+            with self.assertRaises(ValueError):
+                ops.read_stat(20)
+            self.assertEqual(close.call_count, 2)
+            self.assertEqual(read_entry.call_count, 1)
+        with patch.object(native.os, 'uname', return_value=SimpleNamespace(sysname='Linux', machine='x86_64')), \
+                patch.object(native.os, 'open') as open_entry:
+            verify = native.prepare_fixture_temp_file_enrollment(PIN, HANDLES, PROCESS, 10)
+            self.assertFalse(verify(ENROLLMENT, DIGEST))
+            open_entry.assert_not_called()
+
+    def test_every_reference_exclusion_is_required_before_enrollment_io(self):
+        policy = Mock()
+        verify = Mock(return_value=True)
+        coverage = self.prepare_coverage(policy, verify)
+        self.assertIsNone(coverage(PROBE._replace(binding=RESOURCE._replace(slot_id='fixture-other'))))
+        policy.assert_not_called()
+        for field in harness.FixtureTempFilePolicyReadback._fields[2:]:
+            for value in (False, 1, None):
+                with self.subTest(field=field, value=value):
+                    policy.side_effect = lambda challenge: policy_report(challenge)._replace(**{field: value})
+                    self.assertIsNone(coverage(PROBE))
+        policy.side_effect = lambda challenge: policy_report(challenge)._replace(policy_generation='fixture-replaced')
+        self.assertIsNone(coverage(PROBE))
+        verify.assert_not_called()
+
+    def test_coverage_rejects_policy_replay_and_inexact_enrollment(self):
+        policy = Mock(side_effect=policy_report)
+        verify = Mock(return_value=True)
+        coverage = self.prepare_coverage(policy, verify)
+        self.assertEqual(coverage(PROBE), self.coverage_for(PROBE))
+        old = policy.call_args.args[0]
+        policy.side_effect = lambda _: policy_report(old)
+        self.assertIsNone(coverage(PROBE))
+        verify.assert_called_once_with(ENROLLMENT, DIGEST)
+        policy.side_effect = policy_report
+        for value in (False, 1, None):
+            verify.return_value = value
+            self.assertIsNone(coverage(PROBE))
+
+    def test_changed_enrollment_after_inventory_read_withholds_snapshot(self):
+        verify, ops, _ = self.prepare_enrollment()
+        policy = Mock(side_effect=policy_report)
+        coverage = self.prepare_coverage(policy, verify)
+        source = self.prepare_source(self.observe, coverage)
+        self.calls.list_slots.return_value = ()
+        ops.read_stat.side_effect = [stat_record(), stat_record(), stat_record(started=988)]
+        self.assertIsNone(source.snapshot(PROBE))
+        self.calls.list_slots.assert_called_once_with(19)
+        self.assertEqual(policy.call_count, 2)
+
     def test_registry_keeps_cleanup_pending_until_final_descriptor_closes(self):
-        temp = self.prepare_source(self.observe)
+        verify, _, _ = self.prepare_enrollment()
+        temp = self.prepare_source(self.observe, self.prepare_coverage(policy_report, verify))
         sources = tuple(
             temp if kind == temp.kind else harness.FixtureResourceInventorySource(
                 kind, f'fixture-mock-reader-{index}', f'fixture-mock-owner-{index}', Mock(return_value=None),

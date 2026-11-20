@@ -244,6 +244,22 @@ class FixtureTempFileCoverage(NamedTuple):
     policy: str
 
 
+class FixtureTempFilePolicyChallenge(NamedTuple):
+    probe: FixtureResourceProbe
+    enrollment_digest: bytes
+
+
+class FixtureTempFilePolicyReadback(NamedTuple):
+    challenge: FixtureTempFilePolicyChallenge
+    policy_generation: str
+    admission_revoked: bool
+    single_table_since_creation: bool
+    alternate_names_excluded: bool
+    descriptor_transfer_excluded: bool
+    file_mappings_excluded: bool
+    kernel_holds_excluded: bool
+
+
 class _FixtureResourceEntry(NamedTuple):
     kind: str
     settled: bool
@@ -691,13 +707,50 @@ def _resource_inventory_table(rows):
     return table if len(table) == len(rows) else None
 
 
+def _valid_temp_file_source(template, binding, observation_digest):
+    return (_valid_cleanup_scope(template) and template.fence_ns == 0
+            and _valid_resource_binding(binding) and binding.kind == 'temporary_files'
+            and binding.capsule_generation == template.plan.capsule_generation
+            and type(observation_digest) is bytes and len(observation_digest) == 32)
+
+
+def _matches_temp_file_probe(probe, template, binding):
+    return (type(probe) is FixtureResourceProbe and _valid_cleanup_scope(probe.scope)
+            and probe.scope._replace(fence_ns=0) == template
+            and _valid_resource_binding(probe.binding) and probe.binding == binding)
+
+
+def prepare_fixture_temp_file_reference_coverage(template, binding, observation_digest, enrollment_digest,
+                                                 policy_generation, read_policy, verify_enrollment):
+    """Require independent reference exclusions and exact kernel enrollment for each read."""
+    if (not _valid_temp_file_source(template, binding, observation_digest)
+            or type(enrollment_digest) is not bytes or len(enrollment_digest) != 32
+            or not _fixture_id(policy_generation)
+            or not callable(read_policy) or not callable(verify_enrollment)):
+        raise ValueError('Invalid synthetic temporary file reference coverage.')
+
+    def read_coverage(probe):
+        if not _matches_temp_file_probe(probe, template, binding):
+            return None
+        challenge = FixtureTempFilePolicyChallenge(probe, enrollment_digest)
+        try:
+            report = read_policy(challenge)
+            if (type(report) is not FixtureTempFilePolicyReadback or report.challenge is not challenge
+                    or type(report.policy_generation) is not str or report.policy_generation != policy_generation
+                    or not all(control is True for control in report[2:])
+                    or verify_enrollment(enrollment_digest, observation_digest) is not True):
+                return None
+        except Exception:
+            return None
+        return FixtureTempFileCoverage(probe, observation_digest, 'REVOKED_EXCLUSIVE_DESCRIPTOR_ONLY')
+
+    return read_coverage
+
+
 def prepare_fixture_temp_file_inventory_source(template, binding, observation_digest, monotonic_ns,
                                                read_coverage, observe_file):
     """Project one pinned descriptor-only file into the resource inventory."""
-    if (not _valid_cleanup_scope(template) or template.fence_ns != 0
-            or not _valid_resource_binding(binding) or binding.kind != 'temporary_files'
-            or binding.capsule_generation != template.plan.capsule_generation
-            or type(observation_digest) is not bytes or len(observation_digest) != 32
+    if (not _valid_temp_file_source(template, binding, observation_digest)
             or not all(callable(port) for port in (monotonic_ns, read_coverage, observe_file))):
         raise ValueError('Invalid synthetic temporary file inventory source.')
 
@@ -708,9 +761,7 @@ def prepare_fixture_temp_file_inventory_source(template, binding, observation_di
                 and type(record.policy) is str and record.policy == 'REVOKED_EXCLUSIVE_DESCRIPTOR_ONLY')
 
     def snapshot(probe):
-        if (type(probe) is not FixtureResourceProbe or not _valid_cleanup_scope(probe.scope)
-                or probe.scope._replace(fence_ns=0) != template
-                or not _valid_resource_binding(probe.binding) or probe.binding != binding):
+        if not _matches_temp_file_probe(probe, template, binding):
             return None
         try:
             if not descriptor_only(probe):
