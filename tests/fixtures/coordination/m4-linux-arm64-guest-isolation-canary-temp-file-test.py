@@ -1,10 +1,13 @@
 """Offline native temporary-file observation, coverage and registry checks."""
 
 import errno
+from hashlib import sha256
 import importlib.util
 import os
 from pathlib import Path
+import re
 import stat
+import struct
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, call, patch
@@ -44,6 +47,17 @@ PROCESS = native.FixtureTempFileProcessPin(native.FixtureHandlePin(12, 25), 41, 
 ENROLLMENT = native.fixture_temp_file_enrollment_digest(PIN, PROCESS)
 POLICY_GENERATION = 'fixture-reference-policy'
 ABSENT = FileNotFoundError(errno.ENOENT, 'fixture absent')
+FILTER_SOURCE = TOOLS / 'm4-linux-arm64-guest-isolation-canary-reference-filter.c'
+FILTER_RECEIPT = harness.FixtureTempFileFilterReceipt(
+    ENROLLMENT, POLICY_GENERATION, harness.TEMP_REFERENCE_FILTER_DIGEST, PROCESS.pid, 0, True, True,
+)
+FILTER_STATUS = (
+    b'Name:\tfixture\nPid:\t41\nTgid:\t41\nTracerPid:\t0\nThreads:\t1\n'
+    b'NoNewPrivs:\t1\nSeccomp:\t2\nSeccomp_filters:\t1\n'
+)
+ALLOW = 0x7fff0000
+KILL = 0x80000000
+ARCH = 0xc00000b7
 
 
 def stat_record(pid=41, started=987, state=b'S'):
@@ -54,6 +68,60 @@ def stat_record(pid=41, started=987, state=b'S'):
 
 def policy_report(challenge):
     return harness.FixtureTempFilePolicyReadback(challenge, POLICY_GENERATION, True, True, True, True, True, True)
+
+
+def boundary_report(challenge):
+    fence = harness.FixtureCleanupFenceReadback(challenge.probe.scope, 'REVOKED_QUIESCED')
+    return harness.FixtureTempFileBoundaryReadback(challenge, fence, True, True)
+
+
+def load_filter(source):
+    constants = {'SECCOMP_RET_ALLOW': ALLOW, 'SECCOMP_RET_KILL_PROCESS': KILL}
+    rows = re.findall(r'^\s*\{([^{}]+)\},', source, re.M)
+    return [
+        tuple(constants[token] if token in constants else int(token, 0) for token in row.replace(' ', '').split(','))
+        for row in rows
+    ]
+
+
+def evaluate_filter(program, syscall, *, arch=ARCH, descriptor=3, read_length=1):
+    data = struct.pack('<IIQQQQQQQ', syscall, arch, 0, descriptor, 0, read_length, 0, 0, 0)
+    accumulator = 0
+    index = 0
+    for _ in program:
+        op, equal, different, value = program[index]
+        if op == 0x20:
+            accumulator, = struct.unpack_from('<I', data, value)
+            index += 1
+        elif op == 0x15:
+            index += 1 + (equal if accumulator == value else different)
+        elif op == 0x06:
+            return value
+        else:
+            raise AssertionError('Unexpected reference-filter instruction')
+    raise AssertionError('Reference filter did not terminate')
+
+
+class ReferenceFilterProgramTests(unittest.TestCase):
+    def test_exact_c_filter_digest_and_closed_arm64_syscall_set(self):
+        source = FILTER_SOURCE.read_text()
+        program = load_filter(source)
+        encoded = b''.join(struct.pack('<HBBI', *row) for row in program)
+        self.assertEqual(sha256(encoded).digest(), harness.TEMP_REFERENCE_FILTER_DIGEST)
+        self.assertIn('PR_SET_NO_NEW_PRIVS, 1UL', source)
+        self.assertIn('SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_TSYNC', source)
+        self.assertIn('_exit(125)', source)
+        for syscall in (*range(1024), 0x4000003f, 0xffffffff):
+            outcome = ALLOW if syscall in (57, 63, 93, 94) else KILL
+            self.assertEqual(evaluate_filter(program, syscall), outcome, syscall)
+
+    def test_filter_rejects_other_abis_and_unbound_or_wide_control_reads(self):
+        program = load_filter(FILTER_SOURCE.read_text())
+        for arch in (0, 0x40000028, 0xc000003e, ARCH ^ 0x40000000):
+            for syscall in (57, 63, 93, 94):
+                self.assertEqual(evaluate_filter(program, syscall, arch=arch), KILL)
+        for descriptor, size in ((0, 1), (4, 1), (0x100000003, 1), (3, 0), (3, 2), (3, 0x100000001)):
+            self.assertEqual(evaluate_filter(program, 63, descriptor=descriptor, read_length=size), KILL)
 
 
 class TempFileObservationTests(unittest.TestCase):
@@ -101,6 +169,11 @@ class TempFileObservationTests(unittest.TestCase):
     def prepare_coverage(self, policy, verify):
         return harness.prepare_fixture_temp_file_reference_coverage(
             TEMPLATE, RESOURCE, DIGEST, ENROLLMENT, POLICY_GENERATION, policy, verify,
+        )
+
+    def prepare_filter_policy(self, receipt, boundary, read_status):
+        return harness.prepare_fixture_temp_file_filter_policy(
+            TEMPLATE, RESOURCE, DIGEST, ENROLLMENT, POLICY_GENERATION, receipt, boundary, read_status,
         )
 
     def test_registration_is_inert_and_rejects_wrong_digest_and_invalid_pins(self):
@@ -332,9 +405,104 @@ class TempFileObservationTests(unittest.TestCase):
         self.calls.list_slots.assert_called_once_with(19)
         self.assertEqual(policy.call_count, 2)
 
+    def test_kernel_filter_status_uses_fixed_bounded_status_and_exact_process(self):
+        _, calls, ops = self.prepare_enrollment()
+        calls.read_status.return_value = FILTER_STATUS
+        read = native.prepare_fixture_temp_file_status_reader(PIN, PROCESS, 10, ops=ops)
+        self.assertIsNone(read(b'x' * 32))
+        self.assertEqual(calls.mock_calls, [])
+        self.assertEqual(read(ENROLLMENT), FILTER_STATUS)
+        self.assertEqual(calls.mock_calls, [
+            call.duplicate(10), call.describe(20), call.read_stat(20), call.read_status(20),
+            call.read_stat(20), call.describe(20), call.close(20),
+        ])
+        calls.read_stat.side_effect = [stat_record(), stat_record(started=988)]
+        self.assertIsNone(read(ENROLLMENT))
+        calls.read_stat.side_effect = None
+        calls.read_status.return_value = b'x' * (native.MAX_PROC_STATUS_BYTES + 1)
+        self.assertIsNone(read(ENROLLMENT))
+
+        describe = Mock(return_value=self.table_facts._replace(mode=stat.S_IFREG))
+        with patch.object(native, '_linux_arm64_descriptor_reader', return_value=describe), \
+                patch.object(native.os, 'open', return_value=21) as open_entry, \
+                patch.object(native.os, 'read', return_value=FILTER_STATUS) as read_entry, \
+                patch.object(native.os, 'close') as close:
+            native_ops = native._linux_arm64_temp_file_enrollment_ops()
+            self.assertEqual(native_ops.read_status(20), FILTER_STATUS)
+            flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
+            open_entry.assert_called_once_with('status', flags, dir_fd=20)
+            read_entry.assert_called_once_with(21, native.MAX_PROC_STATUS_BYTES + 1)
+            close.assert_called_once_with(21)
+
+    def test_filter_policy_requires_exact_installation_provenance(self):
+        boundary = Mock(side_effect=boundary_report)
+        status = Mock(return_value=FILTER_STATUS)
+        for changes in (
+            {'program_digest': b'x' * 32}, {'enrollment_digest': b'x' * 32}, {'policy_generation': 'fixture-other'},
+            {'pid': True}, {'prior_filters': 1}, {'prior_filters': False}, {'exclusive_bootstrap': False},
+            {'installed': 1},
+        ):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                self.prepare_filter_policy(FILTER_RECEIPT._replace(**changes), boundary, status)
+        status.assert_not_called()
+        boundary.assert_not_called()
+
+    def test_filter_policy_rejects_missing_duplicate_or_wrong_kernel_status(self):
+        boundary = Mock(side_effect=boundary_report)
+        status = Mock()
+        policy = self.prepare_filter_policy(FILTER_RECEIPT, boundary, status)
+        challenge = harness.FixtureTempFilePolicyChallenge(PROBE, ENROLLMENT)
+        for wrong in (
+            None, FILTER_STATUS[:-1], FILTER_STATUS + b'Seccomp:\t2\n',
+            FILTER_STATUS.replace(b'Tgid:\t41', b'Tgid:\t42'),
+            FILTER_STATUS.replace(b'Pid:\t41', b'Pid:\t42'),
+            FILTER_STATUS.replace(b'TracerPid:\t0', b'TracerPid:\t7'),
+            FILTER_STATUS.replace(b'Threads:\t1', b'Threads:\t2'),
+            FILTER_STATUS.replace(b'NoNewPrivs:\t1', b'NoNewPrivs:\t0'),
+            FILTER_STATUS.replace(b'Seccomp:\t2', b'Seccomp:\t0'),
+            FILTER_STATUS.replace(b'Seccomp_filters:\t1\n', b''),
+            FILTER_STATUS.replace(b'Seccomp_filters:\t1', b'Seccomp_filters:\t2'),
+            FILTER_STATUS + b'Overflow:' + b'x' * harness.MAX_REFERENCE_STATUS_BYTES,
+        ):
+            with self.subTest(status=repr(wrong)[:110]):
+                status.return_value = wrong
+                self.assertIsNone(policy(challenge))
+        status.return_value = FILTER_STATUS
+        self.assertEqual(policy(challenge), policy_report(challenge))
+
+    def test_filter_policy_withholds_coverage_on_boundary_replay_or_drift(self):
+        boundary = Mock(side_effect=boundary_report)
+        status = Mock(return_value=FILTER_STATUS)
+        policy = self.prepare_filter_policy(FILTER_RECEIPT, boundary, status)
+        challenge = harness.FixtureTempFilePolicyChallenge(PROBE, ENROLLMENT)
+        self.assertIsNone(policy(challenge._replace(enrollment_digest=b'x' * 32)))
+        for change in ({'external_references_excluded': False}, {'close_path_quiesced': False},
+                       {'close_path_quiesced': 1}):
+            boundary.side_effect = lambda request: boundary_report(request)._replace(**change)
+            self.assertIsNone(policy(challenge))
+        status.assert_not_called()
+        before = None
+
+        def replay(request):
+            nonlocal before
+            if before is None:
+                before = boundary_report(request)
+            return before
+
+        boundary.side_effect = replay
+        self.assertIsNone(policy(challenge))
+        status.assert_called_once_with(ENROLLMENT)
+        boundary.side_effect = lambda request: boundary_report(request)._replace(
+            fence=harness.FixtureCleanupFenceReadback(request.probe.scope._replace(fence_ns=101), 'REVOKED_QUIESCED'),
+        )
+        self.assertIsNone(policy(challenge))
+
     def test_registry_keeps_cleanup_pending_until_final_descriptor_closes(self):
-        verify, _, _ = self.prepare_enrollment()
-        temp = self.prepare_source(self.observe, self.prepare_coverage(policy_report, verify))
+        verify, calls, ops = self.prepare_enrollment()
+        calls.read_status.return_value = FILTER_STATUS
+        read_status = native.prepare_fixture_temp_file_status_reader(PIN, PROCESS, 10, ops=ops)
+        policy = self.prepare_filter_policy(FILTER_RECEIPT, boundary_report, read_status)
+        temp = self.prepare_source(self.observe, self.prepare_coverage(policy, verify))
         sources = tuple(
             temp if kind == temp.kind else harness.FixtureResourceInventorySource(
                 kind, f'fixture-mock-reader-{index}', f'fixture-mock-owner-{index}', Mock(return_value=None),

@@ -15,6 +15,8 @@ ATTEMPT_BUDGET_NS = 250_000_000
 WATCHDOG_GRACE_NS = 250_000_000
 MAX_CLEANUP_RESOURCES = 64
 MAX_RESOURCE_INVENTORY_ROWS = 256
+MAX_REFERENCE_STATUS_BYTES = 8192
+TEMP_REFERENCE_FILTER_DIGEST = bytes.fromhex('be419653d0a20d09847ce283e1d0226ad751670257a57cc2ac42caf3135b8813')
 ORIGIN = 'SYNTHETIC_ONLY'
 CANARIES = ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
 LEGS = ('CONTROL_BEFORE', 'RESTRICTED', 'CONTROL_AFTER')
@@ -258,6 +260,23 @@ class FixtureTempFilePolicyReadback(NamedTuple):
     descriptor_transfer_excluded: bool
     file_mappings_excluded: bool
     kernel_holds_excluded: bool
+
+
+class FixtureTempFileFilterReceipt(NamedTuple):
+    enrollment_digest: bytes
+    policy_generation: str
+    program_digest: bytes
+    pid: int
+    prior_filters: int
+    exclusive_bootstrap: bool
+    installed: bool
+
+
+class FixtureTempFileBoundaryReadback(NamedTuple):
+    challenge: FixtureTempFilePolicyChallenge
+    fence: FixtureCleanupFenceReadback
+    external_references_excluded: bool
+    close_path_quiesced: bool
 
 
 class _FixtureResourceEntry(NamedTuple):
@@ -718,6 +737,68 @@ def _matches_temp_file_probe(probe, template, binding):
     return (type(probe) is FixtureResourceProbe and _valid_cleanup_scope(probe.scope)
             and probe.scope._replace(fence_ns=0) == template
             and _valid_resource_binding(probe.binding) and probe.binding == binding)
+
+
+def _matches_temp_file_filter_status(raw, pid):
+    if (type(raw) is not bytes or not 0 < len(raw) <= MAX_REFERENCE_STATUS_BYTES
+            or not raw.endswith(b'\n') or b'\x00' in raw):
+        return False
+    pid_bytes = str(pid).encode('ascii')
+    required = {
+        b'Pid': pid_bytes, b'Tgid': pid_bytes, b'TracerPid': b'0', b'Threads': b'1',
+        b'NoNewPrivs': b'1', b'Seccomp': b'2', b'Seccomp_filters': b'1',
+    }
+    seen = set()
+    for line in raw[:-1].split(b'\n'):
+        key, separator, value = line.partition(b':')
+        if not separator or not key or key != key.strip():
+            return False
+        if key in required:
+            if key in seen or value.strip(b' \t') != required[key]:
+                return False
+            seen.add(key)
+    return seen == required.keys()
+
+
+def prepare_fixture_temp_file_filter_policy(template, binding, observation_digest, enrollment_digest,
+                                            policy_generation, receipt, read_boundary, read_status):
+    """Combine trusted installation provenance with independent, pinned kernel status."""
+    if (not _valid_temp_file_source(template, binding, observation_digest)
+            or type(enrollment_digest) is not bytes or len(enrollment_digest) != 32
+            or not _fixture_id(policy_generation) or not callable(read_boundary) or not callable(read_status)
+            or type(receipt) is not FixtureTempFileFilterReceipt
+            or type(receipt.enrollment_digest) is not bytes or receipt.enrollment_digest != enrollment_digest
+            or type(receipt.policy_generation) is not str or receipt.policy_generation != policy_generation
+            or type(receipt.program_digest) is not bytes or receipt.program_digest != TEMP_REFERENCE_FILTER_DIGEST
+            or type(receipt.pid) is not int or not 0 < receipt.pid < 2**31
+            or type(receipt.prior_filters) is not int or receipt.prior_filters != 0
+            or receipt.exclusive_bootstrap is not True or receipt.installed is not True):
+        raise ValueError('Invalid synthetic temporary file filter provenance.')
+
+    def check_boundary(probe):
+        challenge = FixtureTempFilePolicyChallenge(probe, enrollment_digest)
+        report = read_boundary(challenge)
+        return (type(report) is FixtureTempFileBoundaryReadback and report.challenge is challenge
+                and _quiesced_scope(report.fence, probe.scope) and report.external_references_excluded is True
+                and report.close_path_quiesced is True)
+
+    def read_policy(challenge):
+        if (type(challenge) is not FixtureTempFilePolicyChallenge
+                or type(challenge.enrollment_digest) is not bytes or challenge.enrollment_digest != enrollment_digest
+                or not _matches_temp_file_probe(challenge.probe, template, binding)):
+            return None
+        try:
+            if not check_boundary(challenge.probe):
+                return None
+            if not _matches_temp_file_filter_status(read_status(enrollment_digest), receipt.pid):
+                return None
+            if not check_boundary(challenge.probe):
+                return None
+        except Exception:
+            return None
+        return FixtureTempFilePolicyReadback(challenge, policy_generation, True, True, True, True, True, True)
+
+    return read_policy
 
 
 def prepare_fixture_temp_file_reference_coverage(template, binding, observation_digest, enrollment_digest,
