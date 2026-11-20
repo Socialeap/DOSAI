@@ -217,17 +217,37 @@ most one frame without blocking. The receiver checks force first and rejects
 truncation, ancillary data, tampering and stale bindings. An accepted frame
 requests termination. Cleanup still requires the independent inventory.
 
+Endpoint and session enrollment in the same module checks an immutable
+ownership record for both roles, including their process generations and
+start identities, the four socket identities in role and lane order, and the
+registered attempt digest. It checks Linux peer credentials for each preconnected
+socket. The kernel credentials describe connection establishment, so enrollment
+also requires independently registered process-start and endpoint ownership
+readback. The two roles and their socket identities must be distinct.
+
+Enrollment is one attempt per prepared request and rechecks ownership, sockets,
+and the monotonic admission deadline before publishing either role. The nonce
+and ephemeral MAC key are generated only after the first successful verification.
+Failure after preparation retires any unpublished roles. Retirement disables
+both roles while the registered resource owner handles physical cleanup.
+The admission deadline governs enrollment. The future trusted owner must retire
+the enrolled session on role loss or after reconciling the attempt so the
+bound reduce-only Stop path remains available during cleanup.
+
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
 independent policy evidence. Physical watchdog use requires an independent
-dispatcher, owned endpoint and session enrollment, a fresh ephemeral MAC key,
-a release-reviewed terminator, and independent inventory. Offline results
-leave physical qualification held.
+dispatcher, trusted enrollment and retirement wiring, a release-reviewed
+terminator, and independent inventory. Before activation, verify live role
+ownership at connection establishment, distinct owned socket pairs, and
+the exact guest kernel's peer credential behavior. Offline results leave
+physical qualification held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
 [IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
 [Python socket operations](https://docs.python.org/3/library/socket.html) ·
+[Python ephemeral randomness](https://docs.python.org/3/library/secrets.html) ·
 [Linux timer descriptors](https://man7.org/linux/man-pages/man2/timerfd_create.2.html) ·
 [Unix sequenced-packet sockets](https://man7.org/linux/man-pages/man7/unix.7.html)
 
@@ -239,6 +259,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-nat
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-supervisor-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-transport-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-enrollment-test.py
 ```
 
 ## Qualification limits

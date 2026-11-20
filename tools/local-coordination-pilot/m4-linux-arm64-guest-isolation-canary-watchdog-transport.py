@@ -4,6 +4,8 @@ import ctypes as c
 import errno
 import hmac
 import os
+import re
+from secrets import token_bytes
 import socket
 import struct
 import time
@@ -18,12 +20,17 @@ _TAG_DOMAIN = b'DOSAI_CANARY_WATCHDOG_TO_TERMINATOR_V1\0'
 _FRAME = struct.Struct('!8sBBQ16s32s')
 _FRAME_BYTES = _FRAME.size + 32
 _PHASES = {'GRACEFUL': 1, 'FORCE': 2}
+_PEER_CREDENTIALS = struct.Struct('=iII')
 
 
 def _require_linux_arm64():
     platform = os.uname()
     if (platform.sysname, platform.machine) != ('Linux', 'aarch64'):
         raise OSError('Linux ARM64 is required for native watchdog bindings.')
+
+
+def _monotonic_ns():
+    return time.clock_gettime_ns(time.CLOCK_MONOTONIC)
 
 
 class _Timespec(c.Structure):
@@ -93,11 +100,7 @@ class WatchdogTimerDispatch:
     def __init__(self, watchdog, timer, clock_ns=None):
         self._watchdog = watchdog
         self._timer = timer
-        self._clock_ns = clock_ns if clock_ns is not None else self._monotonic_ns
-
-    @staticmethod
-    def _monotonic_ns():
-        return time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+        self._clock_ns = clock_ns if clock_ns is not None else _monotonic_ns
 
     def _clock(self):
         try:
@@ -230,3 +233,152 @@ class LinuxArm64TerminationTransport:
             if result in ('ACCEPTED', 'REJECTED'):
                 return phase, result
         return None
+
+    def retire(self):
+        self._sent.update(_PHASES)
+        self._received.update(_PHASES)
+        self._frames.clear()
+
+
+class FixtureProcessPin(NamedTuple):
+    generation: str
+    pid: int
+    uid: int
+    gid: int
+    start_ticks: int
+
+
+class FixtureSocketPin(NamedTuple):
+    device: int
+    inode: int
+
+
+class FixtureTerminationRolePin(NamedTuple):
+    process: FixtureProcessPin
+    graceful: FixtureSocketPin
+    force: FixtureSocketPin
+
+
+class FixtureTerminationEnrollmentPlan(NamedTuple):
+    origin: str
+    generation: str
+    binding_digest: bytes
+    watchdog: FixtureTerminationRolePin
+    terminator: FixtureTerminationRolePin
+    admission_deadline_ns: int
+
+
+class FixtureTerminationLanes(NamedTuple):
+    graceful: object
+    force: object
+
+
+class FixtureEnrolledTermination(NamedTuple):
+    watchdog: LinuxArm64TerminationTransport
+    terminator: LinuxArm64TerminationTransport
+
+    def retire(self):
+        self.watchdog.retire()
+        self.terminator.retire()
+
+
+def _fixture_generation(value):
+    return type(value) is str and re.fullmatch(r'fixture-[a-z0-9-]{1,48}', value) is not None
+
+
+def _unsigned(value, limit):
+    return type(value) is int and 0 <= value < limit
+
+
+def _valid_role_pin(role):
+    if type(role) is not FixtureTerminationRolePin or type(role.process) is not FixtureProcessPin:
+        return False
+    process = role.process
+    return (_fixture_generation(process.generation) and _unsigned(process.pid, 2**31) and process.pid > 0
+            and all(_unsigned(item, 2**32 - 1) and item > 0 for item in (process.uid, process.gid))
+            and _unsigned(process.start_ticks, 2**64) and process.start_ticks > 0
+            and all(type(pin) is FixtureSocketPin and _unsigned(pin.device, 2**64)
+                    and _unsigned(pin.inode, 2**64) and pin.inode > 0 for pin in (role.graceful, role.force)))
+
+
+def _valid_enrollment_plan(plan):
+    if (type(plan) is not FixtureTerminationEnrollmentPlan or type(plan.origin) is not str
+            or plan.origin != 'SYNTHETIC_ONLY' or not _fixture_generation(plan.generation)
+            or not _bytes_of_size(plan.binding_digest, 32) or not _unsigned(plan.admission_deadline_ns, 2**64)
+            or not _valid_role_pin(plan.watchdog) or not _valid_role_pin(plan.terminator)):
+        return False
+    watchdog, terminator = plan.watchdog, plan.terminator
+    return (watchdog.process.pid != terminator.process.pid
+            and len({plan.generation, watchdog.process.generation, terminator.process.generation}) == 3
+            and len({watchdog.graceful, watchdog.force, terminator.graceful, terminator.force}) == 4)
+
+
+def _check_enrollment_lanes(lanes, role, peer):
+    for channel, pin in zip(lanes, (role.graceful, role.force)):
+        if _socket_identity(channel) != pin:
+            raise ValueError('Watchdog endpoint pin rejected.')
+        raw = channel.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, _PEER_CREDENTIALS.size)
+        if (not _bytes_of_size(raw, _PEER_CREDENTIALS.size)
+                or _PEER_CREDENTIALS.unpack(raw) != (peer.pid, peer.uid, peer.gid)):
+            raise ValueError('Watchdog peer credentials rejected.')
+
+
+def prepare_fixture_termination_enrollment(plan, watchdog_lanes, terminator_lanes, read_ownership, *,
+                                           clock_ns=None, random_bytes=None):
+    """Prepare one attempt to enroll preconnected, independently registered fixture endpoints."""
+    clock = _monotonic_ns if clock_ns is None else clock_ns
+    random = token_bytes if random_bytes is None else random_bytes
+    if (not _valid_enrollment_plan(plan) or type(watchdog_lanes) is not FixtureTerminationLanes
+            or type(terminator_lanes) is not FixtureTerminationLanes or not callable(read_ownership)
+            or not callable(clock) or not callable(random)):
+        raise ValueError('Invalid synthetic watchdog enrollment.')
+
+    consumed = False
+    last_tick = None
+
+    def check_clock():
+        nonlocal last_tick
+        now = clock()
+        if (not _unsigned(now, 2**64) or now >= plan.admission_deadline_ns
+                or (last_tick is not None and now < last_tick)):
+            raise ValueError('Watchdog enrollment clock rejected.')
+        last_tick = now
+
+    def require_ownership():
+        readback = read_ownership()
+        if not _valid_enrollment_plan(readback) or readback != plan:
+            raise ValueError('Watchdog ownership rejected.')
+
+    def verify_endpoints():
+        check_clock()
+        require_ownership()
+        _check_enrollment_lanes(watchdog_lanes, plan.watchdog, plan.terminator.process)
+        _check_enrollment_lanes(terminator_lanes, plan.terminator, plan.watchdog.process)
+        require_ownership()
+        check_clock()
+
+    def enroll():
+        nonlocal consumed
+        if consumed:
+            raise ValueError('Synthetic watchdog enrollment consumed.')
+        consumed = True
+        watchdog = terminator = None
+        try:
+            _require_linux_arm64()
+            verify_endpoints()
+            nonce = random(16)
+            if not _bytes_of_size(nonce, 16):
+                raise ValueError('Watchdog session nonce rejected.')
+            key = random(32)
+            session = FixtureTerminationSession(plan.origin, nonce, plan.binding_digest)
+            watchdog = LinuxArm64TerminationTransport(session, key, *watchdog_lanes, role='WATCHDOG')
+            terminator = LinuxArm64TerminationTransport(session, key, *terminator_lanes, role='TERMINATOR')
+            verify_endpoints()
+            return FixtureEnrolledTermination(watchdog, terminator)
+        except Exception:
+            for endpoint in (watchdog, terminator):
+                if endpoint is not None:
+                    endpoint.retire()
+            raise OSError('Synthetic watchdog enrollment rejected.') from None
+
+    return enroll
