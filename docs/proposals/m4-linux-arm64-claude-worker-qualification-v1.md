@@ -363,8 +363,31 @@ evidence holds cleanup.
 
 Offline tests interpret the instruction words from the C source and exercise
 the full temporary-file cleanup path with substituted kernel operations.
-Physical bootstrap, receipt production, external exclusion, and ARM64
-compile and kernel validation remain prerequisites to an authorized guest test.
+
+The [native holder bootstrap](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-bootstrap.c)
+accepts only the registered owner-private directory and two distinct
+anonymous pipes. It separates the holder's descriptor table, closes
+unregistered descriptors, rechecks the pins, and creates the fixed file
+with exclusive, no-follow creation. The holder checks that it owns a regular
+single-link file and drops its directory descriptor before installation.
+It writes one fixed 112-byte setup frame with the public launch challenge,
+PID, and directory, file, control-pipe, and setup-pipe pins. The frame
+reports setup only. The holder closes its setup writer after installation
+and uses only the existing close, exit, and one-byte control-read rules.
+[Linux descriptor-table separation](https://man7.org/linux/man-pages/man2/close_range.2.html) ·
+[Linux pipe EOF semantics](https://man7.org/linux/man-pages/man7/pipe.7.html)
+
+The single-attempt receipt issuer requires the exact setup frame and EOF
+on the registered pipe, the trusted executable and filter digests, and
+exclusive bootstrap evidence with no inherited filters. EOF can also
+result from early exit. The issuer checks active filter status on the same
+enrolled process, confirms the original file is present with one holder
+descriptor, and rechecks enrollment and launch evidence before the
+monotonic deadline. Only then does it issue the existing filter receipt.
+Offline tests exercise the issuer with substituted ports and check the
+ordering in the C source. The native holder has no launcher. Physical
+launch admission, setup-pipe reading, trusted launch evidence, external
+reference exclusion, and ARM64 compile and kernel validation remain held.
 
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.
@@ -404,6 +427,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cle
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-registry-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-resource-absence-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-temp-file-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-bootstrap-test.py
 ```
 
 ## Qualification limits

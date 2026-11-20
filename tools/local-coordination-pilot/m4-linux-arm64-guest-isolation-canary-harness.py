@@ -3,6 +3,7 @@
 from hashlib import sha256
 import json
 import re
+import struct
 from threading import Lock
 from typing import NamedTuple, Optional
 
@@ -17,6 +18,7 @@ MAX_CLEANUP_RESOURCES = 64
 MAX_RESOURCE_INVENTORY_ROWS = 256
 MAX_REFERENCE_STATUS_BYTES = 8192
 TEMP_REFERENCE_FILTER_DIGEST = bytes.fromhex('be419653d0a20d09847ce283e1d0226ad751670257a57cc2ac42caf3135b8813')
+TEMP_HOLDER_SETUP_FRAME = struct.Struct('<8s32s9Q')
 ORIGIN = 'SYNTHETIC_ONLY'
 CANARIES = ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
 LEGS = ('CONTROL_BEFORE', 'RESTRICTED', 'CONTROL_AFTER')
@@ -270,6 +272,54 @@ class FixtureTempFileFilterReceipt(NamedTuple):
     prior_filters: int
     exclusive_bootstrap: bool
     installed: bool
+
+
+class FixtureTempFileBootstrapPins(NamedTuple):
+    directory: tuple
+    file: tuple
+    control: tuple
+    setup: tuple
+
+
+class FixtureTempFileBootstrapRegistration(NamedTuple):
+    template: FixtureCleanupScope
+    binding: FixtureResourceBinding
+    observation_digest: bytes
+    enrollment_digest: bytes
+    policy_generation: str
+    executable_digest: bytes
+    nonce: bytes
+    pid: int
+    pins: FixtureTempFileBootstrapPins
+    deadline_ns: int
+
+
+class FixtureTempFileBootstrapChallenge(NamedTuple):
+    registration: FixtureTempFileBootstrapRegistration
+
+
+class FixtureTempFileLaunchReadback(NamedTuple):
+    challenge: FixtureTempFileBootstrapChallenge
+    executable_digest: bytes
+    program_digest: bytes
+    prior_filters: int
+    exclusive_bootstrap: bool
+
+
+class FixtureTempFileSetupReadback(NamedTuple):
+    challenge: FixtureTempFileBootstrapChallenge
+    pipe_pin: tuple
+    frame: bytes
+    eof: bool
+
+
+class FixtureTempFileBootstrapPorts(NamedTuple):
+    monotonic_ns: object
+    read_launch: object
+    read_setup: object
+    verify_enrollment: object
+    read_status: object
+    observe_file: object
 
 
 class FixtureTempFileBoundaryReadback(NamedTuple):
@@ -758,6 +808,86 @@ def _matches_temp_file_filter_status(raw, pid):
                 return False
             seen.add(key)
     return seen == required.keys()
+
+
+def _bootstrap_handle_pin(pin):
+    return (type(pin) is tuple and len(pin) == 2 and all(_tick(value) for value in pin) and pin[1] > 0)
+
+
+def _valid_temp_file_bootstrap(registration):
+    if (type(registration) is not FixtureTempFileBootstrapRegistration
+            or not _valid_temp_file_source(registration.template, registration.binding, registration.observation_digest)
+            or not all(type(value) is bytes and len(value) == 32 for value in (
+                registration.enrollment_digest, registration.executable_digest, registration.nonce,
+            ))
+            or not _fixture_id(registration.policy_generation)
+            or type(registration.pid) is not int or not 0 < registration.pid < 2**31
+            or not _tick(registration.deadline_ns)
+            or not 0 < registration.deadline_ns <= registration.template.plan.binding.deadline_ns):
+        return False
+    pins = registration.pins
+    return (type(pins) is FixtureTempFileBootstrapPins and all(_bootstrap_handle_pin(pin) for pin in pins)
+            and len(set(pins)) == len(pins) and pins.directory[0] == pins.file[0])
+
+
+def prepare_fixture_temp_file_receipt_issuer(registration, ports):
+    """Issue one installation receipt after setup EOF, pinned enrollment and kernel readback."""
+    if (not _valid_temp_file_bootstrap(registration) or type(ports) is not FixtureTempFileBootstrapPorts
+            or not all(callable(port) for port in ports)):
+        raise ValueError('Invalid synthetic temporary file bootstrap registration.')
+    pins = registration.pins
+    expected_frame = TEMP_HOLDER_SETUP_FRAME.pack(
+        b'DOSAITF1', registration.nonce, registration.pid, *pins.directory, *pins.file, *pins.control, *pins.setup,
+    )
+    enrollment = registration.enrollment_digest
+    observation = registration.observation_digest
+    lock = Lock()
+    consumed = False
+
+    def launch_matches():
+        challenge = FixtureTempFileBootstrapChallenge(registration)
+        record = ports.read_launch(challenge)
+        return (type(record) is FixtureTempFileLaunchReadback and record.challenge is challenge
+                and type(record.executable_digest) is bytes and record.executable_digest == registration.executable_digest
+                and type(record.program_digest) is bytes and record.program_digest == TEMP_REFERENCE_FILTER_DIGEST
+                and type(record.prior_filters) is int and record.prior_filters == 0
+                and record.exclusive_bootstrap is True)
+
+    def setup_matches():
+        challenge = FixtureTempFileBootstrapChallenge(registration)
+        record = ports.read_setup(challenge)
+        return (type(record) is FixtureTempFileSetupReadback and record.challenge is challenge
+                and _bootstrap_handle_pin(record.pipe_pin) and record.pipe_pin == pins.setup
+                and record.eof is True and type(record.frame) is bytes and record.frame == expected_frame)
+
+    def issue():
+        nonlocal consumed
+        with lock:
+            if consumed:
+                return None
+            consumed = True
+        try:
+            started = ports.monotonic_ns()
+            if (not _tick(started) or started >= registration.deadline_ns
+                    or not launch_matches() or not setup_matches()
+                    or ports.verify_enrollment(enrollment, observation) is not True
+                    or not _matches_temp_file_filter_status(ports.read_status(enrollment), registration.pid)):
+                return None
+            file = ports.observe_file(observation)
+            if (type(file) is not tuple or len(file) != 2 or type(file[0]) is not str or file[0] != 'PRESENT'
+                    or type(file[1]) is not int or file[1] != 1
+                    or ports.verify_enrollment(enrollment, observation) is not True or not launch_matches()):
+                return None
+            finished = ports.monotonic_ns()
+        except Exception:
+            return None
+        if not _tick(finished) or not started <= finished < registration.deadline_ns:
+            return None
+        return FixtureTempFileFilterReceipt(
+            enrollment, registration.policy_generation, TEMP_REFERENCE_FILTER_DIGEST, registration.pid, 0, True, True,
+        )
+
+    return issue
 
 
 def prepare_fixture_temp_file_filter_policy(template, binding, observation_digest, enrollment_digest,
