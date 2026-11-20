@@ -11,6 +11,7 @@ import re
 import select
 import signal
 import stat
+import struct
 from threading import Lock
 from typing import NamedTuple
 
@@ -20,6 +21,7 @@ CGROUP2_MAGIC = 0x63677270
 PIDFS_MAGIC = 0x50494446
 PROCFS_MAGIC = 0x9FA0
 PIPEFS_MAGIC = 0x50495045
+TMPFS_MAGIC = 0x01021994
 MAX_GRACEFUL_MEMBERS = 16
 MAX_CGROUP_EVENTS_BYTES = 4096
 MAX_TEMP_FILE_FDS = 256
@@ -27,6 +29,10 @@ MAX_PROC_STAT_BYTES = 4096
 MAX_PROC_STATUS_BYTES = 8192
 TEMP_SETUP_MAGIC = b'DOSAITF1'
 TEMP_SETUP_FRAME_BYTES = 112
+MAX_HOLDER_IMAGE_BYTES = 4 * 1024 * 1024
+HOLDER_IMAGE_CHUNK = 64 * 1024
+# Linux UAPI F_SEAL_SEAL, F_SEAL_SHRINK, F_SEAL_GROW and F_SEAL_WRITE.
+REQUIRED_HOLDER_IMAGE_SEALS = 0x0F
 TEMP_FILE_NAME = 'fixture-canary.tmp'
 
 
@@ -144,6 +150,19 @@ class TempFileSetupPipeOps(NamedTuple):
     describe: object
     poll: object
     read: object
+
+
+class FixtureTempFileLaunchImagePin(NamedTuple):
+    identity: FixtureHandlePin
+    digest: bytes
+    size: int
+
+
+class TempFileLaunchEvidenceOps(NamedTuple):
+    process: TempFileEnrollmentOps
+    stat_exe: object
+    get_seals: object
+    pread: object
 
 
 def _uint(value, limit):
@@ -428,14 +447,18 @@ def prepare_fixture_temp_file_observer(pin, handles, *, ops=None):
 
 def fixture_temp_file_enrollment_digest(file_pin, process_pin):
     observation_digest = fixture_temp_file_observation_digest(file_pin)
-    if (type(process_pin) is not FixtureTempFileProcessPin or not _valid_pin(process_pin.directory)
+    if (not _valid_temp_file_process_pin(process_pin)
             or process_pin.directory.device != file_pin.descriptor_table.device
-            or process_pin.directory == file_pin.descriptor_table
-            or not _uint(process_pin.pid, 2**31) or process_pin.pid == 0
-            or not _uint(process_pin.start_ticks, 2**64) or process_pin.start_ticks == 0):
+            or process_pin.directory == file_pin.descriptor_table):
         raise ValueError('Invalid synthetic temporary file process pin.')
     identity = ('DOSAI_LINUX_ARM64_TEMP_FILE_ENROLLMENT_V1', observation_digest.hex(), process_pin)
     return sha256(json.dumps(identity, separators=(',', ':')).encode('ascii')).digest()
+
+
+def _valid_temp_file_process_pin(process_pin):
+    return (type(process_pin) is FixtureTempFileProcessPin and _valid_pin(process_pin.directory)
+            and _uint(process_pin.pid, 2**31) and process_pin.pid > 0
+            and _uint(process_pin.start_ticks, 2**64) and process_pin.start_ticks > 0)
 
 
 def _registered_process_stat(raw, process_pin):
@@ -623,6 +646,100 @@ def prepare_fixture_temp_file_setup_pipe_capture(pin, read_fd, nonce, *, ops=Non
             return result
 
     return capture
+
+
+def _linux_arm64_temp_file_launch_evidence_ops():
+    def stat_exe(process_fd, follow):
+        info = os.stat('exe', dir_fd=process_fd, follow_symlinks=follow)
+        return FixtureHandlePin(info.st_dev, info.st_ino), info.st_mode
+
+    def get_seals(fd):
+        return fcntl.fcntl(fd, fcntl.F_GET_SEALS)
+
+    return TempFileLaunchEvidenceOps(_linux_arm64_temp_file_enrollment_ops(), stat_exe, get_seals, os.pread)
+
+
+def _require_holder_image(ops, process, image, process_pin, image_pin):
+    _require_readable_directory(ops.process, process, process_pin.directory, PROCFS_MAGIC)
+    if not _registered_process_stat(ops.process.read_stat(process), process_pin):
+        raise ValueError('Holder process identity rejected.')
+    facts = _describe_bound(ops.process, image, image_pin.identity, TMPFS_MAGIC)
+    seals = ops.get_seals(image)
+    if (not stat.S_ISREG(facts.mode) or facts.flags & os.O_ACCMODE != os.O_RDONLY
+            or not _uint(seals, 2**32) or seals & REQUIRED_HOLDER_IMAGE_SEALS != REQUIRED_HOLDER_IMAGE_SEALS):
+        raise ValueError('Holder image is not an immutable read-only file.')
+    link, mode = ops.stat_exe(process, False)
+    if (not _valid_pin(link) or link.device != process_pin.directory.device
+            or type(mode) is not int or not stat.S_ISLNK(mode)):
+        raise ValueError('Holder executable link rejected.')
+    target, mode = ops.stat_exe(process, True)
+    if not _valid_pin(target) or target != image_pin.identity or type(mode) is not int or not stat.S_ISREG(mode):
+        raise ValueError('Holder executable identity rejected.')
+
+
+def _hash_holder_image(ops, image, size):
+    digest = sha256()
+    for offset in range(0, size, HOLDER_IMAGE_CHUNK):
+        length = min(HOLDER_IMAGE_CHUNK, size - offset)
+        chunk = ops.pread(image, length, offset)
+        if type(chunk) is not bytes or len(chunk) != length:
+            return None
+        if offset == 0 and not _static_arm64_holder_header(chunk):
+            return None
+        digest.update(chunk)
+    end = ops.pread(image, 1, size)
+    return digest.digest() if type(end) is bytes and not end else None
+
+
+def _static_arm64_holder_header(first_chunk):
+    if len(first_chunk) < 64 or not first_chunk.startswith(b'\x7fELF\x02\x01\x01'):
+        return False
+    elf_type, machine, version = struct.unpack_from('<HHI', first_chunk, 16)
+    ph_offset, = struct.unpack_from('<Q', first_chunk, 32)
+    header_size, entry_size, entries = struct.unpack_from('<HHH', first_chunk, 52)
+    if ((elf_type, machine, version, header_size, entry_size) != (2, 183, 1, 64, 56)
+            or not 0 < entries <= 32 or not 64 <= ph_offset <= len(first_chunk) - entry_size * entries):
+        return False
+    segments = [struct.unpack_from('<II', first_chunk, ph_offset + entry_size * index) for index in range(entries)]
+    # This fixture uses a static ET_EXEC image without an interpreter or dynamic segment.
+    return (not any(kind in (2, 3) for kind, _ in segments)
+            and any(kind == 1 and flags & 1 for kind, flags in segments))
+
+
+def prepare_fixture_temp_file_launch_process_reader(process_pin, process_fd, image_pin, image_fd, nonce, *, ops=None):
+    """Observe the enrolled process and hash only the admitted sealed image handle."""
+    if (not _valid_temp_file_process_pin(process_pin)
+            or type(image_pin) is not FixtureTempFileLaunchImagePin or not _valid_pin(image_pin.identity)
+            or image_pin.identity == process_pin.directory
+            or type(image_pin.digest) is not bytes or len(image_pin.digest) != 32
+            or type(image_pin.size) is not int or not 0 < image_pin.size <= MAX_HOLDER_IMAGE_BYTES
+            or not all(_uint(fd, 2**31) and fd >= 3 for fd in (process_fd, image_fd)) or process_fd == image_fd
+            or type(nonce) is not bytes or len(nonce) != 32
+            or (ops is not None and (type(ops) is not TempFileLaunchEvidenceOps
+                or type(ops.process) is not TempFileEnrollmentOps or not all(callable(port) for port in ops.process)
+                or not all(callable(port) for port in (ops.stat_exe, ops.get_seals, ops.pread))))):
+        raise ValueError('Invalid synthetic holder launch process registration.')
+
+    def observe(expected_nonce, expected_pid):
+        if (type(expected_nonce) is not bytes or expected_nonce != nonce
+                or type(expected_pid) is not int or expected_pid != process_pin.pid):
+            return None
+        try:
+            reader = _linux_arm64_temp_file_launch_evidence_ops() if ops is None else ops
+            with _owned_copy(reader.process, process_fd) as process, _owned_copy(reader.process, image_fd) as image:
+                _require_holder_image(reader, process, image, process_pin, image_pin)
+                digest = _hash_holder_image(reader, image, image_pin.size)
+                if digest != image_pin.digest:
+                    return None
+                status = reader.process.read_status(process)
+                if type(status) is not bytes or not 0 < len(status) <= MAX_PROC_STATUS_BYTES:
+                    return None
+                _require_holder_image(reader, process, image, process_pin, image_pin)
+                return digest, status
+        except Exception:
+            return None
+
+    return observe
 
 
 def _graceful(ops, handles, plan, require_revoked):
