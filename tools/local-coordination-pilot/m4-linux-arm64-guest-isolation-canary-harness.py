@@ -4,7 +4,7 @@ from hashlib import sha256
 import json
 import re
 from threading import Lock
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 SOURCE_REVISION = '4913c5aa6004c11e3593ce8287344d1f2f4a5a94'
@@ -174,17 +174,55 @@ class FixtureResourceTicket:
     __slots__ = ()
 
 
-class FixtureResourceAbsence(NamedTuple):
-    fence: FixtureCleanupFenceReadback
-    ticket: FixtureResourceTicket
+class FixtureResourceBinding(NamedTuple):
+    kind: str
+    capsule_generation: str
+    source_generation: str
+    authority_id: str
+    slot_id: str
+    instance_id: str
+
+
+class FixtureResourceReadSource(NamedTuple):
+    generation: str
+    authority_id: str
+    read: object
+
+
+class FixtureResourceReadSources(NamedTuple):
+    mounts: FixtureResourceReadSource
+    sockets: FixtureResourceReadSource
+    descriptors: FixtureResourceReadSource
+    temporary_files: FixtureResourceReadSource
+    leases: FixtureResourceReadSource
+    brokered: FixtureResourceReadSource
+
+
+class FixtureResourceProbe(NamedTuple):
+    scope: FixtureCleanupScope
+    binding: FixtureResourceBinding
+
+
+class FixtureResourceReadback(NamedTuple):
+    probe: FixtureResourceProbe
+    binding: FixtureResourceBinding
     observed_ns: int
+    complete: bool
+    slot_state: str
+    owned_references: int
+
+
+class _FixtureResourceEntry(NamedTuple):
+    kind: str
+    settled: bool
+    binding: Optional[FixtureResourceBinding]
 
 
 class FixtureCleanupRegistryOwner(NamedTuple):
     reserve_writer: object
     finish_writer: object
     revoke_at: object
-    record_absent: object
+    verify_absent: object
 
 
 class FixtureCleanupRegistryObserver(NamedTuple):
@@ -607,11 +645,28 @@ def collect_fixture_cleanup_inventory(scope, ports):
     )
 
 
-def prepare_fixture_cleanup_registry(plan, cgroup_digest, resource_generation, monotonic_ns):
+def _valid_resource_binding(binding):
+    return (type(binding) is FixtureResourceBinding and type(binding.kind) is str
+            and binding.kind in FixtureNonProcessResources._fields and all(_fixture_id(field) for field in binding[1:]))
+
+
+def _confirmed_resource_absence(readback, probe):
+    return (type(readback) is FixtureResourceReadback and readback.probe is probe
+            and _valid_resource_binding(readback.binding) and readback.binding == probe.binding
+            and _tick(readback.observed_ns) and readback.complete is True
+            and type(readback.slot_state) is str and readback.slot_state == 'VACANT'
+            and type(readback.owned_references) is int and readback.owned_references == 0)
+
+
+def prepare_fixture_cleanup_registry(plan, cgroup_digest, resource_generation, monotonic_ns, sources):
     """Create owner and observer ports for one offline capsule resource registry."""
     template = FixtureCleanupScope(plan, 0, cgroup_digest, resource_generation)
-    if not _valid_cleanup_scope(template) or not callable(monotonic_ns):
+    if (not _valid_cleanup_scope(template) or not callable(monotonic_ns)
+            or type(sources) is not FixtureResourceReadSources
+            or not all(type(source) is FixtureResourceReadSource and _fixture_id(source.generation)
+                       and _fixture_id(source.authority_id) and callable(source.read) for source in sources)):
         raise ValueError('Invalid synthetic cleanup registry.')
+    sources_by_kind = sources._asdict()
 
     lock = Lock()
     # Each reservation keeps the writer open until settling, and retains its
@@ -645,18 +700,28 @@ def prepare_fixture_cleanup_registry(plan, cgroup_digest, resource_generation, m
                     or tick >= plan.binding.deadline_ns):
                 return None
             ticket = FixtureResourceTicket()
-            records[ticket] = (kind, False)
+            records[ticket] = _FixtureResourceEntry(kind, False, None)
             return ticket
 
-    def finish_writer(ticket):
+    def finish_writer(ticket, binding=None):
         if type(ticket) is not FixtureResourceTicket:
             return False
         tick = read_tick()
         with lock:
             record = records.get(ticket)
-            if record is None or record[1] or not accept_tick(tick):
+            if record is None or record.settled or not accept_tick(tick):
                 return False
-            records[ticket] = (record[0], True)
+            source = sources_by_kind[record.kind]
+            if binding is not None and (
+                not _valid_resource_binding(binding) or binding.kind != record.kind
+                or binding.capsule_generation != plan.capsule_generation
+                or binding.source_generation != source.generation or binding.authority_id != source.authority_id
+                or any(entry.binding is not None and entry.kind == binding.kind
+                       and entry.binding.authority_id == binding.authority_id and entry.binding.slot_id == binding.slot_id
+                       for entry in records.values())
+            ):
+                return False
+            records[ticket] = _FixtureResourceEntry(record.kind, True, binding)
             return True
 
     def revoke_at(fence_ns):
@@ -678,23 +743,36 @@ def prepare_fixture_cleanup_registry(plan, cgroup_digest, resource_generation, m
             last_ns = max(last_ns, fence_ns)
             return scope
 
-    def record_absent(absence):
-        if (type(absence) is not FixtureResourceAbsence or type(absence.ticket) is not FixtureResourceTicket
-                or not _tick(absence.observed_ns)):
+    def verify_absent(fence, ticket):
+        if type(ticket) is not FixtureResourceTicket:
             return False
-        tick = read_tick()
+        started = read_tick()
         with lock:
-            if (fence_witness is None or absence.fence is not fence_witness[0] or absence.ticket not in records
-                    or not accept_tick(tick)
-                    or not fence_witness[1] <= absence.observed_ns <= tick):
+            entry = records.get(ticket)
+            if (fence_witness is None or fence is not fence_witness or entry is None
+                    or entry.binding is None or not accept_tick(started)):
                 return False
-            del records[absence.ticket]
+            probe = FixtureResourceProbe(fence.scope, entry.binding)
+            reader = sources_by_kind[entry.kind].read
+        # A trusted reader may stall. The watchdog and other registry operations
+        # can still advance the fence while the lock is released.
+        try:
+            readback = reader(probe)
+        except Exception:
+            return False
+        finished = read_tick()
+        with lock:
+            if (fence is not fence_witness or records.get(ticket) is not entry
+                    or not accept_tick(finished) or not _confirmed_resource_absence(readback, probe)
+                    or not started <= readback.observed_ns <= finished):
+                return False
+            del records[ticket]
             return True
 
     def quiesced():
         # Called with the lock held. The same lock linearizes writer admission
         # and revocation. A writer admitted before Stop must settle before readback.
-        return scope is not None and all(settled for _, settled in records.values())
+        return scope is not None and all(entry.settled for entry in records.values())
 
     def read_fence():
         nonlocal fence_witness
@@ -703,8 +781,8 @@ def prepare_fixture_cleanup_registry(plan, cgroup_digest, resource_generation, m
             if not quiesced() or not accept_tick(tick):
                 return None
             if fence_witness is None:
-                fence_witness = (FixtureCleanupFenceReadback(scope, 'REVOKED_QUIESCED'), tick)
-            return fence_witness[0]
+                fence_witness = FixtureCleanupFenceReadback(scope, 'REVOKED_QUIESCED')
+            return fence_witness
 
     def read_resources():
         tick = read_tick()
@@ -712,12 +790,12 @@ def prepare_fixture_cleanup_registry(plan, cgroup_digest, resource_generation, m
             if fence_witness is None or not accept_tick(tick):
                 return None
             counts = dict.fromkeys(FixtureNonProcessResources._fields, 0)
-            for kind, _ in records.values():
-                counts[kind] += 1
+            for entry in records.values():
+                counts[entry.kind] += 1
             return FixtureResourceSample(scope, tick, True, FixtureNonProcessResources(**counts))
 
     return FixtureCleanupRegistry(
-        FixtureCleanupRegistryOwner(reserve_writer, finish_writer, revoke_at, record_absent),
+        FixtureCleanupRegistryOwner(reserve_writer, finish_writer, revoke_at, verify_absent),
         FixtureCleanupRegistryObserver(read_fence, read_resources),
     )
 

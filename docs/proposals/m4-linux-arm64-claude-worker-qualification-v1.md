@@ -270,14 +270,29 @@ fence becomes readable only after every reserved writer has finished. All
 finished reservations count toward cleanup, including failed or partial
 acquisitions whose absence has yet to be verified.
 
-The owner clears a reservation only with an absence observation tied to its
-exact ticket and the current quiescence readback. The observation must follow
-that readback and precede the cleanup deadline. An advanced force fence
-invalidates older readbacks. The registry never reopens for the capsule.
-Physical integration must enforce exclusive admission for resource writers and
-new processes through verification, bind every reservation to its actual
-resource, and verify absence independently. The fixture registry is in memory.
-Losing it leaves cleanup uncertain and requires reconciliation.
+At settlement, the writer binds the ticket to the resource kind, capsule
+generation, registered reader generation and authority, exact slot, and
+resource instance. For mounts, sockets, descriptors, and temporary files,
+the authority and slot must identify the owning mount namespace, socket
+owner, process instance, or directory and the exact resource location
+within it. For leases and brokered resources they identify the owning
+service and its exact record. The fixture uses opaque identifiers for those
+pins. The same slot cannot bind twice. Partial acquisitions with unknown
+identity remain counted.
+
+The registry selects the registered reader for the bound kind and sends a
+fresh probe under the exact quiescence fence. To clear the ticket, the
+reader must return a complete observation for that probe and binding, with a
+vacant slot and zero references to the owned instance. A replaced slot, a
+retained reference, an incomplete result, or an out-of-deadline observation
+leaves the count in place. The registry rechecks the fence and ticket after
+the read. The reader runs outside its lock so a force-fence advance can
+invalidate an in-flight result. The registry never reopens for the capsule.
+
+Physical integration must bind the opaque pins to real owned identities,
+implement the independent kernel or service reads for each resource kind,
+and enforce exclusive admission until verification. The fixture registry
+is in memory. Losing it leaves cleanup uncertain and requires reconciliation.
 
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
