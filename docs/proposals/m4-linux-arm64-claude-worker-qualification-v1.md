@@ -149,14 +149,25 @@ This correlation can reject mismatched replies within the rehearsal. It
 provides no attestation or persistent replay protection. The report always
 holds physical qualification and adds zero builder receipts.
 
-The harness has no native observer, command-line entry point or runtime wiring.
-Any physical observer needs separate review and approval. Its control and
-restricted contexts must target the same independently identified disposable
-fixture and prove effective denial. That review must also supply a supervised
-deadline, Stop, cleanup, and independent host configuration evidence.
+The source-only observer in the same module projects typed probe and policy
+records into harness replies. It checks the same reviewed target digest on
+both control legs and the restricted leg, exact operation success markers,
+and process identity before and after the attempt. A restricted permission
+error produces a modeled denial only when a separate policy record matches
+that attempt, target and configuration. Other errors remain inconclusive.
+Out-of-order or replayed requests and failed probes close the observer
+for that rehearsal.
+
+The harness and observer have no native probe driver, command-line entry
+point or runtime wiring. The offline records model evidence and supply no
+physical provenance. A separately reviewed and approved physical driver must
+bind both contexts to an independently identified disposable target, verify
+effective denial and supply a supervised deadline, Stop, cleanup, and
+independent host configuration evidence.
 
 ```sh
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-harness-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-observer-test.py
 ```
 
 ## Qualification limits
