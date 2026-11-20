@@ -21,6 +21,7 @@ MAX_GRACEFUL_MEMBERS = 16
 MAX_CGROUP_EVENTS_BYTES = 4096
 MAX_TEMP_FILE_FDS = 256
 MAX_PROC_STAT_BYTES = 4096
+MAX_PROC_STATUS_BYTES = 8192
 TEMP_FILE_NAME = 'fixture-canary.tmp'
 
 
@@ -129,6 +130,7 @@ class TempFileEnrollmentOps(NamedTuple):
     describe: object
     read_stat: object
     lookup_table: object
+    read_status: object
 
 
 def _uint(value, limit):
@@ -441,23 +443,29 @@ def _registered_process_stat(raw, process_pin):
 def _linux_arm64_temp_file_enrollment_ops():
     describe = _linux_arm64_descriptor_reader()
 
-    def read_stat(process_fd):
+    def read_proc_entry(process_fd, name, maximum):
         flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
-        fd = os.open('stat', flags, dir_fd=process_fd)
+        fd = os.open(name, flags, dir_fd=process_fd)
         try:
             facts = describe(fd)
             if (facts.filesystem != PROCFS_MAGIC or not stat.S_ISREG(facts.mode) or facts.inheritable
                     or facts.flags & os.O_ACCMODE != os.O_RDONLY):
-                raise ValueError('Temporary file process stat rejected.')
-            return os.read(fd, MAX_PROC_STAT_BYTES + 1)
+                raise ValueError('Temporary file proc entry rejected.')
+            return os.read(fd, maximum + 1)
         finally:
             os.close(fd)
+
+    def read_stat(process_fd):
+        return read_proc_entry(process_fd, 'stat', MAX_PROC_STAT_BYTES)
+
+    def read_status(process_fd):
+        return read_proc_entry(process_fd, 'status', MAX_PROC_STATUS_BYTES)
 
     def lookup_table(process_fd):
         info = os.stat('fd', dir_fd=process_fd, follow_symlinks=False)
         return FixtureHandlePin(info.st_dev, info.st_ino), info.st_mode
 
-    return TempFileEnrollmentOps(os.dup, os.close, describe, read_stat, lookup_table)
+    return TempFileEnrollmentOps(os.dup, os.close, describe, read_stat, lookup_table, read_status)
 
 
 def prepare_fixture_temp_file_enrollment(file_pin, handles, process_pin, process_fd, *, ops=None):
@@ -492,6 +500,35 @@ def prepare_fixture_temp_file_enrollment(file_pin, handles, process_pin, process
             return False
 
     return verify
+
+
+def prepare_fixture_temp_file_status_reader(file_pin, process_pin, process_fd, *, ops=None):
+    """Read bounded kernel filter metadata from the exact enrolled proc directory."""
+    enrollment = fixture_temp_file_enrollment_digest(file_pin, process_pin)
+    if (not _uint(process_fd, 2**31) or process_fd < 3
+            or (ops is not None and (type(ops) is not TempFileEnrollmentOps or not all(callable(port) for port in ops)))):
+        raise ValueError('Invalid synthetic temporary file status handle.')
+
+    def read(expected_enrollment):
+        if type(expected_enrollment) is not bytes or expected_enrollment != enrollment:
+            return None
+        try:
+            reader = _linux_arm64_temp_file_enrollment_ops() if ops is None else ops
+            with _owned_copy(reader, process_fd) as process:
+                _require_readable_directory(reader, process, process_pin.directory, PROCFS_MAGIC)
+                if not _registered_process_stat(reader.read_stat(process), process_pin):
+                    return None
+                status = reader.read_status(process)
+                if type(status) is not bytes or not 0 < len(status) <= MAX_PROC_STATUS_BYTES:
+                    return None
+                if not _registered_process_stat(reader.read_stat(process), process_pin):
+                    return None
+                _require_readable_directory(reader, process, process_pin.directory, PROCFS_MAGIC)
+                return status
+        except Exception:
+            return None
+
+    return read
 
 
 def _graceful(ops, handles, plan, require_revoked):

@@ -333,10 +333,38 @@ owner since file creation, and alternate names, descriptor transfer, file
 mappings, and kernel holds must have been excluded. Each policy readback is
 bound to its own challenge and the exact enrollment. Coverage is withheld if
 any control is unknown, a readback is replayed, or the kernel identity changes.
-The offline suite substitutes kernel operations and policy readbacks and checks
-the watchdog transition on the last close. Physical process enrollment,
-enforcement of the reference exclusions, and the independent policy source
-remain prerequisites to an authorized guest test.
+
+The [native reference filter](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-reference-filter.c)
+is for a dedicated, single-threaded temporary-file fixture holder. It has no
+launcher or runtime caller. It sets `no_new_privs` and installs the exact
+ARM64 seccomp program with thread synchronization. Installation failure
+exits the holder. The program allows close, exit, and one-byte reads from
+the fixed control descriptor 3. Other syscalls terminate the process.
+This prevents the holder from creating alternate names, new descriptors,
+processes, mappings, transfers, or kernel-retained file references after
+installation. A trusted bootstrap must establish exclusive custody from
+file creation through installation and keep the control pipe at descriptor
+3 distinct from the tracked file. A separate boundary must exclude
+references and descriptor acquisition by other processes and verify there
+is no pending close or deferred release of the tracked file.
+[Linux seccomp filter semantics](https://docs.kernel.org/userspace-api/seccomp_filter.html) ·
+[Linux seccomp installation](https://man7.org/linux/man-pages/man2/seccomp.2.html)
+
+The readback source binds the exact filter digest and exclusive bootstrap
+from a trusted installation receipt to the enrolled process. It compares
+that receipt with bounded, independently read procfs status from the same
+process instance. It requires one thread, no tracer, `NoNewPrivs: 1`, and
+one active filter in filter mode. Procfs reports mode and filter count. The
+trusted installation receipt supplies the identity of the filter bytes.
+Fresh records of the revoked fence, external reference exclusion, and
+close completion are required on both sides of the status read. Missing
+evidence holds cleanup.
+[Linux process status fields](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html)
+
+Offline tests interpret the instruction words from the C source and exercise
+the full temporary-file cleanup path with substituted kernel operations.
+Physical bootstrap, receipt production, external exclusion, and ARM64
+compile and kernel validation remain prerequisites to an authorized guest test.
 
 The fixture registry is in memory. Losing it leaves cleanup uncertain and
 requires reconciliation.
