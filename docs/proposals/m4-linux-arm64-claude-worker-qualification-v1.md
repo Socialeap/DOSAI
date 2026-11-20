@@ -245,13 +245,31 @@ changed and cgroup ownership still matches. Both paths hold private descriptor
 copies for the operation and close them afterward. Delivery and cleanup remain
 separate evidence. A partial or failed request leaves delivery uncertain.
 
+The [independent cleanup collector](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-harness.py)
+runs outside the serialized watchdog turn. It requires the exact revoked,
+quiesced scope and a fresh, complete inventory of its mounts, sockets,
+descriptors, temporary files, leases, and brokered resources. Each snapshot
+is bracketed by readbacks of the same cleanup fence and by two
+`populated 0` reads from `cgroup.events`. The reader checks the pinned
+cgroup v2 directory and the fixed, read-only event file on private descriptor
+copies. The watchdog binding, capsule generation, and event registration
+digest must all match before the reader touches the descriptors.
+
+Linux reports live processes recursively through `populated`. The six other
+resource classes each require their own counts from the registered inventory
+source. A termination receipt supplies no inventory evidence. A nonzero count
+keeps cleanup uncertain. Missing, stale, inconsistent, or out-of-deadline
+readbacks produce no inventory. The trusted owner must supply the resource
+source and hold the admission fence against new processes and resource
+writers across the snapshot and through verification.
+
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
 independent policy evidence. Physical watchdog use requires an independent
 dispatcher, trusted enrollment and retirement wiring, delegated capsule-only
-control handles, and independent inventory. Before activation, verify live
-role ownership at connection establishment, distinct owned socket pairs, and
+control handles, and trusted fence and resource inventory sources. Before
+activation, verify live role ownership at connection establishment, distinct owned socket pairs, and
 the exact guest kernel's peer credentials, pidfd identity and cgroup v2
 behavior. Offline results leave physical qualification held.
 
@@ -262,6 +280,7 @@ behavior. Offline results leave physical qualification held.
 [Linux timer descriptors](https://man7.org/linux/man-pages/man2/timerfd_create.2.html) ·
 [Unix sequenced-packet sockets](https://man7.org/linux/man-pages/man7/unix.7.html) ·
 [Linux pidfd signaling](https://man7.org/linux/man-pages/man2/pidfd_send_signal.2.html) ·
+[Linux positional reads](https://man7.org/linux/man-pages/man2/pread.2.html) ·
 [Linux cgroup v2 controls](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 
 ```sh
@@ -274,6 +293,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-wat
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-transport-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-enrollment-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-terminator-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-inventory-test.py
 ```
 
 ## Qualification limits
