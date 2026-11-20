@@ -170,9 +170,10 @@ def _observe_exec(ops, digest, deadline):
     return observation.result if observation.result in EXEC_RESULTS else 'UNAVAILABLE'
 
 
-def make_fixture_probe_driver(pins, ops):
+def make_fixture_probe_driver(pins, ops, *, deadline_ns=None):
     """Return a driver with no native defaults and no execution authority."""
-    if not _valid_pins(pins) or type(ops) is not ProbePrimitives or not all(callable(op) for op in ops):
+    if (not _valid_pins(pins) or type(ops) is not ProbePrimitives or not all(callable(op) for op in ops)
+            or not _valid_deadline(deadline_ns)):
         raise ValueError('Invalid synthetic canary probe configuration.')
 
     probes = {
@@ -189,7 +190,12 @@ def make_fixture_probe_driver(pins, ops):
         if operation is None:
             return 'UNAVAILABLE'
         try:
-            deadline = ops.monotonic_ns() + PROBE_BUDGET_NS
+            started = ops.monotonic_ns()
+            deadline = started + PROBE_BUDGET_NS
+            if deadline_ns is not None:
+                deadline = min(deadline, deadline_ns)
+            if started >= deadline:
+                return 'TIMED_OUT'
             result = operation(deadline)
             _remaining_seconds(ops.monotonic_ns, deadline)
             return result
@@ -202,11 +208,15 @@ def make_fixture_probe_driver(pins, ops):
     return probe
 
 
-def prepare_linux_arm64_canary_attempt(pins, canary, scope_active, observe_owned_exec):
+def _valid_deadline(deadline_ns):
+    return deadline_ns is None or (type(deadline_ns) is int and 0 <= deadline_ns < 2**64)
+
+
+def prepare_linux_arm64_canary_attempt(pins, canary, scope_active, observe_owned_exec, *, deadline_ns=None):
     """Prepare one native attempt for a separately authorized, in-process supervisor."""
     if (not _valid_pins(pins) or type(canary) is not str
             or canary not in ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
-            or not callable(scope_active) or not callable(observe_owned_exec)):
+            or not callable(scope_active) or not callable(observe_owned_exec) or not _valid_deadline(deadline_ns)):
         raise ValueError('Invalid native canary binding configuration.')
     platform = os.uname()
     if (platform.sysname, platform.machine) != ('Linux', 'aarch64'):
@@ -246,7 +256,7 @@ def prepare_linux_arm64_canary_attempt(pins, canary, scope_active, observe_owned
         observe_owned_exec=guarded(observe_owned_exec),
         monotonic_ns=guarded(monotonic_ns),
     )
-    probe = make_fixture_probe_driver(pins, ops)
+    probe = make_fixture_probe_driver(pins, ops, deadline_ns=deadline_ns)
     used = False
 
     def attempt():
