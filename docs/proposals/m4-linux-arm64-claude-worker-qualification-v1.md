@@ -234,22 +234,35 @@ The admission deadline governs enrollment. The future trusted owner must retire
 the enrolled session on role loss or after reconciling the attempt so the
 bound reduce-only Stop path remains available during cleanup.
 
+The [owned-capsule terminator](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-watchdog-terminator.py)
+reads the enrolled transport for the exact registered attempt digest. It
+requires fresh ownership readback that the capsule is revoked, the subtree is
+owned, and the watchdog and terminator are outside it. Graceful termination
+uses bounded, pinned pidfs-backed process descriptors. Force checks the
+preopened write-only `cgroup.kill` handle against the fixed control in the
+pinned cgroup v2 directory. It stays available if graceful membership has
+changed and cgroup ownership still matches. Both paths hold private descriptor
+copies for the operation and close them afterward. Delivery and cleanup remain
+separate evidence. A partial or failed request leaves delivery uncertain.
+
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
 independent policy evidence. Physical watchdog use requires an independent
-dispatcher, trusted enrollment and retirement wiring, a release-reviewed
-terminator, and independent inventory. Before activation, verify live role
-ownership at connection establishment, distinct owned socket pairs, and
-the exact guest kernel's peer credential behavior. Offline results leave
-physical qualification held.
+dispatcher, trusted enrollment and retirement wiring, delegated capsule-only
+control handles, and independent inventory. Before activation, verify live
+role ownership at connection establishment, distinct owned socket pairs, and
+the exact guest kernel's peer credentials, pidfd identity and cgroup v2
+behavior. Offline results leave physical qualification held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
 [IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
 [Python socket operations](https://docs.python.org/3/library/socket.html) ·
 [Python ephemeral randomness](https://docs.python.org/3/library/secrets.html) ·
 [Linux timer descriptors](https://man7.org/linux/man-pages/man2/timerfd_create.2.html) ·
-[Unix sequenced-packet sockets](https://man7.org/linux/man-pages/man7/unix.7.html)
+[Unix sequenced-packet sockets](https://man7.org/linux/man-pages/man7/unix.7.html) ·
+[Linux pidfd signaling](https://man7.org/linux/man-pages/man2/pidfd_send_signal.2.html) ·
+[Linux cgroup v2 controls](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 
 ```sh
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-harness-test.py
@@ -260,6 +273,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-sup
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-transport-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-enrollment-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-terminator-test.py
 ```
 
 ## Qualification limits
