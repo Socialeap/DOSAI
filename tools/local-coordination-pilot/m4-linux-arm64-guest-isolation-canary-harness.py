@@ -14,6 +14,7 @@ WATCHDOG_SCHEMA = 'DOSAI_LINUX_ARM64_GUEST_CANARY_WATCHDOG_V1'
 ATTEMPT_BUDGET_NS = 250_000_000
 WATCHDOG_GRACE_NS = 250_000_000
 MAX_CLEANUP_RESOURCES = 64
+MAX_RESOURCE_INVENTORY_ROWS = 256
 ORIGIN = 'SYNTHETIC_ONLY'
 CANARIES = ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
 LEGS = ('CONTROL_BEFORE', 'RESTRICTED', 'CONTROL_AFTER')
@@ -210,6 +211,31 @@ class FixtureResourceReadback(NamedTuple):
     complete: bool
     slot_state: str
     owned_references: int
+
+
+class FixtureResourceInventorySource(NamedTuple):
+    kind: str
+    generation: str
+    authority_id: str
+    snapshot: object
+
+
+class FixtureResourceInventoryRow(NamedTuple):
+    locator_id: str
+    instance_id: str
+
+
+class FixtureResourceInventorySnapshot(NamedTuple):
+    probe: FixtureResourceProbe
+    scope: FixtureCleanupScope
+    kind: str
+    source_generation: str
+    authority_id: str
+    observed_ns: int
+    slots_complete: bool
+    references_complete: bool
+    slots: tuple
+    references: tuple
 
 
 class _FixtureResourceEntry(NamedTuple):
@@ -648,6 +674,75 @@ def collect_fixture_cleanup_inventory(scope, ports):
 def _valid_resource_binding(binding):
     return (type(binding) is FixtureResourceBinding and type(binding.kind) is str
             and binding.kind in FixtureNonProcessResources._fields and all(_fixture_id(field) for field in binding[1:]))
+
+
+def _resource_inventory_table(rows):
+    if (type(rows) is not tuple or len(rows) > MAX_RESOURCE_INVENTORY_ROWS
+            or not all(type(row) is FixtureResourceInventoryRow and _fixture_id(row.locator_id)
+                       and _fixture_id(row.instance_id) for row in rows)):
+        return None
+    table = dict(rows)
+    return table if len(table) == len(rows) else None
+
+
+def prepare_fixture_resource_absence_readers(plan, cgroup_digest, resource_generation, sources):
+    """Adapt six pinned, independent inventory sources to registry readbacks."""
+    template = FixtureCleanupScope(plan, 0, cgroup_digest, resource_generation)
+    kinds = FixtureNonProcessResources._fields
+    if not _valid_cleanup_scope(template) or type(sources) is not tuple or len(sources) != len(kinds):
+        raise ValueError('Invalid synthetic resource inventory sources.')
+    sources_by_kind = {}
+    for source in sources:
+        if (type(source) is not FixtureResourceInventorySource or type(source.kind) is not str
+                or source.kind not in kinds or source.kind in sources_by_kind
+                or not _fixture_id(source.generation) or not _fixture_id(source.authority_id)
+                or not callable(source.snapshot)):
+            raise ValueError('Invalid synthetic resource inventory sources.')
+        sources_by_kind[source.kind] = source
+
+    def bind(source):
+        def read(probe):
+            if (type(probe) is not FixtureResourceProbe or not _valid_cleanup_scope(probe.scope)
+                    or probe.scope._replace(fence_ns=0) != template or not _valid_resource_binding(probe.binding)):
+                return None
+            binding = probe.binding
+            if ((binding.kind, binding.source_generation, binding.authority_id)
+                    != (source.kind, source.generation, source.authority_id)
+                    or binding.capsule_generation != plan.capsule_generation):
+                return None
+            try:
+                snapshot = source.snapshot(probe)
+            except Exception:
+                return None
+            if (type(snapshot) is not FixtureResourceInventorySnapshot or snapshot.probe is not probe
+                    or not _valid_cleanup_scope(snapshot.scope) or snapshot.scope != probe.scope
+                    or not all(type(value) is str for value in (
+                        snapshot.kind, snapshot.source_generation, snapshot.authority_id,
+                    ))
+                    or (snapshot.kind, snapshot.source_generation, snapshot.authority_id)
+                    != (source.kind, source.generation, source.authority_id)
+                    or not _tick(snapshot.observed_ns)
+                    or not probe.scope.fence_ns <= snapshot.observed_ns < plan.cleanup_deadline_ns
+                    or snapshot.slots_complete is not True or snapshot.references_complete is not True):
+                return None
+            slots = _resource_inventory_table(snapshot.slots)
+            references = _resource_inventory_table(snapshot.references)
+            if slots is None or references is None:
+                return None
+            occupant = slots.get(binding.slot_id)
+            if occupant is None:
+                state = 'VACANT'
+            else:
+                state = 'PRESENT' if occupant == binding.instance_id else 'REPLACED'
+            # A second exposed slot still counts even when the reference census
+            # has no additional rows for this instance.
+            count = sum(instance_id == binding.instance_id for instance_id in slots.values())
+            count += sum(instance_id == binding.instance_id for instance_id in references.values())
+            return FixtureResourceReadback(probe, binding, snapshot.observed_ns, True, state, count)
+
+        return FixtureResourceReadSource(source.generation, source.authority_id, read)
+
+    return FixtureResourceReadSources(*(bind(sources_by_kind[kind]) for kind in kinds))
 
 
 def _confirmed_resource_absence(readback, probe):

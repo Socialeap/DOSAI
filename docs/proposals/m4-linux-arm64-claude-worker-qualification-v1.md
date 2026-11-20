@@ -289,10 +289,25 @@ leaves the count in place. The registry rechecks the fence and ticket after
 the read. The reader runs outside its lock so a force-fence advance can
 invalidate an in-flight result. The registry never reopens for the capsule.
 
+The absence readers project two independently inventoried tables for each of
+the six resource classes. The first lists occupied slots, including replacements.
+The second covers references outside those slots. Each table is limited to 256
+rows with unique locators. The reader selects the pinned source and requires
+complete tables for the same probe, authority and cleanup fence. It derives
+vacancy and reference counts from the rows. A reference in a different slot
+still counts. Missing or ambiguous census coverage supplies no readback.
+
 Physical integration must bind the opaque pins to real owned identities,
-implement the independent kernel or service reads for each resource kind,
-and enforce exclusive admission until verification. The fixture registry
-is in memory. Losing it leaves cleanup uncertain and requires reconciliation.
+provide complete kernel or service inventories for each resource class,
+and enforce exclusive admission through verification. Linux can remove a
+lazily unmounted filesystem from the mount table while it is still busy.
+An unlinked file can also remain open. Physical collectors must establish
+full reference coverage before reporting either resource absent.
+[Linux unmount behavior](https://man7.org/linux/man-pages/man2/umount.2.html) ·
+[Linux unlink behavior](https://man7.org/linux/man-pages/man2/unlink.2.html)
+
+The fixture registry is in memory. Losing it leaves cleanup uncertain and
+requires reconciliation.
 
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
@@ -327,6 +342,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-wat
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-terminator-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-inventory-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-cleanup-registry-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-resource-absence-test.py
 ```
 
 ## Qualification limits
