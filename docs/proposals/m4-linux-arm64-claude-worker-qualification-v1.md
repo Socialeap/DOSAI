@@ -188,12 +188,29 @@ only after cleanup matches the attempt binding. Missing or uncertain cleanup
 produces a quarantined rehearsal and holds the result. Tests exercise the
 supervisor and native binding together with substituted operations.
 
+The source-only watchdog accepts serialized timer pulses and a Stop for one
+registered attempt. It revokes the attempt before requesting termination. The
+same 250 ms grace period as the capsule supervisor bounds escalation to one
+force request, subject to the registered cleanup deadline. An unavailable or
+rolled-back clock also revokes, requests force, and quarantines the rehearsal.
+The watchdog consumes already available cleanup evidence so an absent verifier
+cannot delay escalation.
+
+Cleanup requires a fresh inventory from the separately bound verifier for the
+same capsule, watchdog generation, attempt, and latest revocation or force
+fence. The inventory must show quiescence and zero owned processes, mounts,
+sockets, descriptors, temporary files, leases, and brokered resources. Missing,
+stale or mismatched evidence keeps cleanup uncertain. Expiry quarantines the
+rehearsal and closes it to late evidence. The existing supervisor rehearsal
+can consume the verified cleanup readback and still discard results after Stop.
+
 The source has no command-line entry point or runtime caller. Physical
 integration requires separate review and approval for the guest and scope
 source, fixture directory, non-forwarded peers, owned subprocess probe, and
-independent policy evidence. The external supervisor must enforce Stop and
-deadlines for calls already in progress and verify physical cleanup. Offline
-results leave physical qualification held.
+independent policy evidence. A separately reviewed watchdog must supply the
+independent timer and priority termination transport. Physical cleanup needs
+an independent inventory source. Offline results leave physical qualification
+held.
 
 [Linux read-only open flags](https://man7.org/linux/man-pages/man2/open.2.html) ·
 [IPv4 special-purpose registry](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml) ·
@@ -205,6 +222,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-obs
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-probe-driver-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-native-bindings-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-supervisor-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-watchdog-test.py
 ```
 
 ## Qualification limits

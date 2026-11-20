@@ -9,7 +9,9 @@ from typing import NamedTuple
 SOURCE_REVISION = '4913c5aa6004c11e3593ce8287344d1f2f4a5a94'
 SCHEMA = 'DOSAI_LINUX_ARM64_GUEST_CANARY_V1'
 SUPERVISOR_SCHEMA = 'DOSAI_LINUX_ARM64_GUEST_CANARY_SUPERVISION_V1'
+WATCHDOG_SCHEMA = 'DOSAI_LINUX_ARM64_GUEST_CANARY_WATCHDOG_V1'
 ATTEMPT_BUDGET_NS = 250_000_000
+WATCHDOG_GRACE_NS = 250_000_000
 ORIGIN = 'SYNTHETIC_ONLY'
 CANARIES = ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
 LEGS = ('CONTROL_BEFORE', 'RESTRICTED', 'CONTROL_AFTER')
@@ -96,6 +98,42 @@ class FixtureSupervisorPorts(NamedTuple):
     prepare_attempt: object
     cleanup_attempt: object
     read_policy_denial: object
+
+
+class FixtureWatchdogPlan(NamedTuple):
+    origin: str
+    binding: FixtureAttemptBinding
+    capsule_generation: str
+    watchdog_generation: str
+    verifier_generation: str
+    cleanup_deadline_ns: int
+
+
+class FixtureOwnedResources(NamedTuple):
+    processes: int
+    mounts: int
+    sockets: int
+    descriptors: int
+    temporary_files: int
+    leases: int
+    brokered: int
+
+
+class FixtureCleanupInventory(NamedTuple):
+    origin: str
+    binding: FixtureAttemptBinding
+    capsule_generation: str
+    watchdog_generation: str
+    verifier_generation: str
+    fence_ns: int
+    observed_ns: int
+    quiesced: bool
+    resources: FixtureOwnedResources
+
+
+class FixtureWatchdogPorts(NamedTuple):
+    request_graceful: object
+    force_stop: object
 
 
 def _valid_scope(scope):
@@ -393,3 +431,138 @@ def rehearse_supervised_guest_canaries(scope, targets, generation, ports, *, dea
     except ValueError:
         return _supervised_report(_report('INVALID_SYNTHETIC_SCOPE'), cleanup, failure)
     return _supervised_report(rehearse_guest_canaries(scope, observer), cleanup, failure)
+
+
+def _fixture_id(value):
+    return type(value) is str and re.fullmatch(r'fixture-[a-z0-9-]{1,48}', value) is not None
+
+
+def _tick(value):
+    return type(value) is int and 0 <= value < 2**64
+
+
+def _valid_watchdog_plan(plan):
+    if (type(plan) is not FixtureWatchdogPlan or type(plan.origin) is not str or plan.origin != ORIGIN
+            or type(plan.binding) is not FixtureAttemptBinding or not _tick(plan.cleanup_deadline_ns)):
+        return False
+    binding = plan.binding
+    generations = (binding.supervisor_generation, plan.capsule_generation,
+                   plan.watchdog_generation, plan.verifier_generation)
+    request = binding.request
+    return (all(_fixture_id(value) for value in generations) and len(set(generations)) == len(generations)
+            and _is_digest(binding.target_digest) and _tick(binding.deadline_ns)
+            and binding.deadline_ns < plan.cleanup_deadline_ns
+            and type(request) is CanaryRequest and type(request.canary) is str and request.canary in CANARIES
+            and type(request.leg) is str and request.leg in LEGS and _is_digest(request.challenge)
+            and _fixture_id(request.process_start) and type(request.sequence) is int
+            and request.sequence == CANARIES.index(request.canary) * len(LEGS) + LEGS.index(request.leg) + 1)
+
+
+def verify_fixture_canary_cleanup(plan, inventory, fence_ns, now_ns):
+    """Check a separate, owned-resource inventory after the cleanup fence."""
+    if not _valid_watchdog_plan(plan):
+        return None
+    verified = (
+        _tick(fence_ns) and _tick(now_ns) and now_ns < plan.cleanup_deadline_ns
+        and type(inventory) is FixtureCleanupInventory and type(inventory.origin) is str and inventory.origin == ORIGIN
+        and _matches_binding(inventory.binding, plan.binding)
+        and type(inventory.capsule_generation) is str and inventory.capsule_generation == plan.capsule_generation
+        and type(inventory.watchdog_generation) is str and inventory.watchdog_generation == plan.watchdog_generation
+        and type(inventory.verifier_generation) is str and inventory.verifier_generation == plan.verifier_generation
+        and _tick(inventory.fence_ns) and inventory.fence_ns == fence_ns
+        and _tick(inventory.observed_ns) and fence_ns <= inventory.observed_ns <= now_ns
+        and inventory.quiesced is True and type(inventory.resources) is FixtureOwnedResources
+        and all(type(count) is int and count == 0 for count in inventory.resources)
+    )
+    return FixtureCleanupReadback(ORIGIN, plan.binding, 'VERIFIED' if verified else 'UNCERTAIN')
+
+
+class FixtureCanaryWatchdog:
+    """Reduce-only watchdog state driven by independent, serialized fixture pulses."""
+
+    def __init__(self, plan, ports):
+        if (not _valid_watchdog_plan(plan) or type(ports) is not FixtureWatchdogPorts
+                or not all(callable(port) for port in ports)):
+            raise ValueError('Invalid synthetic canary watchdog plan.')
+        self._plan = plan
+        self._ports = ports
+        self._state = 'ACTIVE'
+        self._reason = 'WATCHDOG_ARMED'
+        self._fence = None
+        self._last_tick = None
+        self._forced = False
+
+    def _snapshot(self, reason=None):
+        cleanup = {'ACTIVE': 'NOT_REQUIRED', 'STOPPED': 'VERIFIED'}.get(self._state, 'UNCERTAIN')
+        return {**_report(self._reason if reason is None else reason), 'schema': WATCHDOG_SCHEMA,
+                'watchdogState': self._state, 'watchdogCleanup': cleanup}
+
+    def scope_readback(self, binding):
+        if not _matches_binding(binding, self._plan.binding):
+            return None
+        state = 'REVOKED' if self._state == 'QUARANTINED' else self._state
+        return FixtureScopeReadback(ORIGIN, self._plan.binding, state)
+
+    def cleanup_readback(self, binding):
+        if not _matches_binding(binding, self._plan.binding):
+            return None
+        return FixtureCleanupReadback(ORIGIN, self._plan.binding,
+                                      'VERIFIED' if self._state == 'STOPPED' else 'UNCERTAIN')
+
+    def stop(self, binding, tick):
+        if not _matches_binding(binding, self._plan.binding):
+            return self._snapshot('WATCHDOG_BINDING_REJECTED')
+        return self._advance(tick, 'OWNER_STOP_REQUESTED', None)
+
+    def poll(self, tick, *, inventory=None):
+        return self._advance(tick, None, inventory)
+
+    def _force(self, tick=None):
+        if self._forced:
+            return
+        self._forced = True
+        if tick is not None:
+            self._fence = tick
+        try:
+            self._ports.force_stop(self._plan)
+        except Exception:
+            # Verify independently. A transport error does not establish cleanup.
+            pass
+
+    def _quarantine(self, reason):
+        self._state = 'QUARANTINED'
+        self._reason = reason
+        self._force()
+        return self._snapshot()
+
+    def _advance(self, tick, stop_reason, inventory):
+        if self._state in ('STOPPED', 'QUARANTINED'):
+            return self._snapshot()
+        if not _tick(tick) or (self._last_tick is not None and tick < self._last_tick):
+            return self._quarantine('WATCHDOG_CLOCK_UNAVAILABLE')
+        self._last_tick = tick
+        if self._state == 'ACTIVE':
+            if stop_reason is None and tick < self._plan.binding.deadline_ns:
+                return self._snapshot()
+            self._state = 'STOPPING'
+            self._reason = stop_reason or 'WATCHDOG_ATTEMPT_EXPIRED'
+            self._fence = tick
+            if tick >= self._plan.cleanup_deadline_ns:
+                return self._quarantine('WATCHDOG_CLEANUP_EXPIRED')
+            try:
+                self._ports.request_graceful(self._plan)
+            except Exception:
+                self._force(tick)
+            return self._snapshot()
+
+        if tick >= self._plan.cleanup_deadline_ns:
+            return self._quarantine('WATCHDOG_CLEANUP_EXPIRED')
+        # The serialized watchdog turn takes an already available inventory.
+        # No inventory reader can delay the graceful or force deadlines here.
+        cleanup = verify_fixture_canary_cleanup(self._plan, inventory, self._fence, tick)
+        if cleanup.state == 'VERIFIED':
+            self._state = 'STOPPED'
+            self._reason = 'WATCHDOG_CLEANUP_VERIFIED'
+        elif tick >= self._fence + WATCHDOG_GRACE_NS:
+            self._force(tick)
+        return self._snapshot()
