@@ -1,9 +1,11 @@
-"""Inactive reduce-only terminator for registered Linux ARM64 capsule handles."""
+"""Inactive Linux ARM64 capsule termination and read-only population primitives."""
 
 from contextlib import ExitStack, contextmanager
 import ctypes as c
 import errno
 import fcntl
+from hashlib import sha256
+import json
 import os
 import re
 import signal
@@ -15,6 +17,7 @@ ORIGIN = 'SYNTHETIC_ONLY'
 CGROUP2_MAGIC = 0x63677270
 PIDFS_MAGIC = 0x50494446
 MAX_GRACEFUL_MEMBERS = 16
+MAX_CGROUP_EVENTS_BYTES = 4096
 
 
 class FixtureHandlePin(NamedTuple):
@@ -71,6 +74,24 @@ class TerminationOps(NamedTuple):
     write_kill: object
 
 
+class FixtureCgroupReadPin(NamedTuple):
+    capsule: FixtureCapsuleBinding
+    events: FixtureHandlePin
+
+
+class FixtureCgroupReadHandles(NamedTuple):
+    directory_fd: int
+    events_fd: int
+
+
+class CgroupReadOps(NamedTuple):
+    duplicate: object
+    close: object
+    describe: object
+    stat_events: object
+    pread: object
+
+
 def _uint(value, limit):
     return type(value) is int and 0 <= value < limit
 
@@ -118,10 +139,10 @@ class _LinuxArm64Statfs(c.Structure):
     ]
 
 
-def _linux_arm64_termination_ops():
+def _linux_arm64_descriptor_reader():
     platform = os.uname()
     if (platform.sysname, platform.machine) != ('Linux', 'aarch64') or c.sizeof(c.c_long) != 8:
-        raise OSError('Linux ARM64 LP64 is required for native termination.')
+        raise OSError('Linux ARM64 LP64 is required for native descriptor reads.')
     library = c.CDLL(None, use_errno=True)
     fstatfs = library.fstatfs
     fstatfs.argtypes = [c.c_int, c.POINTER(_LinuxArm64Statfs)]
@@ -135,6 +156,12 @@ def _linux_arm64_termination_ops():
         return DescriptorFacts(FixtureHandlePin(metadata.st_dev, metadata.st_ino), metadata.st_mode,
                                filesystem.filesystem, os.get_inheritable(fd), fcntl.fcntl(fd, fcntl.F_GETFL))
 
+    return describe
+
+
+def _linux_arm64_termination_ops():
+    describe = _linux_arm64_descriptor_reader()
+
     def stat_kill_control(directory_fd):
         metadata = os.stat('cgroup.kill', dir_fd=directory_fd, follow_symlinks=False)
         return FixtureHandlePin(metadata.st_dev, metadata.st_ino), metadata.st_mode
@@ -146,6 +173,16 @@ def _linux_arm64_termination_ops():
         return os.write(kill_fd, b'1')
 
     return TerminationOps(os.dup, os.close, describe, stat_kill_control, signal_term, write_kill)
+
+
+def _linux_arm64_cgroup_read_ops():
+    describe = _linux_arm64_descriptor_reader()
+
+    def stat_events(directory_fd):
+        metadata = os.stat('cgroup.events', dir_fd=directory_fd, follow_symlinks=False)
+        return FixtureHandlePin(metadata.st_dev, metadata.st_ino), metadata.st_mode
+
+    return CgroupReadOps(os.dup, os.close, describe, stat_events, os.pread)
 
 
 @contextmanager
@@ -164,6 +201,69 @@ def _describe_bound(ops, fd, pin, filesystem):
             or facts.inheritable is not False or type(facts.mode) is not int or type(facts.flags) is not int):
         raise ValueError('Watchdog handle identity rejected.')
     return facts
+
+
+def fixture_cgroup_population_digest(pin):
+    if (type(pin) is not FixtureCgroupReadPin or not _valid_capsule(pin.capsule) or not _valid_pin(pin.events)
+            or pin.capsule.directory.device != pin.events.device
+            or pin.events in (pin.capsule.directory, pin.capsule.kill_control)):
+        raise ValueError('Invalid synthetic cgroup population pin.')
+    capsule = pin.capsule
+    identity = (capsule.digest.hex(), capsule.capsule_generation, capsule.directory, capsule.kill_control, pin.events)
+    payload = json.dumps(('DOSAI_LINUX_ARM64_CGROUP_EVENTS_V1', identity), separators=(',', ':')).encode('ascii')
+    return sha256(payload).digest()
+
+
+def _population(raw):
+    if (type(raw) is not bytes or not 0 < len(raw) <= MAX_CGROUP_EVENTS_BYTES
+            or not raw.endswith(b'\n')):
+        return None
+    fields = {}
+    for line in raw[:-1].split(b'\n'):
+        match = re.fullmatch(rb'([a-z][a-z0-9_]{0,63}) (0|[1-9][0-9]{0,19})', line)
+        if match is None or match[1] in fields:
+            return None
+        fields[match[1]] = match[2]
+    return {b'0': False, b'1': True}.get(fields.get(b'populated'))
+
+
+def _require_events_lookup(ops, directory, pin):
+    actual, mode = ops.stat_events(directory)
+    if not _valid_pin(actual) or actual != pin or type(mode) is not int or not stat.S_ISREG(mode):
+        raise ValueError('Watchdog cgroup events identity rejected.')
+
+
+def prepare_fixture_cgroup_population_reader(pin, handles, *, ops=None):
+    """Prepare a read-only bound cgroup population source for an independent verifier."""
+    digest = fixture_cgroup_population_digest(pin)
+    if (type(handles) is not FixtureCgroupReadHandles or not all(_uint(fd, 2**31) and fd >= 3 for fd in handles)
+            or handles.directory_fd == handles.events_fd
+            or (ops is not None and (type(ops) is not CgroupReadOps or not all(callable(port) for port in ops)))):
+        raise ValueError('Invalid synthetic cgroup population handles.')
+
+    def read_population(watchdog_digest, capsule_generation, expected_digest):
+        if (type(watchdog_digest) is not bytes or watchdog_digest != pin.capsule.digest
+                or type(capsule_generation) is not str or capsule_generation != pin.capsule.capsule_generation
+                or type(expected_digest) is not bytes or expected_digest != digest):
+            return None
+        try:
+            reader = _linux_arm64_cgroup_read_ops() if ops is None else ops
+            with _owned_copy(reader, handles.directory_fd) as directory:
+                directory_facts = _describe_bound(reader, directory, pin.capsule.directory, CGROUP2_MAGIC)
+                if not stat.S_ISDIR(directory_facts.mode):
+                    return None
+                with _owned_copy(reader, handles.events_fd) as events:
+                    facts = _describe_bound(reader, events, pin.events, CGROUP2_MAGIC)
+                    if not stat.S_ISREG(facts.mode) or facts.flags & os.O_ACCMODE != os.O_RDONLY:
+                        return None
+                    _require_events_lookup(reader, directory, pin.events)
+                    raw = reader.pread(events, MAX_CGROUP_EVENTS_BYTES + 1, 0)
+                    _require_events_lookup(reader, directory, pin.events)
+                    return _population(raw)
+        except Exception:
+            return None
+
+    return read_population
 
 
 def _graceful(ops, handles, plan, require_revoked):

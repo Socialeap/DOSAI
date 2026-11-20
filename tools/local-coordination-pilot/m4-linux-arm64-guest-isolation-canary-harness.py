@@ -131,6 +131,41 @@ class FixtureCleanupInventory(NamedTuple):
     resources: FixtureOwnedResources
 
 
+class FixtureCleanupScope(NamedTuple):
+    plan: FixtureWatchdogPlan
+    fence_ns: int
+    cgroup_digest: bytes
+    resource_generation: str
+
+
+class FixtureCleanupFenceReadback(NamedTuple):
+    scope: FixtureCleanupScope
+    state: str
+
+
+class FixtureNonProcessResources(NamedTuple):
+    mounts: int
+    sockets: int
+    descriptors: int
+    temporary_files: int
+    leases: int
+    brokered: int
+
+
+class FixtureResourceSample(NamedTuple):
+    scope: FixtureCleanupScope
+    observed_ns: int
+    complete: bool
+    resources: FixtureNonProcessResources
+
+
+class FixtureCleanupCollectorPorts(NamedTuple):
+    monotonic_ns: object
+    read_fence: object
+    read_population: object
+    read_resources: object
+
+
 class FixtureWatchdogPorts(NamedTuple):
     request_graceful: object
     force_stop: object
@@ -482,6 +517,63 @@ def fixture_watchdog_binding_digest(plan):
         raise ValueError('Invalid synthetic canary watchdog plan.')
     encoded = json.dumps((WATCHDOG_SCHEMA, plan), separators=(',', ':')).encode('ascii')
     return sha256(encoded).digest()
+
+
+def _valid_cleanup_scope(scope):
+    if type(scope) is not FixtureCleanupScope or not _valid_watchdog_plan(scope.plan):
+        return False
+    plan = scope.plan
+    return (
+        _tick(scope.fence_ns) and scope.fence_ns < plan.cleanup_deadline_ns
+        and type(scope.cgroup_digest) is bytes and len(scope.cgroup_digest) == 32
+        and _fixture_id(scope.resource_generation)
+        and scope.resource_generation not in (
+            plan.binding.supervisor_generation, plan.capsule_generation,
+            plan.watchdog_generation, plan.verifier_generation,
+        )
+    )
+
+
+def _quiesced_scope(readback, scope):
+    return (type(readback) is FixtureCleanupFenceReadback and type(readback.state) is str
+            and readback.state == 'REVOKED_QUIESCED'
+            and _valid_cleanup_scope(readback.scope) and readback.scope == scope)
+
+
+def collect_fixture_cleanup_inventory(scope, ports):
+    """Sample separate, trusted cleanup sources outside the watchdog turn."""
+    if (not _valid_cleanup_scope(scope) or type(ports) is not FixtureCleanupCollectorPorts
+            or not all(callable(port) for port in ports)):
+        return None
+    plan = scope.plan
+    population_binding = (fixture_watchdog_binding_digest(plan), plan.capsule_generation, scope.cgroup_digest)
+    try:
+        started = ports.monotonic_ns()
+        if (not _tick(started) or not scope.fence_ns <= started < plan.cleanup_deadline_ns
+                or not _quiesced_scope(ports.read_fence(), scope)
+                or ports.read_population(*population_binding) is not False):
+            return None
+        sample = ports.read_resources()
+        sampled = ports.monotonic_ns()
+        if (type(sample) is not FixtureResourceSample or sample.complete is not True
+                or not _valid_cleanup_scope(sample.scope) or sample.scope != scope
+                or type(sample.resources) is not FixtureNonProcessResources
+                or not all(_tick(count) for count in sample.resources)
+                or not _tick(sample.observed_ns) or not _tick(sampled)
+                or not started <= sample.observed_ns <= sampled < plan.cleanup_deadline_ns):
+            return None
+        if (ports.read_population(*population_binding) is not False
+                or not _quiesced_scope(ports.read_fence(), scope)):
+            return None
+        finished = ports.monotonic_ns()
+        if not _tick(finished) or not sampled <= finished < plan.cleanup_deadline_ns:
+            return None
+    except Exception:
+        return None
+    return FixtureCleanupInventory(
+        plan.origin, plan.binding, plan.capsule_generation, plan.watchdog_generation,
+        plan.verifier_generation, scope.fence_ns, finished, True, FixtureOwnedResources(0, *sample.resources),
+    )
 
 
 class FixtureCanaryWatchdog:
