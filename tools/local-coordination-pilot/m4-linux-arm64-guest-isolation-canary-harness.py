@@ -313,6 +313,11 @@ class FixtureTempFileSetupReadback(NamedTuple):
     eof: bool
 
 
+class FixtureTempFileSetupReader(NamedTuple):
+    poll: object
+    read_setup: object
+
+
 class FixtureTempFileBootstrapPorts(NamedTuple):
     monotonic_ns: object
     read_launch: object
@@ -830,15 +835,79 @@ def _valid_temp_file_bootstrap(registration):
             and len(set(pins)) == len(pins) and pins.directory[0] == pins.file[0])
 
 
+def _expected_temp_file_setup_frame(registration):
+    pins = registration.pins
+    return TEMP_HOLDER_SETUP_FRAME.pack(
+        b'DOSAITF1', registration.nonce, registration.pid, *pins.directory, *pins.file, *pins.control, *pins.setup,
+    )
+
+
+def prepare_fixture_temp_file_setup_reader(registration, monotonic_ns, capture):
+    """Collect before issuing a receipt and deliver one exact, timely setup readback."""
+    if not _valid_temp_file_bootstrap(registration) or not callable(monotonic_ns) or not callable(capture):
+        raise ValueError('Invalid synthetic temporary setup reader registration.')
+    expected_frame = _expected_temp_file_setup_frame(registration)
+    pipe_pin = registration.pins.setup
+    lock = Lock()
+    state = 'PENDING'
+    last_ns = 0
+
+    def in_time():
+        nonlocal last_ns
+        now = monotonic_ns()
+        if not _tick(now) or not last_ns <= now < registration.deadline_ns:
+            return False
+        last_ns = now
+        return True
+
+    def poll():
+        nonlocal state
+        with lock:
+            if state in ('CONSUMED', 'REJECTED'):
+                return state
+            try:
+                if not in_time():
+                    state = 'REJECTED'
+                elif state == 'PENDING':
+                    result = capture(registration.nonce, pipe_pin)
+                    if (not in_time() or type(result) is not tuple or len(result) != 2
+                            or type(result[0]) is not str):
+                        state = 'REJECTED'
+                    elif result[0] == 'READY' and type(result[1]) is bytes and result[1] == expected_frame:
+                        state = 'READY'
+                    elif result[0] != 'PENDING' or result[1] is not None:
+                        state = 'REJECTED'
+            except Exception:
+                state = 'REJECTED'
+            return state
+
+    def read_setup(challenge):
+        nonlocal state
+        if (type(challenge) is not FixtureTempFileBootstrapChallenge
+                or challenge.registration is not registration):
+            return None
+        with lock:
+            if state != 'READY':
+                return None
+            try:
+                if in_time():
+                    state = 'CONSUMED'
+                    return FixtureTempFileSetupReadback(challenge, pipe_pin, expected_frame, True)
+            except Exception:
+                pass
+            state = 'REJECTED'
+            return None
+
+    return FixtureTempFileSetupReader(poll, read_setup)
+
+
 def prepare_fixture_temp_file_receipt_issuer(registration, ports):
     """Issue one installation receipt after setup EOF, pinned enrollment and kernel readback."""
     if (not _valid_temp_file_bootstrap(registration) or type(ports) is not FixtureTempFileBootstrapPorts
             or not all(callable(port) for port in ports)):
         raise ValueError('Invalid synthetic temporary file bootstrap registration.')
     pins = registration.pins
-    expected_frame = TEMP_HOLDER_SETUP_FRAME.pack(
-        b'DOSAITF1', registration.nonce, registration.pid, *pins.directory, *pins.file, *pins.control, *pins.setup,
-    )
+    expected_frame = _expected_temp_file_setup_frame(registration)
     enrollment = registration.enrollment_digest
     observation = registration.observation_digest
     lock = Lock()
