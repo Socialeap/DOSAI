@@ -1,0 +1,291 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-staging-readback-plan:1",
+  "schema_version": 1,
+  "status": "SOURCE_ONLY_HOLD",
+  "source_revision": "fcc2ff7125a33f2fb7070e860bccb1b8b23f58b3",
+  "input_sha256": {
+    "m4-linux-arm64-holder-staging-allowlist-v6.json": "969fdf3eea6f41e02f3e3d8183f1d5a815fccaaef10d1cb7a8cf2df0bee2ece8",
+    "m4-linux-arm64-holder-debian-dependency-candidate-v1.json": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+    "m4-linux-arm64-holder-staging-member-observation-v1.json": "ae542d78478f88ab9e8be0b7a9d36febce7e35d162886e91366a2c5f6b5ac0a2",
+    "m4-linux-arm64-holder-linker-elf-graph-observation-v1.json": "f7448404857fa92b0bea74463f5388325e846d160f199c0eea6a6fa97f94cba9",
+    "m4-linux-arm64-holder-tool-root-elf-observation-v1.json": "93c513ecdc5e6b0d1414fc494bd52eab9e5ac1546da8624492c523baf74e3ca5",
+    "m4-linux-arm64-holder-tool-root-library-elf-observation-v1.json": "60714c00711e5e54563609913ea557d81450cdee1be94304ec3a085796f9d427",
+    "m4-linux-arm64-holder-build-manifest-v2.json": "d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e"
+  },
+  "initial_raw_receipt_sha256": "0523a68bd96ea75b84f37d8eee8ffb3577a1a2472c3f87aee927f958d9548b0d",
+  "manifest_sha256": "d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e",
+  "recipe_sha256": "c0c9d991e2da8966a2d8ab53f73935b7465ee3d998c848b52ad85a67350e0272",
+  "directory_mode_octal": "0755",
+  "entries": [
+    {
+      "package": "gcc-14-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-gcc-14",
+      "staged_path": "toolchain/bin/aarch64-linux-gnu-gcc",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 1121152,
+      "sha256": "fb051a6c58961fb6aec758acf50d7d0375eecff740d0706388092829e3fb7a41",
+      "link_target": null
+    },
+    {
+      "package": "cpp-14-aarch64-linux-gnu",
+      "member_path": "usr/libexec/gcc/aarch64-linux-gnu/14/cc1",
+      "staged_path": "toolchain/bin/cc1",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 30564912,
+      "sha256": "8b4cebfca2ac1ac9edbdac9b335830d8ad27372e930e3c816ea3018b4fdb9fbc",
+      "link_target": null
+    },
+    {
+      "package": "gcc-14-aarch64-linux-gnu",
+      "member_path": "usr/libexec/gcc/aarch64-linux-gnu/14/collect2",
+      "staged_path": "toolchain/bin/collect2",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 463000,
+      "sha256": "e7b70ebce9aec752928b708a1a34c08729c65c7f50006d9bfbdd60ef82227ca2",
+      "link_target": null
+    },
+    {
+      "package": "binutils-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-as",
+      "staged_path": "toolchain/bin/as",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 465912,
+      "sha256": "6d47317c37bd8596c9dcf0e3dd03185065dc6dd58cdc61e861fda7b9150e720a",
+      "link_target": null
+    },
+    {
+      "package": "binutils-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-ld",
+      "staged_path": "toolchain/bin/ld",
+      "kind": "SYMLINK",
+      "size_bytes": 0,
+      "mode_octal": "0777",
+      "sha256": null,
+      "link_target": "aarch64-linux-gnu-ld.bfd"
+    },
+    {
+      "package": "libc6-dev",
+      "member_path": "usr/include/fcntl.h",
+      "staged_path": "toolchain/sysroot/usr/include/fcntl.h",
+      "kind": "FILE",
+      "size_bytes": 11417,
+      "mode_octal": "0644",
+      "sha256": "6ec7f899b9cbb06442afef4934fae7906fa8a53d2387de774770525d1fbfcb49",
+      "link_target": null
+    },
+    {
+      "package": "linux-libc-dev",
+      "member_path": "usr/include/linux/seccomp.h",
+      "staged_path": "toolchain/sysroot/usr/include/linux/seccomp.h",
+      "kind": "FILE",
+      "size_bytes": 5990,
+      "mode_octal": "0644",
+      "sha256": "de46b007f5a360498fc67a46cb00c5c81de310f7429aaba2aa947817dc156cb4",
+      "link_target": null
+    },
+    {
+      "package": "libc6-dev",
+      "member_path": "usr/lib/aarch64-linux-gnu/crt1.o",
+      "staged_path": "toolchain/sysroot/usr/lib/aarch64-linux-gnu/crt1.o",
+      "kind": "FILE",
+      "size_bytes": 2056,
+      "mode_octal": "0644",
+      "sha256": "e38422f78aa32625908c490d006d4f139069104d531d57fafa12bdb598f67a9e",
+      "link_target": null
+    },
+    {
+      "package": "libc6-dev",
+      "member_path": "usr/lib/aarch64-linux-gnu/libc.a",
+      "staged_path": "toolchain/sysroot/usr/lib/aarch64-linux-gnu/libc.a",
+      "kind": "FILE",
+      "size_bytes": 5570214,
+      "mode_octal": "0644",
+      "sha256": "24d996c8ba9939bc2fffb09906adb83913771f855c6404b2cccc6fc1f1e913a2",
+      "link_target": null
+    },
+    {
+      "package": "libgcc-14-dev",
+      "member_path": "usr/lib/gcc/aarch64-linux-gnu/14/libgcc.a",
+      "staged_path": "toolchain/lib/gcc/aarch64-linux-gnu/14/libgcc.a",
+      "kind": "FILE",
+      "size_bytes": 3227744,
+      "mode_octal": "0644",
+      "sha256": "60dbf748e1c310aa50300a33f30bf4ee070061071aee74a52cf115a7b8765e50",
+      "link_target": null
+    },
+    {
+      "package": "libc6",
+      "member_path": "usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 201344,
+      "sha256": "1b882eddacd494b060413a8aa4f0a4754ee3f84775e68cecbf8a86092b59cca6",
+      "link_target": null
+    },
+    {
+      "package": "binutils-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-ld.bfd",
+      "staged_path": "toolchain/bin/aarch64-linux-gnu-ld.bfd",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 2499576,
+      "sha256": "5a284e435cdf41bc05d93f0683da12b8a42608b93c79e187e7d03fab6a22ddf4",
+      "link_target": null
+    },
+    {
+      "package": "libbinutils",
+      "member_path": "usr/lib/aarch64-linux-gnu/libbfd-2.44-system.so",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libbfd-2.44-system.so",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 1648320,
+      "sha256": "7148e290f24b5de218d65be62fa74a595143664ddf95dcc76335b292eeb1bbb4",
+      "link_target": null
+    },
+    {
+      "package": "libctf0",
+      "member_path": "usr/lib/aarch64-linux-gnu/libctf.so.0.0.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libctf.so.0",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 265424,
+      "sha256": "def024cba74defbba1928cb4e44d5d7730ba2e08d5855d6620c2ab16a319257d",
+      "link_target": null
+    },
+    {
+      "package": "libjansson4",
+      "member_path": "usr/lib/aarch64-linux-gnu/libjansson.so.4.14.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libjansson.so.4",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 68000,
+      "sha256": "b7830632c6245b8805ce05240c6818eb77644adef86a55d754acfd93bbf0fb6b",
+      "link_target": null
+    },
+    {
+      "package": "libc6",
+      "member_path": "usr/lib/aarch64-linux-gnu/libc.so.6",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libc.so.6",
+      "kind": "FILE",
+      "mode_octal": "0755",
+      "size_bytes": 1716616,
+      "sha256": "70fa4c4cf57eabeb96097cce47582d02379c4cd1de3db3e98ade4dd7089a1b13",
+      "link_target": null
+    },
+    {
+      "package": "libsframe1",
+      "member_path": "usr/lib/aarch64-linux-gnu/libsframe.so.1.0.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libsframe.so.1",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 67816,
+      "sha256": "5e92ed310274e75e698397260b1da66afc9730287b6478f1f8e0c3c0efd8ad06",
+      "link_target": null
+    },
+    {
+      "package": "zlib1g",
+      "member_path": "usr/lib/aarch64-linux-gnu/libz.so.1.3.1",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libz.so.1",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 133600,
+      "sha256": "ac4b7f163145ca73ddba8e657cc35c5b5380ce01f75cbf3b65f8deeebd9c1e72",
+      "link_target": null
+    },
+    {
+      "package": "libzstd1",
+      "member_path": "usr/lib/aarch64-linux-gnu/libzstd.so.1.5.7",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libzstd.so.1",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 723048,
+      "sha256": "1279c4edfbfb08878b5b7fb40d392c1bdc9b30100d9b7a019d4aefaf10d2046c",
+      "link_target": null
+    },
+    {
+      "package": "libgmp10",
+      "member_path": "usr/lib/aarch64-linux-gnu/libgmp.so.10.5.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libgmp.so.10",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 529216,
+      "sha256": "8858b931d041b74a8ce9dcb16d9912eb431c4f55b97ca2e58646a1c1bd991852",
+      "link_target": null
+    },
+    {
+      "package": "libisl23",
+      "member_path": "usr/lib/aarch64-linux-gnu/libisl.so.23.4.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libisl.so.23",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 2264368,
+      "sha256": "f201f8a719870a06623d19f6d42d22dae3009dd71cf4494b6675bb7e2fc33600",
+      "link_target": null
+    },
+    {
+      "package": "libc6",
+      "member_path": "usr/lib/aarch64-linux-gnu/libm.so.6",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libm.so.6",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 591960,
+      "sha256": "a8afb2d1f4a0c5e14c0fc82f794ec839eafe29738907aa92895410f57630bbe2",
+      "link_target": null
+    },
+    {
+      "package": "libmpc3",
+      "member_path": "usr/lib/aarch64-linux-gnu/libmpc.so.3.3.1",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libmpc.so.3",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 135104,
+      "sha256": "707d07bbb9679bd44a3899b50fc0a1379adf927eae189b6ae558eb71b8efd0f9",
+      "link_target": null
+    },
+    {
+      "package": "libmpfr6",
+      "member_path": "usr/lib/aarch64-linux-gnu/libmpfr.so.6.2.2",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libmpfr.so.6",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 761792,
+      "sha256": "205661529fa64cff38e8bac07fa606c05f914571a59f37b596a6c0f3820e579e",
+      "link_target": null
+    },
+    {
+      "package": "libbinutils",
+      "member_path": "usr/lib/aarch64-linux-gnu/libopcodes-2.44-system.so",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libopcodes-2.44-system.so",
+      "kind": "FILE",
+      "mode_octal": "0644",
+      "size_bytes": 1447048,
+      "sha256": "3d930fa35e975c40fea9543a1cdcacfcaf9cd14747145cda3d56e4d3a203fa0b",
+      "link_target": null
+    },
+    {
+      "package": null,
+      "member_path": null,
+      "staged_path": "toolchain/runtime/lib/ld-linux-aarch64.so.1",
+      "kind": "SYMLINK",
+      "mode_octal": "0777",
+      "size_bytes": 0,
+      "sha256": null,
+      "link_target": "../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1"
+    }
+  ],
+  "native_staging_observation": null,
+  "native_readback_observation": null,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}
