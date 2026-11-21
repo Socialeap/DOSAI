@@ -577,9 +577,11 @@ The [v2 staging allowlist](m4-linux-arm64-holder-staging-allowlist-v2.json)
 adds `usr/bin/aarch64-linux-gnu-ld.bfd` from the same pinned ARM64 binutils
 archive at `toolchain/bin/aarch64-linux-gnu-ld.bfd`. The observed `ld`
 symlink retains its literal relative target `aarch64-linux-gnu-ld.bfd` in
-the proposed layout. The target file's type, mode, size, and SHA-256 still
-require measurement. Reviewed member pins, remaining native runtime
-paths, and the staged toolchain lock remain held.
+the proposed layout. The [linker member observation](m4-linux-arm64-holder-linker-member-observation-v1.json)
+binds the follow-up receipt to the exact v2 allowlist and binutils pin. The
+archive reader measured `ld.bfd` as a 2,499,576-byte regular file with mode
+`0755` and recorded its SHA-256. Reviewed member pins, remaining native
+runtime paths, and the staged toolchain lock remain held.
 [Debian ARM64 binutils file list](https://packages.debian.org/trixie/arm64/binutils-aarch64-linux-gnu/filelist)
 
 The [bounded in-memory archive reader](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-deb-reader.py)
@@ -596,6 +598,22 @@ Unsupported compression, extended tar headers, unapproved member modes,
 and malformed data stop the check. The synthetic fixtures cover acceptance
 of the exact linker target and refusal of a missing or redirected target.
 [Debian binary package format](https://manpages.debian.org/trixie/dpkg-dev/deb.5.en.html)
+
+The [bounded ARM64 ELF reader](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-elf-reader.py)
+accepts immutable bytes that match a caller-supplied SHA-256. It uses the
+program headers and file-backed load segments to read `PT_INTERP` and
+`PT_DYNAMIC`, including on stripped objects. It returns the ELF ABI and
+role, interpreter, SONAME, ordered needed libraries, and GNU version
+requirements and definitions. It rejects ambiguous mappings, malformed
+tables, stray version requirements, and out-of-range records. It reports
+search overrides, unknown tags and relevant segment flags as held features
+for the existing dependency verifier. The offline integration uses
+synthetic bytes. The observed linker bytes have yet to be read by the
+ELF reader. Native readback, symbol resolution, relocations, and runtime
+loader behavior require separate evidence.
+[ELF program headers](https://gabi.xinuos.com/elf/08-pheader.html) ·
+[ELF dynamic metadata](https://gabi.xinuos.com/elf/09-dynamic.html) ·
+[AArch64 ELF ABI](https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst)
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
