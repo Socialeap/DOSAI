@@ -1,0 +1,353 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-tool-root-library-elf-observation:1",
+  "schema_version": 1,
+  "status": "LIBRARY_ELF_METADATA_OBSERVED_SOURCE_ONLY_HOLD",
+  "source_revision": "c4bbebc2c9db392dee7fbc9ba4a761a310688f02",
+  "raw_receipt_sha256": "67885d3001e7b27a05e6b2ab7298e5e833bbcbc6e226fe47c5b78f6d38bf36e3",
+  "allowlist_sha256": "969fdf3eea6f41e02f3e3d8183f1d5a815fccaaef10d1cb7a8cf2df0bee2ece8",
+  "tool_root_elf_observation_sha256": "93c513ecdc5e6b0d1414fc494bd52eab9e5ac1546da8624492c523baf74e3ca5",
+  "linker_graph_observation_sha256": "f7448404857fa92b0bea74463f5388325e846d160f199c0eea6a6fa97f94cba9",
+  "arm64_dependency_candidate_sha256": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+  "archive_hash_observation_sha256": "d24ab63fa183367025ccd175bf42eae81ac0ba98e1ae9595d067fea1ac8a3d21",
+  "archive_reader_sha256": "46910b0b5082267c8cc8c05388331b289e3cf829e3a68519783c2a03b06d71e3",
+  "elf_reader_sha256": "6c01e74ebbfb414123e25986247bc37554bef24db6133e9836370b1631649339",
+  "object_verifier_sha256": "51e37dad7b69c0ef76420f1619099ae5d93fb2f1f08e09edc04262b149faaabc",
+  "started_at": "2026-11-21T23:03:08Z",
+  "finished_at": "2026-11-21T23:03:09Z",
+  "verified_archives": 6,
+  "verified_archive_bytes": 5015368,
+  "measured_members": 6,
+  "elf_metadata_observations": 6,
+  "matching_restricted_library_profiles": 6,
+  "archives": [
+    {
+      "package": "libgmp10",
+      "version": "2:6.3.0+dfsg-3",
+      "architecture": "arm64",
+      "archive": "debian",
+      "filename": "pool/main/g/gmp/libgmp10_6.3.0+dfsg-3_arm64.deb",
+      "size_bytes": 535088,
+      "sha256": "a27bbc27f119161ea9702c8dd66f54131cdf0d2ca73000f50ea91ef2fdfef0fb"
+    },
+    {
+      "package": "libisl23",
+      "version": "0.27-1",
+      "architecture": "arm64",
+      "archive": "debian",
+      "filename": "pool/main/i/isl/libisl23_0.27-1_arm64.deb",
+      "size_bytes": 600836,
+      "sha256": "21c490db3fa5f0a517c55090a199334da6164589772ebd922dff1e569c78515d"
+    },
+    {
+      "package": "libc6",
+      "version": "2.41-12+deb13u4",
+      "architecture": "arm64",
+      "archive": "debian",
+      "filename": "pool/main/g/glibc/libc6_2.41-12+deb13u4_arm64.deb",
+      "size_bytes": 2483572,
+      "sha256": "8784eda966b189c777a384dac5ce009e8fc9b52d006926c5a013e7fa8aa688cc"
+    },
+    {
+      "package": "libmpc3",
+      "version": "1.3.1-1+b3",
+      "architecture": "arm64",
+      "archive": "debian",
+      "filename": "pool/main/m/mpclib3/libmpc3_1.3.1-1+b3_arm64.deb",
+      "size_bytes": 50480,
+      "sha256": "d4cfe026a624e51641c80ef2af77387185714f62f3b5c87035e62d9ed8d9eec1"
+    },
+    {
+      "package": "libmpfr6",
+      "version": "4.2.2-1",
+      "architecture": "arm64",
+      "archive": "debian",
+      "filename": "pool/main/m/mpfr4/libmpfr6_4.2.2-1_arm64.deb",
+      "size_bytes": 685000,
+      "sha256": "628a4ef58cc6815880f72e9d3953984a379a017e4042bc575f1fcbf3954d79ac"
+    },
+    {
+      "package": "libbinutils",
+      "version": "2.44-3",
+      "architecture": "arm64",
+      "archive": "debian",
+      "filename": "pool/main/b/binutils/libbinutils_2.44-3_arm64.deb",
+      "size_bytes": 660392,
+      "sha256": "c51c0cc0272202d00fc3e6da8b96bfed2a428c239b689363abddd3bac6bd7a02"
+    }
+  ],
+  "objects": [
+    {
+      "mapping": {
+        "package": "libgmp10",
+        "member_path": "usr/lib/aarch64-linux-gnu/libgmp.so.10.5.0",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libgmp.so.10"
+      },
+      "member_size_bytes": 529216,
+      "member_mode_octal": "0644",
+      "member_sha256": "8858b931d041b74a8ce9dcb16d9912eb431c4f55b97ca2e58646a1c1bd991852",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libgmp.so.10",
+        "needed": [
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.38",
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libisl23",
+        "member_path": "usr/lib/aarch64-linux-gnu/libisl.so.23.4.0",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libisl.so.23"
+      },
+      "member_size_bytes": 2264368,
+      "member_mode_octal": "0644",
+      "member_sha256": "f201f8a719870a06623d19f6d42d22dae3009dd71cf4494b6675bb7e2fc33600",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libisl.so.23",
+        "needed": [
+          {
+            "soname": "libgmp.so.10",
+            "required_versions": []
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libc6",
+        "member_path": "usr/lib/aarch64-linux-gnu/libm.so.6",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libm.so.6"
+      },
+      "member_size_bytes": 591960,
+      "member_mode_octal": "0644",
+      "member_sha256": "a8afb2d1f4a0c5e14c0fc82f794ec839eafe29738907aa92895410f57630bbe2",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libm.so.6",
+        "needed": [
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_ABI_DT_RELR",
+              "GLIBC_PRIVATE",
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [
+          "GLIBC_2.17",
+          "GLIBC_2.18",
+          "GLIBC_2.23",
+          "GLIBC_2.24",
+          "GLIBC_2.25",
+          "GLIBC_2.27",
+          "GLIBC_2.28",
+          "GLIBC_2.29",
+          "GLIBC_2.31",
+          "GLIBC_2.32",
+          "GLIBC_2.35",
+          "GLIBC_2.38",
+          "GLIBC_2.39",
+          "GLIBC_2.40",
+          "GLIBC_2.41"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libmpc3",
+        "member_path": "usr/lib/aarch64-linux-gnu/libmpc.so.3.3.1",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libmpc.so.3"
+      },
+      "member_size_bytes": 135104,
+      "member_mode_octal": "0644",
+      "member_sha256": "707d07bbb9679bd44a3899b50fc0a1379adf927eae189b6ae558eb71b8efd0f9",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libmpc.so.3",
+        "needed": [
+          {
+            "soname": "libmpfr.so.6",
+            "required_versions": []
+          },
+          {
+            "soname": "libgmp.so.10",
+            "required_versions": []
+          },
+          {
+            "soname": "libm.so.6",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libmpfr6",
+        "member_path": "usr/lib/aarch64-linux-gnu/libmpfr.so.6.2.2",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libmpfr.so.6"
+      },
+      "member_size_bytes": 761792,
+      "member_mode_octal": "0644",
+      "member_sha256": "205661529fa64cff38e8bac07fa606c05f914571a59f37b596a6c0f3820e579e",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libmpfr.so.6",
+        "needed": [
+          {
+            "soname": "libgmp.so.10",
+            "required_versions": []
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libbinutils",
+        "member_path": "usr/lib/aarch64-linux-gnu/libopcodes-2.44-system.so",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libopcodes-2.44-system.so"
+      },
+      "member_size_bytes": 1447048,
+      "member_mode_octal": "0644",
+      "member_sha256": "3d930fa35e975c40fea9543a1cdcacfcaf9cd14747145cda3d56e4d3a203fa0b",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libopcodes-2.44-system.so",
+        "needed": [
+          {
+            "soname": "libbfd-2.44-system.so",
+            "required_versions": []
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.38",
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    }
+  ],
+  "static_metadata_comparison": {
+    "observed_elf_objects": 19,
+    "observed_needed_edges": 51,
+    "unresolved_providers": [],
+    "missing_required_versions": []
+  },
+  "package_archives_saved": false,
+  "payload_files_saved": false,
+  "native_staging_observed": false,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}

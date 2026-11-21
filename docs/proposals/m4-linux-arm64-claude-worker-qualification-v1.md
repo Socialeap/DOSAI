@@ -728,18 +728,29 @@ regular-file candidates under the same runtime library directory.
 | `cc1` | `libmpfr6` | `libmpfr.so.6.2.2` | `libmpfr.so.6` |
 | `as` | `libbinutils` | `libopcodes-2.44-system.so` | `libopcodes-2.44-system.so` |
 
-The candidate paths match Debian's public ARM64 file lists. The offline
-replay uses synthetic metadata for the six providers and rejects missing
-providers, an incorrect SONAME, and the loss of `GLIBC_2.17` from the
-`libm.so.6` fixture. In-memory measurement and ELF inspection of the six
-pinned provider members, their transitive dependency edges, and native
-staging and qualification remain held.
+The candidate paths match Debian's public ARM64 file lists.
 [Debian GMP file list](https://packages.debian.org/trixie/arm64/libgmp10/filelist) ·
 [Debian ISL file list](https://packages.debian.org/trixie/arm64/libisl23/filelist) ·
 [Debian libc file list](https://packages.debian.org/trixie/arm64/libc6/filelist) ·
 [Debian MPC file list](https://packages.debian.org/trixie/arm64/libmpc3/filelist) ·
 [Debian MPFR file list](https://packages.debian.org/trixie/arm64/libmpfr6/filelist) ·
 [Debian Binutils library file list](https://packages.debian.org/trixie/arm64/libbinutils/filelist)
+
+The [six-library ELF observation](m4-linux-arm64-holder-tool-root-library-elf-observation-v1.json)
+binds the measured regular files and their metadata to the six verified
+archive pins, the v6 allowlist, and the local receipt at PR #104's merge.
+The offline test combines those six measured objects with the four tool
+roots and the nine measured linker-graph objects. It replays the five
+compiler-tool entry points, the v6 linker and interpreter aliases, and
+all 51 declared dependency edges across 19 reachable ELF objects. The
+replay checks symbol versions on every edge and rejects missing providers,
+mismatched versions or SONAMEs, ambiguous lookup, and redirected aliases.
+
+The fixture supplies synthetic sysroot and static archive entries to
+exercise the inventory shape. Its result remains `SOURCE_ONLY_HOLD`.
+Native staging and readback, physical loader behavior, relocations,
+compiler lookup, toolchain admission, and independent native builders
+retain their separate evidence gates.
 
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
