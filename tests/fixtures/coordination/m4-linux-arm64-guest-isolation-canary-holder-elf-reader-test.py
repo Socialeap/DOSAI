@@ -32,10 +32,11 @@ NEED = 0x1000
 DEFINE = 0x2000
 LIBC = 'libc.so.6'
 EXAMPLE = 'libexample.so.1'
+JANSSON = 'libjansson.so.4'
 LOADER = 'ld-linux-aarch64.so.1'
 ABI_INTERPRETER = '/lib/' + LOADER
 NAME_HASH = {
-    LIBC: 0x865f4e6, EXAMPLE: 0xacb98b1,
+    LIBC: 0x865f4e6, EXAMPLE: 0xacb98b1, JANSSON: 0xd1dca64,
     'GLIBC_2.38': 0x69691b8, 'GLIBC_2.41': 0x69691a1, 'GLIBC_PRIVATE': 0x963cf85,
     'EXAMPLE_1.0': 0x541e630, 'EXAMPLE_2.0': 0x541e330,
 }
@@ -188,13 +189,43 @@ class Arm64ELFReaderTests(unittest.TestCase):
             read(edited(image, DYNAMIC + 8, '<Q', 9999))
 
     def test_unknown_tags_and_search_overrides_are_reported_as_held_features(self):
-        metadata = read(elf(extra=((29, 0), (0x6ffffefc, 0), (0x7fffffff, 0), (0x70000001, 0),
+        metadata = read(elf(extra=((29, 0), (0x6ffffefc, 0), (0x7fffffff, 0), (0x70000003, 0),
                                     (30, 1), (0x6ffffffb, 0x800))))
         self.assertEqual(metadata.unsupported_features,
-                         ('DT_AUDIT', 'DT_FILTER', 'DT_FLAGS', 'DT_FLAGS_1', 'DT_RUNPATH', 'DT_UNKNOWN:0x70000001'))
+                         ('DT_AUDIT', 'DT_FILTER', 'DT_FLAGS', 'DT_FLAGS_1', 'DT_RUNPATH', 'DT_UNKNOWN:0x70000003'))
         image = edited(elf(), PHDR + 56 + 4, '<I', 7)
         stack = edited(edited(image, 56, '<H', 4), PHDR + 168, '<II', 0x6474e551, 7)
         self.assertEqual(read(stack).unsupported_features, ('PT_GNU_STACK_EXECUTE', 'PT_LOAD_WRITE_EXECUTE'))
+
+    def test_tls_descriptor_pair_requires_aligned_file_backed_code_and_writable_data(self):
+        plt, got = BASE + 0x280, BASE + 0x4000
+
+        def image(tags, got_flags=6):
+            binary = elf(interpreter='', soname=EXAMPLE, extra=tags)
+            binary = edited(binary, 56, '<H', 3)
+            binary = edited(binary, PHDR + 32, '<QQ', 0x2400, 0x2400)
+            return edited(binary, PHDR + 112, '<IIQQQQQQ', 1, got_flags, 0x2400, got, 0, 0x400, 0x400, 8)
+
+        pair = ((reader.DT_TLSDESC_PLT, plt), (reader.DT_TLSDESC_GOT, got))
+        self.assertEqual(read(image(pair)).unsupported_features, ())
+        for tags in (pair[:1], pair[1:], ((reader.DT_TLSDESC_PLT, plt + 1), pair[1]),
+                     (pair[0], (reader.DT_TLSDESC_GOT, got + 2))):
+            with self.subTest(tags=tags), self.assertRaisesRegex(ValueError, 'TLS descriptor location'):
+                read(image(tags))
+        for tags, permission in ((pair, 4), ((pair[0], (reader.DT_TLSDESC_GOT, got + 0x400)), 6)):
+            with self.subTest(tags=tags, permission=permission), self.assertRaisesRegex(ValueError, 'file-backed load segment'):
+                read(image(tags, permission))
+        with self.assertRaisesRegex(ValueError, 'file-backed load segment'):
+            read(image(((reader.DT_TLSDESC_PLT, got), pair[1])))
+
+    def test_arm64_bti_zero_marker_keeps_soname_and_interpreter_without_allowing_other_flags(self):
+        known = read(elf((LOADER,), soname=LIBC, extra=((reader.DT_AARCH64_BTI_PLT, 0),)))
+        self.assertEqual((known.kind, known.soname, known.interpreter), ('SHARED_OBJECT', LIBC, ABI_INTERPRETER))
+        self.assertEqual(known.unsupported_features, ())
+        wrong_marker = read(elf((LOADER,), soname=LIBC, extra=((reader.DT_AARCH64_BTI_PLT, 1),)))
+        self.assertEqual(wrong_marker.unsupported_features, ('DT_AARCH64_BTI_PLT',))
+        mixed = read(elf((LOADER,), soname=LIBC, extra=((reader.DT_AARCH64_BTI_PLT, 0), (29, 0), (0x70000005, 0))))
+        self.assertEqual(mixed.unsupported_features, ('DT_RUNPATH', 'DT_UNKNOWN:0x70000005'))
 
     def test_malformed_version_needs_reject_bounds_bad_hash_and_unknown_owner(self):
         image = elf((LIBC,), requirements=((LIBC, ('GLIBC_2.38',)),))
@@ -215,6 +246,26 @@ class Arm64ELFReaderTests(unittest.TestCase):
         # Extend the string table to include the readable version records.
         with self.assertRaisesRegex(ValueError, 'Overlapping ELF metadata'):
             read(edited(image, DYNAMIC + 4 * 16 + 8, '<Q', 0x1800 + 0x80))
+
+    def test_jansson_base_and_named_version_share_only_the_exact_terminal_auxiliary(self):
+        original = elf((LIBC, LOADER), interpreter='', soname=JANSSON,
+                       requirements=((LIBC, ('GLIBC_2.38',)),), definitions=((JANSSON, ()), (JANSSON, ())))
+        name_offset, _ = struct.unpack_from('<II', original, DEFINE + 20)
+        shared = edited(original, DEFINE, '<HHHHIIIHHHHIIIII',
+                        1, 1, 1, 1, NAME_HASH[JANSSON], 40, 20,
+                        1, 0, 2, 1, NAME_HASH[JANSSON], 20, 0, name_offset, 0)
+        metadata = read(shared)
+        self.assertEqual(metadata.soname, JANSSON)
+        self.assertEqual(metadata.version_definitions, (JANSSON,))
+        self.assertEqual(metadata.needed, ((LIBC, ('GLIBC_2.38',)), (LOADER, ())))
+        self.assertEqual(metadata.unsupported_features, ())
+        for offset, fmt, value in ((DEFINE + 16, '<I', 16), (DEFINE + 32, '<I', 16),
+                                   (DEFINE + 32, '<I', 24), (DEFINE + 44, '<I', 8),
+                                   (DEFINE + 28, '<I', 0), (DEFINE + 24, '<H', 1)):
+            with self.subTest(offset=offset, value=value), self.assertRaisesRegex(ValueError, 'ELF version'):
+                read(edited(shared, offset, fmt, value))
+        with self.assertRaisesRegex(ValueError, 'ELF version definition'):
+            read(elf(interpreter='', soname=JANSSON, definitions=((JANSSON, ()), (JANSSON, ()), (JANSSON, ()))))
 
     def test_parsed_graph_consumes_metadata_and_keeps_unsafe_search_held(self):
         libc = 'toolchain/runtime/usr/lib/aarch64-linux-gnu/' + LIBC
@@ -278,6 +329,33 @@ class HolderLinkerLibraryAllowlistTests(unittest.TestCase):
         self.observation = json.loads(self.observation_raw)
         self.dependencies = (self.proposals / 'm4-linux-arm64-holder-debian-dependency-candidate-v1.json').read_bytes()
 
+    def test_direct_library_receipt_retains_the_pre_fix_results_and_authority_holds(self):
+        raw = (self.proposals / 'm4-linux-arm64-holder-linker-direct-library-observation-v1.json').read_bytes()
+        recorded = json.loads(raw)
+        self.assertEqual(sha256(raw).hexdigest(), 'a2922362e964148fa9a0ad580247d7d45709b73d4164f873dae8a5c38765ad09')
+        self.assertEqual(recorded['source_revision'], '158d3e6cef4ed0f07c33e05d6d7d4f5dfdad4269')
+        self.assertEqual(recorded['status'], 'DIRECT_LIBRARIES_REQUIRE_REVIEW_SOURCE_ONLY_HOLD')
+        self.assertEqual(recorded['raw_receipt_sha256'], 'f453c5bd34e05e6efe046b05cab45c6587bea69b12ee44416a6502dd7972b714')
+        self.assertEqual(recorded['jansson_diagnostic_sha256'], 'ae2f9e1738d3dcdef990f4a4866794c4b7b314db6de21295e9821b61fdf24553')
+        self.assertEqual(recorded['elf_reader_sha256'], self.observation['elf_reader_sha256'])
+        v3_raw = (self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v3.json').read_bytes()
+        self.assertEqual(recorded['allowlist_sha256'], sha256(v3_raw).hexdigest())
+        self.assertEqual(recorded['linker_elf_observation_sha256'], sha256(self.observation_raw).hexdigest())
+        self.assertEqual(recorded['dependency_candidate_sha256'], sha256(self.dependencies).hexdigest())
+        self.assertEqual((recorded['verified_archives'], recorded['measured_members'], recorded['elf_metadata_observations'],
+                          recorded['matching_linker_names_and_versions'], recorded['matching_restricted_direct_library_profiles']),
+                         (4, 4, 3, 3, 1))
+        self.assertEqual([row['soname'] for row in recorded['libraries']],
+                         [edge['soname'] for edge in self.observation['elf_metadata']['needed']])
+        self.assertEqual(recorded['jansson_shared_version_definition_auxiliary']['record_overlaps'],
+                         [[[40, 48, 'auxiliary'], [40, 48, 'auxiliary']]])
+        for flag in ('materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible',
+                     'native_staging_observed', 'package_archives_saved', 'payload_files_saved'):
+            self.assertIs(recorded[flag], False)
+        for field in ('native_loader_closure', 'approved_toolchain_lock', 'artifact_receipt'):
+            self.assertIsNone(recorded[field])
+        self.assertEqual(recorded['qualifying_native_amd64_builder_receipts_added'], 0)
+
     def test_elf_observation_binds_the_receipt_and_exact_inputs_and_retains_holds(self):
         observed = self.observation
         self.assertEqual(sha256(self.observation_raw).hexdigest(),
@@ -290,9 +368,8 @@ class HolderLinkerLibraryAllowlistTests(unittest.TestCase):
         prior = (self.proposals / 'm4-linux-arm64-holder-linker-member-observation-v1.json').read_bytes()
         self.assertEqual(observed['linker_observation_sha256'], sha256(prior).hexdigest())
         self.assertEqual(observed['linker_member_sha256'], json.loads(prior)['measurement']['sha256'])
-        tools = ROOT / 'tools/local-coordination-pilot'
-        for tool, field in (('elf-reader', 'elf_reader_sha256'), ('deb-reader', 'archive_reader_sha256')):
-            self.assertEqual(observed[field], sha256((tools / (PREFIX + tool + '.py')).read_bytes()).hexdigest())
+        self.assertEqual(observed['elf_reader_sha256'], 'bd40b647b1979334686165ff8805aa69780aee97282ce1bfca6f781d2d45e64d')
+        self.assertEqual(observed['archive_reader_sha256'], '46910b0b5082267c8cc8c05388331b289e3cf829e3a68519783c2a03b06d71e3')
         metadata = observed['elf_metadata']
         self.assertEqual((tuple(metadata['abi']), metadata['kind'], metadata['interpreter']),
                          (closure.ELF_ABI, 'DYNAMIC_TOOL', closure.ELF_INTERPRETER))

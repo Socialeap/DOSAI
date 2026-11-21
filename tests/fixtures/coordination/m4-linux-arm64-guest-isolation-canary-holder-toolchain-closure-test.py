@@ -269,6 +269,30 @@ class HolderELFClosureTests(unittest.TestCase):
                                 if obj.path == jansson else obj for obj in objects)
         self.assertIsNone(self.verify(entries=renamed_entries, objects=renamed_objects))
 
+    def test_libc_interpreter_is_admitted_only_at_the_exact_runtime_path_and_loader_edge(self):
+        entries = tuple(entry._replace(executable=True) if entry.path == LIBC else entry for entry in self.entries
+                        if entry.path not in (GCC_LIB, RUNTIME + 'libgcc_s.so.1'))
+        libc = next(obj for obj in self.objects if obj.path == LIBC)
+        libc = libc._replace(interpreter=closure.ELF_INTERPRETER,
+                             needed=((closure.ELF_LOADER_SONAME, ('GLIBC_PRIVATE',)),))
+        others = tuple(obj for obj in self.objects if obj.path not in (LIBC, GCC_LIB))
+        self.assertEqual(self.verify(entries=entries, objects=(*others, libc)).status, 'SOURCE_ONLY_HOLD')
+
+        for rejected in (libc._replace(interpreter='/lib/elsewhere.so'), libc._replace(needed=()),
+                         libc._replace(needed=((closure.ELF_LOADER_SONAME, ('UNKNOWN',)),)),
+                         libc._replace(needed=(*libc.needed, ('libc.so.6', ()))),
+                         libc._replace(unsupported_features=('DT_RPATH',)), libc._replace(soname='libother.so.6')):
+            with self.subTest(rejected=rejected):
+                self.assertIsNone(self.verify(entries=entries, objects=(*others, rejected)))
+        wrong_directory = 'toolchain/runtime/lib/libc.so.6'
+        reloc = file(wrong_directory, True)
+        self.assertIsNone(self.verify(entries=tuple(reloc if entry.path == LIBC else entry for entry in entries),
+                                      objects=(*others, libc._replace(path=reloc.path, digest=reloc.digest))))
+        wrong_mode = tuple(entry._replace(executable=False) if entry.path == LIBC else entry for entry in entries)
+        self.assertIsNone(self.verify(entries=wrong_mode, objects=(*others, libc)))
+        self.assertIsNone(self.verify(entries=tuple(entry for entry in entries if entry.path != INTERPRETER_ALIAS),
+                                      objects=(*others, libc)))
+
 
 if __name__ == '__main__':
     unittest.main()

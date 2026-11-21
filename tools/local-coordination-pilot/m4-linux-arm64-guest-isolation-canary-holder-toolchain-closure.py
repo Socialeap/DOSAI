@@ -14,6 +14,8 @@ TOOL_PREFIX = 'toolchain/bin/'
 SYSROOT_PREFIX = 'toolchain/sysroot/'
 RUNTIME_PREFIX = 'toolchain/runtime'
 ELF_INTERPRETER = '/lib/ld-linux-aarch64.so.1'
+ELF_LOADER_SONAME = ELF_INTERPRETER.rsplit('/', 1)[-1]
+LIBC_RUNTIME_PATH = RUNTIME_PREFIX + '/usr/lib/aarch64-linux-gnu/libc.so.6'
 ELF_ABI = ('ELF64', 'LITTLE_ENDIAN', 'EM_AARCH64')
 ELF_LIBRARY_DIRS = ('/lib/aarch64-linux-gnu', '/usr/lib/aarch64-linux-gnu', '/lib', '/usr/lib')
 RUNTIME_LIBRARY_DIRS = tuple(RUNTIME_PREFIX + directory for directory in ELF_LIBRARY_DIRS)
@@ -271,7 +273,7 @@ def _elf_objects(rows, catalog):
             if not entry.executable or obj.interpreter != ELF_INTERPRETER or obj.soname != '':
                 return None
         elif obj.kind == 'SHARED_OBJECT':
-            if obj.interpreter != '' or not _elf_name(obj.soname):
+            if not _elf_name(obj.soname):
                 return None
         else:
             return None
@@ -283,6 +285,10 @@ def _elf_objects(rows, catalog):
             if not _elf_name(soname) or soname in dependencies or not _elf_names(versions):
                 return None
             dependencies.add(soname)
+        if obj.kind == 'SHARED_OBJECT' and obj.interpreter != '':
+            if (entry.path != LIBC_RUNTIME_PATH or obj.soname != 'libc.so.6' or not entry.executable
+                    or obj.interpreter != ELF_INTERPRETER or dependencies != {ELF_LOADER_SONAME}):
+                return None
         objects[obj.path] = obj
     return objects
 
@@ -327,8 +333,7 @@ def verify_fixture_holder_elf_closure(lock, approved_digest, inventory, observat
     roots = tuple(catalog.canonical_path(TOOL_PREFIX + tool) for tool in REQUIRED_TOOLS)
     if len(set(roots)) != len(REQUIRED_TOOLS):
         return None
-    loader_name = ELF_INTERPRETER.rsplit('/', 1)[-1]
-    loader = _runtime_library(loader_name, catalog, objects)
+    loader = _runtime_library(ELF_LOADER_SONAME, catalog, objects)
     if (loader is None or catalog.canonical_path(RUNTIME_PREFIX + ELF_INTERPRETER) != loader.path
             or not catalog.records[loader.path].executable
             or any(path not in objects or objects[path].kind != 'DYNAMIC_TOOL' for path in roots)):
