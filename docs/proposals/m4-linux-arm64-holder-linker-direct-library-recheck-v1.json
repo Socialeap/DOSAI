@@ -1,0 +1,133 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-linker-direct-library-recheck:1",
+  "schema_version": 1,
+  "status": "DIRECT_LIBRARY_CHECKS_PASSED_SOURCE_ONLY_HOLD",
+  "source_revision": "3f90cfe2161a017aba5fb397120929435966413b",
+  "raw_receipt_sha256": "7283b2f037b50e92eb6dbdbb6565ebe0cd8c7e26a186b4a54350710756e780d3",
+  "allowlist_sha256": "b4275005a790f4cfd66433b42f20d99ef5d66b8cdaf1a521e541ee50dc901446",
+  "prior_direct_library_observation_sha256": "a2922362e964148fa9a0ad580247d7d45709b73d4164f873dae8a5c38765ad09",
+  "linker_elf_observation_sha256": "38b26aeed7ad68d90e0168119f9a88467770159d4ce091ff3669c5ee8ff39fe5",
+  "dependency_candidate_sha256": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+  "archive_reader_sha256": "46910b0b5082267c8cc8c05388331b289e3cf829e3a68519783c2a03b06d71e3",
+  "elf_reader_sha256": "6c01e74ebbfb414123e25986247bc37554bef24db6133e9836370b1631649339",
+  "object_verifier_sha256": "51e37dad7b69c0ef76420f1619099ae5d93fb2f1f08e09edc04262b149faaabc",
+  "started_at": "2026-11-21T20:46:09Z",
+  "finished_at": "2026-11-21T20:46:10Z",
+  "verified_archives": 4,
+  "measured_members": 4,
+  "elf_metadata_observations": 4,
+  "passing_direct_library_checks": 4,
+  "additional_needed_names_outside_v3_runtime_paths": [
+    "libsframe.so.1",
+    "libz.so.1",
+    "libzstd.so.1"
+  ],
+  "libraries": [
+    {
+      "package": "libbinutils",
+      "soname": "libbfd-2.44-system.so",
+      "member_sha256": "7148e290f24b5de218d65be62fa74a595143664ddf95dcc76335b292eeb1bbb4",
+      "interpreter": "",
+      "needed": [
+        {
+          "soname": "libz.so.1",
+          "required_versions": [
+            "ZLIB_1.2.0"
+          ]
+        },
+        {
+          "soname": "libzstd.so.1",
+          "required_versions": []
+        },
+        {
+          "soname": "libsframe.so.1",
+          "required_versions": [
+            "LIBSFRAME_1.0"
+          ]
+        },
+        {
+          "soname": "libc.so.6",
+          "required_versions": [
+            "GLIBC_2.33",
+            "GLIBC_2.34",
+            "GLIBC_2.38",
+            "GLIBC_2.17"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "libctf0",
+      "soname": "libctf.so.0",
+      "member_sha256": "def024cba74defbba1928cb4e44d5d7730ba2e08d5855d6620c2ab16a319257d",
+      "interpreter": "",
+      "needed": [
+        {
+          "soname": "libbfd-2.44-system.so",
+          "required_versions": []
+        },
+        {
+          "soname": "libz.so.1",
+          "required_versions": [
+            "ZLIB_1.2.0"
+          ]
+        },
+        {
+          "soname": "libc.so.6",
+          "required_versions": [
+            "GLIBC_2.33",
+            "GLIBC_2.17"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "libjansson4",
+      "soname": "libjansson.so.4",
+      "member_sha256": "b7830632c6245b8805ce05240c6818eb77644adef86a55d754acfd93bbf0fb6b",
+      "interpreter": "",
+      "needed": [
+        {
+          "soname": "libc.so.6",
+          "required_versions": [
+            "GLIBC_2.38",
+            "GLIBC_2.17"
+          ]
+        },
+        {
+          "soname": "ld-linux-aarch64.so.1",
+          "required_versions": [
+            "GLIBC_2.17"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "libc6",
+      "soname": "libc.so.6",
+      "member_sha256": "70fa4c4cf57eabeb96097cce47582d02379c4cd1de3db3e98ade4dd7089a1b13",
+      "interpreter": "/lib/ld-linux-aarch64.so.1",
+      "needed": [
+        {
+          "soname": "ld-linux-aarch64.so.1",
+          "required_versions": [
+            "GLIBC_2.35",
+            "GLIBC_PRIVATE",
+            "GLIBC_2.17"
+          ]
+        }
+      ]
+    }
+  ],
+  "package_archives_saved": false,
+  "payload_files_saved": false,
+  "native_staging_observed": false,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}

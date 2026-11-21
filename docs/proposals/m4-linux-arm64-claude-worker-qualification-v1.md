@@ -652,9 +652,30 @@ diagnostic. The following source changes are verified with offline fixtures.
   checks that loader's path, identity, and required version definitions.
   [Arm AArch64 dynamic tags](https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst#9103dynamic-section-tags)
 
-The fixed readers still need a separate observation against the pinned
-library bytes. The recorded outcomes are historical. Transitive closure,
-native readback, relocations, and runtime loader behavior remain held.
+The [direct-library recheck](m4-linux-arm64-holder-linker-direct-library-recheck-v1.json)
+binds the four successful in-memory observations to PR #100, the exact
+ELF reader and object verifier, and the unchanged library hashes. All four
+provided the SONAMEs and versions required by `ld.bfd`. The observed ELF
+edges refer to three names absent from the v3 runtime paths.
+
+The [v4 staging allowlist](m4-linux-arm64-holder-staging-allowlist-v4.json)
+preserves the 16 v3 paths and adds these three candidate files in the same
+ARM64 runtime directory. The staged names match the ELF requirements.
+
+| Pinned package | Archive basename | Staged basename |
+|---|---|---|
+| `libsframe1` | `libsframe.so.1.0.0` | `libsframe.so.1` |
+| `zlib1g` from `debian-security` | `libz.so.1.3.1` | `libz.so.1` |
+| `libzstd1` | `libzstd.so.1.5.7` | `libzstd.so.1` |
+
+The fixtures prove that omitting any of the three paths or the required
+`LIBSFRAME_1.0` or `ZLIB_1.2.0` version leaves the observed dependency
+graph unresolved. The three archive members still need in-memory byte and
+ELF verification. Transitive closure, native readback, relocations, and
+runtime loader behavior remain held.
+[Debian SFrame file list](https://packages.debian.org/trixie/arm64/libsframe1/filelist) ·
+[Debian zlib file list](https://packages.debian.org/trixie/arm64/zlib1g/filelist) ·
+[Debian Zstandard file list](https://packages.debian.org/trixie/arm64/libzstd1/filelist)
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
