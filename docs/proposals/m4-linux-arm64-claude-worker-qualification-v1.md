@@ -784,11 +784,29 @@ result. Child handles are released on success and failure.
 [Linux statx](https://man7.org/linux/man-pages/man2/statx.2.html) ·
 [Linux readlinkat](https://man7.org/linux/man-pages/man2/readlink.2.html)
 
-The collector receives substituted operations for offline tests. Native
-binding review must establish that directory enumeration and file reads
-operate on the same pinned object, with complete bounded samples,
-verified cleanup, and supervisor-enforced deadlines. Binding, physical
-writer exclusion, and native qualification remain separately gated.
+The [ARM64 syscall bindings](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-staging-readback.py)
+prepare the fixed Linux ARM64 little-endian LP64 operations for a future
+supervisor-owned session. Child paths use the pinned parent descriptor.
+A directory stream opens `.` relative to the pinned directory and checks
+identity before enumeration and at EOF. The binding requires the unique
+mount ID in the returned `statx` mask, parses bounded `getdents64` records,
+and reads symlinks through `readlinkat` on the link descriptor.
+[ARM64 open flags](https://github.com/torvalds/linux/blob/v6.12/arch/arm64/include/uapi/asm/fcntl.h) ·
+[Linux syscall table](https://github.com/torvalds/linux/blob/v6.12/include/uapi/asm-generic/unistd.h) ·
+[Linux statx ABI](https://github.com/torvalds/linux/blob/v6.12/include/uapi/linux/stat.h)
+
+Regular reads use pre-enrolled read-only descriptors supplied by the
+supervisor. Each read checks the descriptor against the pinned regular
+object, verifies read-only and close-on-exec flags, and checks both
+identities again afterward. This keeps content retrieval independent of the
+original pathname. The binding borrows these descriptors and the root and
+closes only acquired children and directory streams. An uncertain close
+withholds the census and consumes the close attempt.
+
+Offline tests supply simulated kernel buffers and cover the native
+factory through a mock syscall. Physical descriptor enrollment and
+custody, writer exclusion, supervisor-enforced deadlines, and native
+qualification retain their gates.
 
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
