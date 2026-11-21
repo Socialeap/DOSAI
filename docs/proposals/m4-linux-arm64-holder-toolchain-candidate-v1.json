@@ -1,0 +1,100 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-toolchain-candidate:1",
+  "schema_version": 1,
+  "status": "PUBLIC_METADATA_ONLY_HOLD",
+  "observed_on": "2026-11-21",
+  "source_revision": "eee1a6a723a6f76c13aeec335930d9a81544ce86",
+  "source_manifest_sha256": "d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e",
+  "recipe_sha256": "c0c9d991e2da8966a2d8ab53f73935b7465ee3d998c848b52ad85a67350e0272",
+  "distribution": "Debian 13 (trixie)",
+  "required_host": "NATIVE_LINUX_ARM64",
+  "target": "aarch64-linux-gnu",
+  "package_roots": [
+    {
+      "name": "gcc-14-aarch64-linux-gnu",
+      "version": "14.2.0-19",
+      "architecture": "arm64",
+      "archive": "debian",
+      "pool_directory": "pool/main/g/gcc-14",
+      "size_bytes": 17686496,
+      "sha256": "5ff736a332ba5d60ad463355ed25c8c39da1281acf9155cc2f8a55fc1d478be8"
+    },
+    {
+      "name": "cpp-14-aarch64-linux-gnu",
+      "version": "14.2.0-19",
+      "architecture": "arm64",
+      "archive": "debian",
+      "pool_directory": "pool/main/g/gcc-14",
+      "size_bytes": 9168888,
+      "sha256": "8e588ac3efe06f7784b08feac584c70e6965b74c045bae7e4e80bb42938f7dbe"
+    },
+    {
+      "name": "binutils-aarch64-linux-gnu",
+      "version": "2.44-3",
+      "architecture": "arm64",
+      "archive": "debian",
+      "pool_directory": "pool/main/b/binutils",
+      "size_bytes": 820124,
+      "sha256": "79cbf1459118bce3535133ffbf1fd2adbd57af65271f95c829af5cfa7f474168"
+    },
+    {
+      "name": "libc6-dev",
+      "version": "2.41-12+deb13u4",
+      "architecture": "arm64",
+      "archive": "debian",
+      "pool_directory": "pool/main/g/glibc",
+      "size_bytes": 1624488,
+      "sha256": "71e373cb5e9da975b02fb4af555929cb1977560e2dd8245de4eb8a7b03677a08"
+    },
+    {
+      "name": "libc6",
+      "version": "2.41-12+deb13u4",
+      "architecture": "arm64",
+      "archive": "debian",
+      "pool_directory": "pool/main/g/glibc",
+      "size_bytes": 2483572,
+      "sha256": "8784eda966b189c777a384dac5ce009e8fc9b52d006926c5a013e7fa8aa688cc"
+    },
+    {
+      "name": "linux-libc-dev",
+      "version": "6.12.117-1",
+      "architecture": "all",
+      "archive": "debian-security",
+      "pool_directory": "pool/updates/main/l/linux",
+      "size_bytes": 3085840,
+      "sha256": "8b4848725a2705e5b1612f2135c44300716690ba762368ab87df127e9a5ed416"
+    },
+    {
+      "name": "libgcc-14-dev",
+      "version": "14.2.0-19",
+      "architecture": "arm64",
+      "archive": "debian",
+      "pool_directory": "pool/main/g/gcc-14",
+      "size_bytes": 2358568,
+      "sha256": "64b8ebc7182a69aa9525df6eab5e7eb849b947e350d821549f8a8a3e9b19e5ba"
+    }
+  ],
+  "package_root_bytes": 37227976,
+  "stage_candidates": [
+    ["gcc-14-aarch64-linux-gnu", "usr/bin/aarch64-linux-gnu-gcc-14", "toolchain/bin/aarch64-linux-gnu-gcc"],
+    ["cpp-14-aarch64-linux-gnu", "usr/libexec/gcc/aarch64-linux-gnu/14/cc1", "toolchain/bin/cc1"],
+    ["gcc-14-aarch64-linux-gnu", "usr/libexec/gcc/aarch64-linux-gnu/14/collect2", "toolchain/bin/collect2"],
+    ["binutils-aarch64-linux-gnu", "usr/bin/aarch64-linux-gnu-as", "toolchain/bin/as"],
+    ["binutils-aarch64-linux-gnu", "usr/bin/aarch64-linux-gnu-ld", "toolchain/bin/ld"],
+    ["libc6-dev", "usr/include/fcntl.h", "toolchain/sysroot/usr/include/fcntl.h"],
+    ["linux-libc-dev", "usr/include/linux/seccomp.h", "toolchain/sysroot/usr/include/linux/seccomp.h"],
+    ["libc6-dev", "usr/lib/aarch64-linux-gnu/crt1.o", "toolchain/sysroot/usr/lib/aarch64-linux-gnu/crt1.o"],
+    ["libc6-dev", "usr/lib/aarch64-linux-gnu/libc.a", "toolchain/sysroot/usr/lib/aarch64-linux-gnu/libc.a"],
+    ["libgcc-14-dev", "usr/lib/gcc/aarch64-linux-gnu/14/libgcc.a", "toolchain/lib/gcc/aarch64-linux-gnu/14/libgcc.a"],
+    ["libc6", "usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1", "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1"]
+  ],
+  "signed_index_verification": null,
+  "dependency_closure": null,
+  "native_staging_observation": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}
