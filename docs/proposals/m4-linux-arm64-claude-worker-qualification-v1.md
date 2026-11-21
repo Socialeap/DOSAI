@@ -498,6 +498,47 @@ host-runtime resolution stay inside the disposable build root. The v2
 manifest's toolchain field remains unset until that toolchain is selected
 and independently reviewed.
 
+The [Debian 13 ARM64 toolchain candidate](m4-linux-arm64-holder-toolchain-candidate-v1.json)
+pins the Debian-published metadata for the native GCC 14 driver and
+frontend, binutils, glibc development and runtime packages, Linux UAPI
+headers, and the GCC development runtime. Those seven package roots total
+37,227,976 archive bytes. The package file lists identify the driver,
+`cc1`, `collect2`, assembler, linker, headers, startup object, static
+archives, and loader candidates for the staging layout.
+[GCC driver files](https://packages.debian.org/trixie/arm64/gcc-14-aarch64-linux-gnu/filelist) ·
+[Frontend files](https://packages.debian.org/trixie/arm64/cpp-14-aarch64-linux-gnu/filelist) ·
+[Binutils files](https://packages.debian.org/trixie/arm64/binutils-aarch64-linux-gnu/filelist) ·
+[Glibc development files](https://packages.debian.org/trixie/arm64/libc6-dev/filelist) ·
+[Glibc runtime files](https://packages.debian.org/trixie/arm64/libc6/filelist) ·
+[UAPI header files](https://packages.debian.org/trixie/all/linux-libc-dev/filelist) ·
+[GCC runtime archive](https://packages.debian.org/trixie/arm64/libgcc-14-dev/filelist)
+
+The candidate SHA-256 is
+`b499f1cecd84044854631bd702dd33d33666d1fcabcfbf706d27317d62735f0e`.
+It records the versions, archive sizes, and SHA-256 values published by
+Debian's package pages. This review used metadata only. Signed
+index verification, package byte verification, and dependency resolution
+remain held.
+[GCC package](https://packages.debian.org/trixie/arm64/gcc-14-aarch64-linux-gnu/download) ·
+[Frontend package](https://packages.debian.org/trixie/arm64/cpp-14-aarch64-linux-gnu/download) ·
+[Binutils package](https://packages.debian.org/trixie/arm64/binutils-aarch64-linux-gnu/download) ·
+[Glibc development package](https://packages.debian.org/trixie/arm64/libc6-dev/download) ·
+[Glibc runtime package](https://packages.debian.org/trixie/arm64/libc6/download) ·
+[UAPI header package](https://packages.debian.org/trixie/all/linux-libc-dev/download) ·
+[GCC runtime package](https://packages.debian.org/en/trixie/arm64/libgcc-14-dev/download)
+
+Before selecting the staged lock, verify the exact main and security index
+records through Debian's signed Release metadata under a reviewed archive
+trust root. Resolve the full versioned dependency and loader closure from
+those same indexes. The GCC and binutils roots report dependencies such as
+`libgmp10` and `libbinutils` beyond these roots. Native staging must prove
+that aliases, compiler lookup, and the host loader stay within the isolated
+build root. Only an independently verified staged census can populate the
+toolchain lock.
+[Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
+[GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
+[Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
@@ -553,6 +594,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-lau
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-build-manifest-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-entry-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-toolchain-closure-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-toolchain-candidate-test.py
 ```
 
 ## Qualification limits
