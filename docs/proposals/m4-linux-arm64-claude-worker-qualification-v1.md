@@ -690,9 +690,19 @@ including the loader. It resolved all 19 `DT_NEEDED` edges and found
 every required version definition on the matching provider. Both
 `ld.bfd` and `libc.so.6` also declare `/lib/ld-linux-aarch64.so.1` in
 `PT_INTERP`. The v4 allowlist places the measured loader under
-`toolchain/runtime/usr/lib/aarch64-linux-gnu/`. The exact `/lib` binding
-remains held for separate review. Native staging, the approved lock,
-relocations, and runtime loader behavior retain their gates.
+`toolchain/runtime/usr/lib/aarch64-linux-gnu/`.
+
+The [v5 staging allowlist](m4-linux-arm64-holder-staging-allowlist-v5.json)
+plans one relative alias at `toolchain/runtime/lib/ld-linux-aarch64.so.1`
+with target `../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1`. This
+binds the two declared interpreter paths to the same measured `libc6`
+member by package path, size, mode, and SHA-256. The 19 archive-member
+paths remain intact. The v5 replay checks both declarations and all 19
+dependency edges offline. The fixture rejects a missing, redirected,
+or colliding alias and a changed loader measurement. The historical v4
+replay still records the unbound interpreter path. Native materialization
+and readback, the approved lock, relocations, and runtime loader behavior
+retain their gates.
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)

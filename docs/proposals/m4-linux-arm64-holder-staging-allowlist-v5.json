@@ -1,0 +1,160 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-staging-allowlist:5",
+  "schema_version": 5,
+  "status": "STAGING_PATHS_ONLY_HOLD",
+  "source_revision": "bd7ed4401ce5dd3357306af68cc26ac4acf13761",
+  "predecessor_sha256": "46d51270d9110e4784939ba3c3f590ac158cf4f146a29a86aff12717bccbb4e4",
+  "member_observation_sha256": "ae542d78478f88ab9e8be0b7a9d36febce7e35d162886e91366a2c5f6b5ac0a2",
+  "input_sha256": {
+    "m4-linux-arm64-holder-toolchain-candidate-v1.json": "b499f1cecd84044854631bd702dd33d33666d1fcabcfbf706d27317d62735f0e",
+    "m4-linux-arm64-holder-debian-dependency-candidate-v1.json": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+    "m4-linux-arm64-holder-debian-package-hash-observation-v1.json": "d24ab63fa183367025ccd175bf42eae81ac0ba98e1ae9595d067fea1ac8a3d21",
+    "m4-linux-arm64-holder-build-manifest-v2.json": "d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e",
+    "m4-linux-arm64-holder-native-staging-and-elf-plan-v1.md": "14c085da6d7065e27265215cdeba76d936e7d7e635727b4672bebb5ca92901e9"
+  },
+  "archive_pin_count": 35,
+  "paths": [
+    {
+      "package": "gcc-14-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-gcc-14",
+      "staged_path": "toolchain/bin/aarch64-linux-gnu-gcc"
+    },
+    {
+      "package": "cpp-14-aarch64-linux-gnu",
+      "member_path": "usr/libexec/gcc/aarch64-linux-gnu/14/cc1",
+      "staged_path": "toolchain/bin/cc1"
+    },
+    {
+      "package": "gcc-14-aarch64-linux-gnu",
+      "member_path": "usr/libexec/gcc/aarch64-linux-gnu/14/collect2",
+      "staged_path": "toolchain/bin/collect2"
+    },
+    {
+      "package": "binutils-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-as",
+      "staged_path": "toolchain/bin/as"
+    },
+    {
+      "package": "binutils-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-ld",
+      "staged_path": "toolchain/bin/ld"
+    },
+    {
+      "package": "libc6-dev",
+      "member_path": "usr/include/fcntl.h",
+      "staged_path": "toolchain/sysroot/usr/include/fcntl.h"
+    },
+    {
+      "package": "linux-libc-dev",
+      "member_path": "usr/include/linux/seccomp.h",
+      "staged_path": "toolchain/sysroot/usr/include/linux/seccomp.h"
+    },
+    {
+      "package": "libc6-dev",
+      "member_path": "usr/lib/aarch64-linux-gnu/crt1.o",
+      "staged_path": "toolchain/sysroot/usr/lib/aarch64-linux-gnu/crt1.o"
+    },
+    {
+      "package": "libc6-dev",
+      "member_path": "usr/lib/aarch64-linux-gnu/libc.a",
+      "staged_path": "toolchain/sysroot/usr/lib/aarch64-linux-gnu/libc.a"
+    },
+    {
+      "package": "libgcc-14-dev",
+      "member_path": "usr/lib/gcc/aarch64-linux-gnu/14/libgcc.a",
+      "staged_path": "toolchain/lib/gcc/aarch64-linux-gnu/14/libgcc.a"
+    },
+    {
+      "package": "libc6",
+      "member_path": "usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1"
+    },
+    {
+      "package": "binutils-aarch64-linux-gnu",
+      "member_path": "usr/bin/aarch64-linux-gnu-ld.bfd",
+      "staged_path": "toolchain/bin/aarch64-linux-gnu-ld.bfd"
+    },
+    {
+      "package": "libbinutils",
+      "member_path": "usr/lib/aarch64-linux-gnu/libbfd-2.44-system.so",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libbfd-2.44-system.so"
+    },
+    {
+      "package": "libctf0",
+      "member_path": "usr/lib/aarch64-linux-gnu/libctf.so.0.0.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libctf.so.0"
+    },
+    {
+      "package": "libjansson4",
+      "member_path": "usr/lib/aarch64-linux-gnu/libjansson.so.4.14.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libjansson.so.4"
+    },
+    {
+      "package": "libc6",
+      "member_path": "usr/lib/aarch64-linux-gnu/libc.so.6",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libc.so.6"
+    },
+    {
+      "package": "libsframe1",
+      "member_path": "usr/lib/aarch64-linux-gnu/libsframe.so.1.0.0",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libsframe.so.1"
+    },
+    {
+      "package": "zlib1g",
+      "member_path": "usr/lib/aarch64-linux-gnu/libz.so.1.3.1",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libz.so.1"
+    },
+    {
+      "package": "libzstd1",
+      "member_path": "usr/lib/aarch64-linux-gnu/libzstd.so.1.5.7",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libzstd.so.1"
+    }
+  ],
+  "required_link": {
+    "package": "binutils-aarch64-linux-gnu",
+    "member_path": "usr/bin/aarch64-linux-gnu-ld",
+    "staged_path": "toolchain/bin/ld",
+    "relative_target": "aarch64-linux-gnu-ld.bfd"
+  },
+  "reviewed_member_pins": null,
+  "runtime_extension": {
+    "scope": "LD_BFD_DIRECT_LIBRARY_PATHS_ONLY",
+    "linker_elf_observation_sha256": "38b26aeed7ad68d90e0168119f9a88467770159d4ce091ff3669c5ee8ff39fe5",
+    "path_count": 4,
+    "source_member_kind_required": "FILE",
+    "provider_metadata_observation": null,
+    "transitive_loader_closure": null
+  },
+  "staged_inventory": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0,
+  "transitive_runtime_extension": {
+    "scope": "LD_BFD_OBSERVED_TRANSITIVE_LIBRARY_PATHS_ONLY",
+    "direct_library_recheck_sha256": "99e22bb5dd0f090b7ff657d206afb8a46eb81ecb01c903165c3a2581c4de89ef",
+    "path_count": 3,
+    "source_member_kind_required": "FILE",
+    "provider_metadata_observation": null,
+    "transitive_loader_closure": null
+  },
+  "runtime_interpreter_binding": {
+    "kind": "STAGED_RELATIVE_ALIAS",
+    "linker_graph_observation_sha256": "f7448404857fa92b0bea74463f5388325e846d160f199c0eea6a6fa97f94cba9",
+    "declared_interpreter": "/lib/ld-linux-aarch64.so.1",
+    "staged_path": "toolchain/runtime/lib/ld-linux-aarch64.so.1",
+    "relative_target": "../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+    "provider": {
+      "package": "libc6",
+      "member_path": "usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+      "member_size_bytes": 201344,
+      "member_mode_octal": "0755",
+      "member_sha256": "1b882eddacd494b060413a8aa4f0a4754ee3f84775e68cecbf8a86092b59cca6"
+    },
+    "native_binding_observation": null
+  }
+}
