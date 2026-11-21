@@ -268,5 +268,79 @@ class Arm64ELFReaderTests(unittest.TestCase):
         self.assertEqual(receipt['qualifying_native_amd64_builder_receipts_added'], 0)
 
 
+class HolderLinkerLibraryAllowlistTests(unittest.TestCase):
+    def setUp(self):
+        self.proposals = ROOT / 'docs/proposals'
+        self.v2_raw = (self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v2.json').read_bytes()
+        self.v2 = json.loads(self.v2_raw)
+        self.v3 = json.loads((self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v3.json').read_bytes())
+        self.observation_raw = (self.proposals / 'm4-linux-arm64-holder-linker-elf-observation-v1.json').read_bytes()
+        self.observation = json.loads(self.observation_raw)
+        self.dependencies = (self.proposals / 'm4-linux-arm64-holder-debian-dependency-candidate-v1.json').read_bytes()
+
+    def test_elf_observation_binds_the_receipt_and_exact_inputs_and_retains_holds(self):
+        observed = self.observation
+        self.assertEqual(sha256(self.observation_raw).hexdigest(),
+                         '38b26aeed7ad68d90e0168119f9a88467770159d4ce091ff3669c5ee8ff39fe5')
+        self.assertEqual(observed['source_revision'], 'f0c969f9dc16d3bb2841053cf974af1d2c7f243c')
+        self.assertEqual(observed['status'], 'ELF_METADATA_OBSERVED_SOURCE_ONLY_HOLD')
+        self.assertEqual(observed['raw_receipt_sha256'], 'a1f7e7f4a99fa99b32644c4e49b7449973892cb920038f34b8b477e8973f90a8')
+        self.assertEqual(observed['allowlist_sha256'], sha256(self.v2_raw).hexdigest())
+        self.assertEqual(observed['dependency_candidate_sha256'], sha256(self.dependencies).hexdigest())
+        prior = (self.proposals / 'm4-linux-arm64-holder-linker-member-observation-v1.json').read_bytes()
+        self.assertEqual(observed['linker_observation_sha256'], sha256(prior).hexdigest())
+        self.assertEqual(observed['linker_member_sha256'], json.loads(prior)['measurement']['sha256'])
+        tools = ROOT / 'tools/local-coordination-pilot'
+        for tool, field in (('elf-reader', 'elf_reader_sha256'), ('deb-reader', 'archive_reader_sha256')):
+            self.assertEqual(observed[field], sha256((tools / (PREFIX + tool + '.py')).read_bytes()).hexdigest())
+        metadata = observed['elf_metadata']
+        self.assertEqual((tuple(metadata['abi']), metadata['kind'], metadata['interpreter']),
+                         (closure.ELF_ABI, 'DYNAMIC_TOOL', closure.ELF_INTERPRETER))
+        self.assertEqual(metadata['unsupported_features'], [])
+        for field in ('package_archives_saved', 'payload_files_saved', 'native_staging_observed',
+                      'materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible'):
+            self.assertIs(observed[field], False)
+        for field in ('native_loader_closure', 'approved_toolchain_lock', 'artifact_receipt'):
+            self.assertIsNone(observed[field])
+        self.assertEqual(observed['qualifying_native_amd64_builder_receipts_added'], 0)
+
+    def test_v3_adds_only_the_four_exact_candidate_members_in_needed_order(self):
+        expected = (
+            ('libbinutils', '2.44-3', 'libbfd-2.44-system.so', 'libbfd-2.44-system.so', []),
+            ('libctf0', '2.44-3', 'libctf.so.0.0.0', 'libctf.so.0', ['LIBCTF_1.1', 'LIBCTF_1.0']),
+            ('libjansson4', '2.14-2+b3', 'libjansson.so.4.14.0', 'libjansson.so.4', ['libjansson.so.4']),
+            ('libc6', '2.41-12+deb13u4', 'libc.so.6', 'libc.so.6',
+             ['GLIBC_2.27', 'GLIBC_2.33', 'GLIBC_2.34', 'GLIBC_2.38', 'GLIBC_2.17']),
+        )
+        v3 = self.v3
+        directory = 'usr/lib/aarch64-linux-gnu'
+        self.assertEqual(v3['schema_version'], 3)
+        self.assertEqual(v3['source_revision'], self.observation['source_revision'])
+        self.assertEqual(v3['predecessor_sha256'], sha256(self.v2_raw).hexdigest())
+        self.assertEqual(v3['paths'][:-4], self.v2['paths'])
+        self.assertEqual(v3['paths'][-4:], [
+            {'package': package, 'member_path': f'{directory}/{source}',
+             'staged_path': f'toolchain/runtime/{directory}/{soname}'}
+            for package, _, source, soname, _ in expected
+        ])
+        self.assertEqual(self.observation['elf_metadata']['needed'], [
+            {'soname': soname, 'required_versions': versions} for _, _, _, soname, versions in expected
+        ])
+        signed = {row['Package']: row for row in json.loads(self.dependencies)['packages']}
+        self.assertEqual(len(signed), v3['archive_pin_count'])
+        for package, version, _, _, _ in expected:
+            self.assertEqual((signed[package]['Version'], signed[package]['Architecture']), (version, 'arm64'))
+        self.assertEqual(v3['runtime_extension'], {
+            'scope': 'LD_BFD_DIRECT_LIBRARY_PATHS_ONLY',
+            'linker_elf_observation_sha256': sha256(self.observation_raw).hexdigest(),
+            'path_count': 4, 'source_member_kind_required': 'FILE',
+            'provider_metadata_observation': None, 'transitive_loader_closure': None,
+        })
+        for field in ('status', 'member_observation_sha256', 'input_sha256', 'required_link', 'reviewed_member_pins',
+                      'staged_inventory', 'approved_toolchain_lock', 'artifact_receipt', 'materialization_authorized',
+                      'build_authorized', 'launch_authorized', 'runtime_eligible', 'qualifying_native_amd64_builder_receipts_added'):
+            self.assertEqual(v3[field], self.v2[field])
+
+
 if __name__ == '__main__':
     unittest.main()

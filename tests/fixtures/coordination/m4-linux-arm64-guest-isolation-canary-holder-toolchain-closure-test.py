@@ -235,6 +235,40 @@ class HolderELFClosureTests(unittest.TestCase):
         observation = closure.FixtureHolderELFObservation('SYNTHETIC_ONLY', pin, True, self.objects)
         self.assertIsNone(closure.verify_fixture_holder_elf_closure(lock, pin, inventory, observation))
 
+    def test_linker_direct_library_candidates_need_exact_staged_names_and_versions(self):
+        proposals = ROOT / 'docs/proposals'
+        policy = json.loads((proposals / 'm4-linux-arm64-holder-staging-allowlist-v3.json').read_bytes())
+        observation = json.loads((proposals / 'm4-linux-arm64-holder-linker-elf-observation-v1.json').read_bytes())
+        needed = tuple((edge['soname'], tuple(edge['required_versions'])) for edge in observation['elf_metadata']['needed'])
+        link = policy['required_link']
+        linker_path = 'toolchain/bin/' + link['relative_target']
+        entries = tuple(entry for entry in ENTRIES if entry.path != link['staged_path'])
+        entries += Alias(link['staged_path'], link['relative_target']), file(linker_path, True)
+        objects = tuple(obj._replace(needed=()) for obj in self.objects
+                        if obj.kind == 'DYNAMIC_TOOL' and obj.path != link['staged_path']) + (
+            elf(linker_path, 'DYNAMIC_TOOL', interpreter=closure.ELF_INTERPRETER, needed=needed),
+            elf(INTERPRETER_ALIAS, 'SHARED_OBJECT', soname='ld-linux-aarch64.so.1'),
+        )
+        for row, (soname, versions) in zip(policy['paths'][-4:], needed):
+            entries += (file(row['staged_path']),)
+            objects += (elf(row['staged_path'], 'SHARED_OBJECT', soname=soname, versions=versions),)
+        self.assertEqual(self.verify(entries=entries, objects=objects).status, 'SOURCE_ONLY_HOLD')
+
+        for row in policy['paths'][-4:]:
+            missing = row['staged_path']
+            with self.subTest(missing=missing):
+                self.assertIsNone(self.verify(entries=tuple(entry for entry in entries if entry.path != missing),
+                                              objects=tuple(obj for obj in objects if obj.path != missing)))
+        wrong_version = tuple(obj._replace(version_definitions=('LIBCTF_1.0',)) if obj.soname == 'libctf.so.0'
+                              else obj for obj in objects)
+        self.assertIsNone(self.verify(entries=entries, objects=wrong_version))
+        jansson = RUNTIME + 'libjansson.so.4'
+        wrong_path = RUNTIME + 'libjansson.so.4.14.0'
+        renamed_entries = tuple(file(wrong_path) if entry.path == jansson else entry for entry in entries)
+        renamed_objects = tuple(obj._replace(path=wrong_path, digest=file(wrong_path).digest)
+                                if obj.path == jansson else obj for obj in objects)
+        self.assertIsNone(self.verify(entries=renamed_entries, objects=renamed_objects))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -607,13 +607,31 @@ role, interpreter, SONAME, ordered needed libraries, and GNU version
 requirements and definitions. It rejects ambiguous mappings, malformed
 tables, stray version requirements, and out-of-range records. It reports
 search overrides, unknown tags and relevant segment flags as held features
-for the existing dependency verifier. The offline integration uses
-synthetic bytes. The observed linker bytes have yet to be read by the
-ELF reader. Native readback, symbol resolution, relocations, and runtime
-loader behavior require separate evidence.
+for the existing dependency verifier. The [linker ELF observation](m4-linux-arm64-holder-linker-elf-observation-v1.json)
+binds the in-memory read of the pinned `ld.bfd` to the exact merged reader
+and linker member measurement. The reader observed a little-endian
+AArch64 ELF64 tool with `/lib/ld-linux-aarch64.so.1` as interpreter and
+four ordered direct libraries. The record retains the required symbol
+versions and the digest of the local receipt.
 [ELF program headers](https://gabi.xinuos.com/elf/08-pheader.html) ·
 [ELF dynamic metadata](https://gabi.xinuos.com/elf/09-dynamic.html) ·
 [AArch64 ELF ABI](https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst)
+
+The [v3 staging allowlist](m4-linux-arm64-holder-staging-allowlist-v3.json)
+adds four candidate paths under `toolchain/runtime/usr/lib/aarch64-linux-gnu/`
+in the recorded dependency order. It maps the versioned archive filenames
+`libctf.so.0.0.0` and `libjansson.so.4.14.0` directly to the requested
+loader names `libctf.so.0` and `libjansson.so.4`. `libbfd-2.44-system.so`
+and `libc.so.6` retain their basenames. Future inspection must confirm that
+all four archive members are regular files and that their ELF metadata
+matches the required SONAMEs and symbol versions. The offline fixtures
+check that the graph rejects missing providers, wrong staged names, and
+missing versions. Provider measurements, the transitive closure, native
+readback, relocations, and runtime loader behavior remain held.
+[Debian libbinutils file list](https://packages.debian.org/trixie/arm64/libbinutils/filelist) ·
+[Debian libctf0 file list](https://packages.debian.org/trixie/arm64/libctf0/filelist) ·
+[Debian libjansson4 file list](https://packages.debian.org/trixie/arm64/libjansson4/filelist) ·
+[Debian libc6 file list](https://packages.debian.org/trixie/arm64/libc6/filelist)
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
