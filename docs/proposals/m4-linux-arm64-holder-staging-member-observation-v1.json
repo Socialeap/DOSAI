@@ -1,0 +1,40 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-staging-member-observation:1",
+  "schema_version": 1,
+  "status": "MEMBERS_MEASURED_SOURCE_ONLY_HOLD",
+  "source_revision": "37526b9fad1750fba2de9099bd2f84f6da624ecc",
+  "staging_allowlist_sha256": "2adbadbb2e6db9584e134ca89754c2535e22d845c201f6be1466d5a43798d207",
+  "archive_reader_sha256": "46910b0b5082267c8cc8c05388331b289e3cf829e3a68519783c2a03b06d71e3",
+  "dependency_candidate_sha256": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+  "raw_receipt_sha256": "0523a68bd96ea75b84f37d8eee8ffb3577a1a2472c3f87aee927f958d9548b0d",
+  "observed_member_rows_sha256": "f4056c37c9f764ce6a49734e949e25d09cfc4d20c0a62b3b26b6db2298631dc5",
+  "started_at": "2026-11-21T18:38:51Z",
+  "finished_at": "2026-11-21T18:38:54Z",
+  "verified_package_archives": 7,
+  "verified_package_archive_bytes": 37227976,
+  "measured_members": 11,
+  "measured_member_counts": {
+    "FILE": 10,
+    "SYMLINK": 1
+  },
+  "observed_link": {
+    "package": "binutils-aarch64-linux-gnu",
+    "member_path": "usr/bin/aarch64-linux-gnu-ld",
+    "staged_path": "toolchain/bin/ld",
+    "kind": "SYMLINK",
+    "size_bytes": 0,
+    "mode_octal": "0777",
+    "sha256": null,
+    "link_target": "aarch64-linux-gnu-ld.bfd"
+  },
+  "package_archives_saved": false,
+  "payload_files_saved": false,
+  "native_staging_observed": false,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}

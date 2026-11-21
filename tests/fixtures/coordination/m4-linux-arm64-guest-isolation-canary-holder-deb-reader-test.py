@@ -5,7 +5,7 @@ import importlib.util
 import io
 import json
 import lzma
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import tarfile
 import unittest
 from unittest.mock import patch
@@ -234,6 +234,97 @@ class HolderStagingProjectionTests(unittest.TestCase):
         for field in ('materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible'):
             self.assertIs(allowlist[field], False)
         self.assertEqual(allowlist['qualifying_native_amd64_builder_receipts_added'], 0)
+
+
+class HolderLinkerTargetTests(unittest.TestCase):
+    def setUp(self):
+        proposals = ROOT / 'docs/proposals'
+        self.v1_raw = (proposals / 'm4-linux-arm64-holder-staging-allowlist-v1.json').read_bytes()
+        self.v1 = json.loads(self.v1_raw)
+        self.v2 = json.loads((proposals / 'm4-linux-arm64-holder-staging-allowlist-v2.json').read_bytes())
+        self.observation_raw = (proposals / 'm4-linux-arm64-holder-staging-member-observation-v1.json').read_bytes()
+        self.observation = json.loads(self.observation_raw)
+
+    def test_record_matches_v1_and_preserves_every_authority_hold(self):
+        observation = self.observation
+        self.assertEqual(observation['status'], 'MEMBERS_MEASURED_SOURCE_ONLY_HOLD')
+        self.assertEqual(observation['source_revision'], '37526b9fad1750fba2de9099bd2f84f6da624ecc')
+        self.assertEqual(observation['staging_allowlist_sha256'], sha256(self.v1_raw).hexdigest())
+        self.assertEqual(observation['archive_reader_sha256'],
+                         sha256((ROOT / 'tools/local-coordination-pilot' / NAME).read_bytes()).hexdigest())
+        dependency = 'm4-linux-arm64-holder-debian-dependency-candidate-v1.json'
+        self.assertEqual(observation['dependency_candidate_sha256'], self.v1['input_sha256'][dependency])
+        self.assertEqual(observation['raw_receipt_sha256'],
+                         '0523a68bd96ea75b84f37d8eee8ffb3577a1a2472c3f87aee927f958d9548b0d')
+        self.assertEqual(observation['observed_member_rows_sha256'],
+                         'f4056c37c9f764ce6a49734e949e25d09cfc4d20c0a62b3b26b6db2298631dc5')
+        self.assertEqual(observation['verified_package_archives'], 7)
+        self.assertEqual(observation['verified_package_archive_bytes'], 37227976)
+        self.assertEqual(observation['measured_members'], len(self.v1['paths']))
+        self.assertEqual(observation['measured_member_counts'], {'FILE': 10, 'SYMLINK': 1})
+        self.assertEqual(observation['observed_link'], {
+            'package': 'binutils-aarch64-linux-gnu', 'member_path': 'usr/bin/aarch64-linux-gnu-ld',
+            'staged_path': 'toolchain/bin/ld', 'kind': 'SYMLINK', 'size_bytes': 0,
+            'mode_octal': '0777', 'sha256': None, 'link_target': 'aarch64-linux-gnu-ld.bfd',
+        })
+        for field in ('package_archives_saved', 'payload_files_saved', 'native_staging_observed',
+                      'materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible'):
+            self.assertIs(observation[field], False)
+        for field in ('approved_toolchain_lock', 'artifact_receipt'):
+            self.assertIsNone(observation[field])
+        self.assertEqual(observation['qualifying_native_amd64_builder_receipts_added'], 0)
+
+    def test_v2_adds_only_the_observed_linkers_exact_same_package_target(self):
+        original = self.v1
+        v2 = self.v2
+        link = self.observation['observed_link']
+        self.assertEqual(v2['schema_version'], 2)
+        self.assertEqual(v2['source_revision'], self.observation['source_revision'])
+        self.assertEqual(v2['predecessor_sha256'], sha256(self.v1_raw).hexdigest())
+        self.assertEqual(v2['member_observation_sha256'], sha256(self.observation_raw).hexdigest())
+        self.assertEqual(v2['paths'][:-1], original['paths'])
+        self.assertEqual(v2['paths'][-1], {
+            'package': 'binutils-aarch64-linux-gnu',
+            'member_path': 'usr/bin/aarch64-linux-gnu-ld.bfd',
+            'staged_path': 'toolchain/bin/aarch64-linux-gnu-ld.bfd',
+        })
+        self.assertEqual(v2['required_link'], {
+            'package': link['package'], 'member_path': link['member_path'], 'staged_path': link['staged_path'],
+            'relative_target': link['link_target'],
+        })
+        self.assertEqual(str(PurePosixPath(link['member_path']).with_name(link['link_target'])),
+                         v2['paths'][-1]['member_path'])
+        self.assertEqual(str(PurePosixPath(link['staged_path']).with_name(link['link_target'])),
+                         v2['paths'][-1]['staged_path'])
+        for field in ('input_sha256', 'archive_pin_count', 'status', 'reviewed_member_pins', 'runtime_extension',
+                      'staged_inventory', 'approved_toolchain_lock', 'artifact_receipt',
+                      'materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible',
+                      'qualifying_native_amd64_builder_receipts_added'):
+            self.assertEqual(v2[field], original[field])
+
+    def test_projection_requires_the_exact_linker_target_and_rejects_redirection(self):
+        link = self.v2['required_link']
+        alias = reader.StagingPath(link['package'], link['member_path'], link['staged_path'])
+        target = reader.StagingPath(**self.v2['paths'][-1])
+        relative_target = link['relative_target']
+        archive = deb(tar(((alias.member_path, tarfile.SYMTYPE, 0o777, relative_target),
+                           (target.member_path, tarfile.REGTYPE, 0o755, BODY))))
+        archive_pin = pin(archive, alias.package)
+        pins, archives = {alias.package: archive_pin}, {alias.package: archive}
+        measured = reader.read_pinned_debian_payload(archive, archive_pin, (alias.member_path, target.member_path))
+        alias_pin = reader.StagingMemberPin(alias, archive_pin, measured[alias.member_path], relative_target)
+        target_pin = reader.StagingMemberPin(target, archive_pin, measured[target.member_path], None)
+        accepted = reader.verify_staging_projection((alias, target), pins, (alias_pin, target_pin), archives)
+        self.assertEqual(accepted.status, 'SOURCE_ONLY_HOLD')
+        with self.assertRaisesRegex(ValueError, 'Unresolved or escaping staged alias'):
+            reader.verify_staging_projection((alias,), pins, (alias_pin,), archives)
+        renamed = target._replace(staged_path='toolchain/bin/other-linker')
+        with self.assertRaisesRegex(ValueError, 'Unresolved or escaping staged alias'):
+            reader.verify_staging_projection((alias, renamed), pins,
+                                             (alias_pin, target_pin._replace(mapping=renamed)), archives)
+        with self.assertRaisesRegex(ValueError, 'differ from review'):
+            wrong = alias_pin._replace(member=alias_pin.member._replace(link='other-linker'))
+            reader.verify_staging_projection((alias, target), pins, (wrong, target_pin), archives)
 
 
 if __name__ == '__main__':
