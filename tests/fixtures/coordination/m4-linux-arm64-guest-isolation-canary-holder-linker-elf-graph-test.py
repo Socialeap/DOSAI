@@ -233,7 +233,12 @@ class HolderLinkerELFGraphTests(unittest.TestCase):
 class HolderToolRootAllowlistTests(unittest.TestCase):
     def setUp(self):
         self.v5 = json.loads(BINDING_POLICY_RAW)
-        self.v6 = json.loads((PROPOSALS / 'm4-linux-arm64-holder-staging-allowlist-v6.json').read_bytes())
+        self.v6_raw = (PROPOSALS / 'm4-linux-arm64-holder-staging-allowlist-v6.json').read_bytes()
+        self.v6 = json.loads(self.v6_raw)
+        self.library_record_raw = (
+            PROPOSALS / 'm4-linux-arm64-holder-tool-root-library-elf-observation-v1.json'
+        ).read_bytes()
+        self.library_record = json.loads(self.library_record_raw)
         self.receipt_raw = (PROPOSALS / 'm4-linux-arm64-holder-tool-root-elf-observation-v1.json').read_bytes()
         self.receipt = json.loads(self.receipt_raw)
         self.graph = json.loads(RECORD_RAW)
@@ -340,53 +345,138 @@ class HolderToolRootAllowlistTests(unittest.TestCase):
                 pin = self.pins[package]
                 self.assertEqual((pin['Version'], pin['Architecture'], pin['archive']), (version, 'arm64', 'debian'))
 
-    def test_synthetic_replay_requires_each_new_provider_and_cc1s_libm_version(self):
-        rows = self.graph['objects'] + self.receipt['tools']
-        measured = [fixture_object(row) for row in rows]
+    def test_library_record_binds_members_and_metadata_to_the_exact_receipt(self):
+        record = self.library_record
+        self.assertEqual(sha256(self.library_record_raw).hexdigest(),
+                         '60714c00711e5e54563609913ea557d81450cdee1be94304ec3a085796f9d427')
+        self.assertEqual(record['raw_receipt_sha256'],
+                         '67885d3001e7b27a05e6b2ab7298e5e833bbcbc6e226fe47c5b78f6d38bf36e3')
+        self.assertEqual(record['source_revision'], 'c4bbebc2c9db392dee7fbc9ba4a761a310688f02')
+        self.assertEqual(record['status'], 'LIBRARY_ELF_METADATA_OBSERVED_SOURCE_ONLY_HOLD')
+        source_digests = {
+            'allowlist_sha256': self.v6_raw,
+            'tool_root_elf_observation_sha256': self.receipt_raw,
+            'linker_graph_observation_sha256': RECORD_RAW,
+            'arm64_dependency_candidate_sha256': self.pins_raw,
+            'archive_hash_observation_sha256': (
+                PROPOSALS / 'm4-linux-arm64-holder-debian-package-hash-observation-v1.json'
+            ).read_bytes(),
+            'archive_reader_sha256': VERIFIER.with_name(
+                'm4-linux-arm64-guest-isolation-canary-holder-deb-reader.py'
+            ).read_bytes(),
+            'elf_reader_sha256': VERIFIER.with_name(
+                'm4-linux-arm64-guest-isolation-canary-holder-elf-reader.py'
+            ).read_bytes(),
+            'object_verifier_sha256': VERIFIER.read_bytes(),
+        }
+        for field, data in source_digests.items():
+            self.assertEqual(record[field], sha256(data).hexdigest(), field)
+        libraries = record['objects']
+        self.assertEqual([row['mapping'] for row in libraries], self.added)
+        self.assertEqual(len(libraries), 6)
+        for field in ('verified_archives', 'measured_members', 'elf_metadata_observations',
+                      'matching_restricted_library_profiles'):
+            self.assertEqual(record[field], len(libraries), field)
+        archives = record['archives']
+        self.assertEqual(len(archives), 6)
+        self.assertEqual({row['package'] for row in archives}, {row['package'] for row in self.added})
+        self.assertEqual(sum(row['size_bytes'] for row in archives), record['verified_archive_bytes'])
+        for row in archives:
+            pin = self.pins[row['package']]
+            self.assertEqual(row, {
+                'package': pin['Package'], 'version': pin['Version'], 'architecture': pin['Architecture'],
+                'archive': pin['archive'], 'filename': pin['Filename'], 'size_bytes': int(pin['Size']),
+                'sha256': pin['SHA256'],
+            })
+        for row in libraries:
+            entry, obj = fixture_object(row)
+            self.assertEqual(row['member_mode_octal'], '0644')
+            self.assertGreater(entry.size, 0)
+            self.assertEqual(len(entry.digest), 32)
+            self.assertEqual((obj.abi, obj.kind, obj.interpreter, obj.unsupported_features),
+                             (closure.ELF_ABI, 'SHARED_OBJECT', '', ()))
+            self.assertEqual(obj.soname, Path(entry.path).name)
+        for field in ('package_archives_saved', 'payload_files_saved', 'native_staging_observed',
+                      'materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible'):
+            self.assertIs(record[field], False)
+        for field in ('native_loader_closure', 'approved_toolchain_lock', 'artifact_receipt'):
+            self.assertIsNone(record[field])
+        self.assertEqual(record['qualifying_native_amd64_builder_receipts_added'], 0)
+
+    def full_graph_fixture(self):
+        rows = self.graph['objects'] + self.receipt['tools'] + self.library_record['objects']
         for row in rows:
             self.assertIn(row['mapping'], self.v6['paths'])
-        entries, objects = map(list, zip(*measured))
+        entries, objects = map(list, zip(*(fixture_object(row) for row in rows)))
         for field in ('runtime_interpreter_binding', 'required_link'):
             alias = self.v6[field]
             entries.append(closure.FixtureHolderToolchainAlias(alias['staged_path'], alias['relative_target']))
+        # The input files outside the ELF graph supply only required inventory shape.
         for row in self.v6['paths']:
             path = row['staged_path']
             if path.startswith(('toolchain/sysroot/', 'toolchain/lib/')):
                 entries.append(closure.FixtureHolderToolchainFile(path, 1, sha256(path.encode()).digest(), False))
+        return entries, objects
 
-        # The six newly listed providers are synthetic. The tool roots and linker graph are measured.
-        for row in self.added:
-            path = row['staged_path']
-            soname = path.rsplit('/', 1)[-1]
-            digest = sha256(('fixture:' + path).encode()).digest()
-            entries.append(closure.FixtureHolderToolchainFile(path, 1, digest, False))
-            versions = ('GLIBC_2.17',) if soname == 'libm.so.6' else ()
-            objects.append(closure.FixtureHolderELFObject(
-                path, digest, closure.ELF_ABI, 'SHARED_OBJECT', '', soname, (), versions, (),
-            ))
+    def verify_full_graph(self, entries, objects):
+        entries = tuple(entries)
+        manifest, recipe = closure.MANIFEST_V2_DIGEST, closure.RECIPE_V2_DIGEST
+        lock = closure.FixtureHolderToolchainLock(manifest, recipe, entries)
+        digest = closure.fixture_holder_toolchain_lock_digest(lock)
+        inventory = closure.FixtureHolderToolchainObservation(
+            'SYNTHETIC_ONLY', 'NATIVE_LINUX_ARM64', manifest, recipe, True, True, entries,
+        )
+        observation = closure.FixtureHolderELFObservation('SYNTHETIC_ONLY', digest, True, tuple(objects))
+        return closure.verify_fixture_holder_elf_closure(lock, digest, inventory, observation)
 
-        def verify(entries, objects):
-            entries = tuple(entries)
-            manifest, recipe = closure.MANIFEST_V2_DIGEST, closure.RECIPE_V2_DIGEST
-            lock = closure.FixtureHolderToolchainLock(manifest, recipe, entries)
-            digest = closure.fixture_holder_toolchain_lock_digest(lock)
-            inventory = closure.FixtureHolderToolchainObservation(
-                'SYNTHETIC_ONLY', 'NATIVE_LINUX_ARM64', manifest, recipe, True, True, entries,
-            )
-            observation = closure.FixtureHolderELFObservation('SYNTHETIC_ONLY', digest, True, tuple(objects))
-            return closure.verify_fixture_holder_elf_closure(lock, digest, inventory, observation)
+    def test_full_measured_elf_graph_replays_offline(self):
+        entries, objects = self.full_graph_fixture()
+        expected_paths = {row['staged_path'] for row in self.v6['paths']}
+        expected_paths.add(self.v6['runtime_interpreter_binding']['staged_path'])
+        self.assertEqual({entry.path for entry in entries}, expected_paths)
+        self.assertEqual(len(entries), len(expected_paths))
+        self.assertEqual(len(objects), 19)
+        self.assertEqual(sum(len(obj.needed) for obj in objects), 51)
+        self.assertEqual(self.library_record['static_metadata_comparison'], {
+            'observed_elf_objects': len(objects), 'observed_needed_edges': sum(len(obj.needed) for obj in objects),
+            'unresolved_providers': [], 'missing_required_versions': [],
+        })
+        result = self.verify_full_graph(entries, objects)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.status, 'SOURCE_ONLY_HOLD')
+        self.assertEqual(result, self.verify_full_graph(entries[::-1], objects[::-1]))
 
-        self.assertEqual(verify(entries, objects).status, 'SOURCE_ONLY_HOLD')
+    def test_full_replay_rejects_missing_or_mismatched_providers(self):
+        entries, objects = self.full_graph_fixture()
         for row in self.added:
             path = row['staged_path']
             with self.subTest(missing=path):
-                self.assertIsNone(verify([entry for entry in entries if entry.path != path],
-                                         [obj for obj in objects if obj.path != path]))
-        without_version = [obj._replace(version_definitions=()) if obj.soname == 'libm.so.6' else obj
-                           for obj in objects]
+                self.assertIsNone(self.verify_full_graph([entry for entry in entries if entry.path != path],
+                                                         [obj for obj in objects if obj.path != path]))
+        # cc1 needs libm, and the measured libm in turn needs the private libc version.
+        for soname, version in (('libm.so.6', 'GLIBC_2.17'), ('libc.so.6', 'GLIBC_PRIVATE')):
+            with self.subTest(soname=soname, version=version):
+                changed = [obj._replace(version_definitions=tuple(v for v in obj.version_definitions if v != version))
+                           if obj.soname == soname else obj for obj in objects]
+                self.assertNotEqual(changed, objects)
+                self.assertIsNone(self.verify_full_graph(entries, changed))
         wrong_soname = [obj._replace(soname='libm.so.0') if obj.soname == 'libm.so.6' else obj for obj in objects]
-        self.assertIsNone(verify(entries, without_version))
-        self.assertIsNone(verify(entries, wrong_soname))
+        self.assertIsNone(self.verify_full_graph(entries, wrong_soname))
+
+    def test_full_replay_rejects_redirected_aliases_and_ambiguous_runtime_paths(self):
+        entries, objects = self.full_graph_fixture()
+        for binding, target in (('runtime_interpreter_binding', '../usr/lib/aarch64-linux-gnu/libc.so.6'),
+                                ('required_link', 'as')):
+            with self.subTest(binding=binding):
+                path = self.v6[binding]['staged_path']
+                changed = [entry._replace(target=target) if entry.path == path else entry for entry in entries]
+                self.assertIsNone(self.verify_full_graph(changed, objects))
+
+        library, = (obj for obj in objects if obj.soname == 'libgmp.so.10')
+        original, = (entry for entry in entries if entry.path == library.path)
+        shadow = 'toolchain/runtime/lib/libgmp.so.10'
+        self.assertIsNone(self.verify_full_graph([*entries, original._replace(path=shadow)],
+                                                 [*objects, library._replace(path=shadow)]))
 
 
 if __name__ == '__main__':
