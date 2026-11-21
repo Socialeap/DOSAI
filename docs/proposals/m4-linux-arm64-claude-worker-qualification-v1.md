@@ -770,6 +770,26 @@ measured ELF graph against that inventory. A native proof still requires
 separately approved staging, verified input archives, independent pinned
 root-relative readback, and physical evidence of writer exclusion.
 
+The [pinned-handle fixture collector](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-staging-readback.py)
+starts from a borrowed root handle already bound to the expected mount,
+inode, and writer seal. It compares directory names against the plan
+before opening one component at a time. The operations contract requires
+`openat2` with beneath, no-symlink, no-magic-link and no-mount-crossing
+resolution, and complete handle-derived `statx` metadata including the
+unique mount ID. Alias targets are bounded link-handle reads. Regular
+file reads are bounded by the pinned length and require EOF and the
+planned SHA-256. A second census and final seal check guard the held
+result. Child handles are released on success and failure.
+[Linux openat2](https://man7.org/linux/man-pages/man2/openat2.2.html) ·
+[Linux statx](https://man7.org/linux/man-pages/man2/statx.2.html) ·
+[Linux readlinkat](https://man7.org/linux/man-pages/man2/readlink.2.html)
+
+The collector receives substituted operations for offline tests. Native
+binding review must establish that directory enumeration and file reads
+operate on the same pinned object, with complete bounded samples,
+verified cleanup, and supervisor-enforced deadlines. Binding, physical
+writer exclusion, and native qualification remain separately gated.
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
