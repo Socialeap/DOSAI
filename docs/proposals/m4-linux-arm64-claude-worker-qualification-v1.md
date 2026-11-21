@@ -478,6 +478,26 @@ computed from compact ASCII JSON with sorted keys. Source-only verification
 checks both digests and all three source pins. The native toolchain closure,
 artifact receipt, build approval, and launch approval remain held.
 
+The [toolchain inventory verifier](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-toolchain-closure.py)
+binds a proposed lock to the exact v2 manifest and recipe digests. It
+requires an independently pinned lock digest and matches it against the
+complete, write-fenced synthetic inventory. Each regular file has a
+canonical staging path, size, SHA-256, and executable flag. File aliases
+must resolve to listed regular files inside the staged toolchain. Sysroot
+aliases must also remain inside the sysroot. The verifier rejects absolute
+or escaping links, loops, directory aliases, and extra, missing, or changed
+entries. It expects the staged GCC driver, `cc1`, `as`, `collect2`, `ld`,
+the required header and startup inputs, and the static C and GCC runtimes.
+The complete inventory also binds supporting files such as host-side loader
+dependencies. It returns a separate sysroot digest and a held status.
+
+This verifier performs no filesystem reads or executions. The offline
+tests supply synthetic files and aliases. A future native readback must
+measure the complete staged inventory and prove that compiler lookup and
+host-runtime resolution stay inside the disposable build root. The v2
+manifest's toolchain field remains unset until that toolchain is selected
+and independently reviewed.
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
@@ -532,6 +552,7 @@ python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-hol
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-launch-evidence-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-build-manifest-test.py
 python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-entry-test.py
+python3 -B tests/fixtures/coordination/m4-linux-arm64-guest-isolation-canary-holder-toolchain-closure-test.py
 ```
 
 ## Qualification limits
