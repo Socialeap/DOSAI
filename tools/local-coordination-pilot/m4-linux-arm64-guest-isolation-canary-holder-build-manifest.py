@@ -13,6 +13,11 @@ SOURCE_ROLES = (
     ('HOLDER_BOOTSTRAP', 'tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-bootstrap.c'),
     ('REFERENCE_FILTER', 'tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-reference-filter.c'),
 )
+SOURCE_ROLES_V2 = (
+    *SOURCE_ROLES,
+    ('HOLDER_ENTRY', 'tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-entry.c'),
+)
+V1_MANIFEST_SHA256 = '5d115ca42e5d514db5ead1ff56310a52af6d8a4aa97ffe533bba9c0cf257ad4a'
 FILTER_BYTES = 136
 FILTER_DIGEST = bytes.fromhex('be419653d0a20d09847ce283e1d0226ad751670257a57cc2ac42caf3135b8813')
 BUILD_CONTRACT = {
@@ -36,6 +41,27 @@ OUTPUT_CONTRACT = {
     'required_receipt_fields': [
         'source_manifest_sha256', 'source_revision', 'build_inputs_sha256',
         'executable_sha256', 'executable_size_bytes', 'embedded_reference_filter_sha256',
+    ],
+}
+STAGED_SOURCES = {
+    'HOLDER_BOOTSTRAP': 'src/holder-bootstrap.c',
+    'REFERENCE_FILTER': 'src/reference-filter.c',
+    'HOLDER_ENTRY': 'src/holder-entry.c',
+}
+BUILD_OBJECTS = ['obj/holder-entry.o', 'obj/holder-bootstrap.o', 'obj/reference-filter.o']
+TOOLCHAIN_ARGS = ['-Btoolchain/bin/', '--sysroot=toolchain/sysroot']
+RECIPE_V2 = {
+    'execution': 'DIRECT_ARGV',
+    'workspace': 'DISPOSABLE_NATIVE_ARM64_BUILD_ROOT',
+    'driver': 'toolchain/bin/aarch64-linux-gnu-gcc',
+    'inherit_environment': False,
+    'environment': {'LC_ALL': 'C', 'PATH': 'toolchain/bin', 'TZ': 'UTC'},
+    'staged_sources': STAGED_SOURCES,
+    'argv': [
+        [*TOOLCHAIN_ARGS, *BUILD_CONTRACT['compile_flags'], '-c', STAGED_SOURCES['HOLDER_ENTRY'], '-o', BUILD_OBJECTS[0]],
+        [*TOOLCHAIN_ARGS, *BUILD_CONTRACT['compile_flags'], '-c', STAGED_SOURCES['HOLDER_BOOTSTRAP'], '-o', BUILD_OBJECTS[1]],
+        [*TOOLCHAIN_ARGS, *BUILD_CONTRACT['compile_flags'], '-c', STAGED_SOURCES['REFERENCE_FILTER'], '-o', BUILD_OBJECTS[2]],
+        [*TOOLCHAIN_ARGS, *BUILD_CONTRACT['link_flags'], *BUILD_OBJECTS, '-o', 'out/dosai-temp-file-holder'],
     ],
 }
 
@@ -83,25 +109,35 @@ def _reference_filter_digest(source):
 
 def verify_fixture_holder_build_manifest(raw, expected_digest, source_revision, sources):
     """Check a pinned declaration and two local source byte strings without reading files or building."""
+    return _verify_manifest(raw, expected_digest, source_revision, sources, 1)
+
+
+def verify_fixture_holder_build_manifest_v2(raw, expected_digest, source_revision, sources):
+    """Check the held successor, including the entry shim and exact offline recipe."""
+    return _verify_manifest(raw, expected_digest, source_revision, sources, 2)
+
+
+def _verify_manifest(raw, expected_digest, source_revision, sources, version):
+    source_roles = SOURCE_ROLES if version == 1 else SOURCE_ROLES_V2
     if (type(raw) is not bytes or not 0 < len(raw) <= MAX_MANIFEST_BYTES
             or type(expected_digest) is not bytes or len(expected_digest) != 32
             or sha256(raw).digest() != expected_digest
             or type(source_revision) is not str or re.fullmatch(r'[0-9a-f]{40}', source_revision) is None
-            or type(sources) is not tuple or len(sources) != len(SOURCE_ROLES)
+            or type(sources) is not tuple or len(sources) != len(source_roles)
             or not all(type(source) is bytes and 0 < len(source) <= MAX_SOURCE_BYTES for source in sources)):
         return None
     program_digest = _reference_filter_digest(sources[1])
     if program_digest != FILTER_DIGEST:
         return None
     expected = {
-        'schema_id': 'urn:dosai:proposal:m4-linux-arm64-holder-build-manifest:1',
-        'schema_version': 1,
+        'schema_id': f'urn:dosai:proposal:m4-linux-arm64-holder-build-manifest:{version}',
+        'schema_version': version,
         'scope': 'TEMPORARY_FILE_FIXTURE_HOLDER',
         'status': 'SOURCE_ONLY_HOLD',
         'source_revision': source_revision,
         'sources': [
             {'role': role, 'path': path, 'sha256': sha256(source).hexdigest()}
-            for (role, path), source in zip(SOURCE_ROLES, sources)
+            for (role, path), source in zip(source_roles, sources)
         ],
         'reference_filter': {
             'symbol': 'reference_filter', 'encoding': 'LINUX_SOCK_FILTER_LITTLE_ENDIAN',
@@ -117,6 +153,14 @@ def verify_fixture_holder_build_manifest(raw, expected_digest, source_revision, 
         'runtime_eligible': False,
         'qualifying_native_amd64_builder_receipts_added': 0,
     }
+    if version == 2:
+        recipe = json.dumps(RECIPE_V2, sort_keys=True, separators=(',', ':')).encode('ascii')
+        expected.update(
+            predecessor_manifest_sha256=V1_MANIFEST_SHA256,
+            entry_input={'role': 'HOLDER_ENTRY', 'sha256': sha256(sources[2]).hexdigest()},
+            recipe=RECIPE_V2,
+            recipe_sha256=sha256(recipe).hexdigest(),
+        )
     try:
         document = json.loads(raw.decode('utf-8'), object_pairs_hook=_unique_object)
         # Encoding preserves the distinction between booleans and integers.

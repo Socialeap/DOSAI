@@ -1,0 +1,147 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-build-manifest:2",
+  "schema_version": 2,
+  "scope": "TEMPORARY_FILE_FIXTURE_HOLDER",
+  "status": "SOURCE_ONLY_HOLD",
+  "source_revision": "570c9e3c3e951452666ebb2a773ed5d88b68eb13",
+  "sources": [
+    {
+      "role": "HOLDER_BOOTSTRAP",
+      "path": "tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-bootstrap.c",
+      "sha256": "31200fca7d5c31d2ccec39e964c9f804c8afff5adf7778f61a999255131ea43d"
+    },
+    {
+      "role": "REFERENCE_FILTER",
+      "path": "tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-reference-filter.c",
+      "sha256": "cb3b6a600594b6dd987a7cf36b327b5729507d322503a3950ed407d32e5db0f4"
+    },
+    {
+      "role": "HOLDER_ENTRY",
+      "path": "tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-entry.c",
+      "sha256": "d74a9a47f6479fe9141678ff885544f729919f16d4bfc9d2a99d6531546b38cf"
+    }
+  ],
+  "reference_filter": {
+    "symbol": "reference_filter",
+    "encoding": "LINUX_SOCK_FILTER_LITTLE_ENDIAN",
+    "size_bytes": 136,
+    "sha256": "be419653d0a20d09847ce283e1d0226ad751670257a57cc2ac42caf3135b8813"
+  },
+  "build_contract": {
+    "host": "NATIVE_LINUX_ARM64",
+    "target": "aarch64-linux-gnu",
+    "network": "DISABLED",
+    "compile_flags": [
+      "-std=c11",
+      "-fno-pie",
+      "-fno-lto"
+    ],
+    "link_flags": [
+      "-static",
+      "-no-pie",
+      "-fno-lto"
+    ],
+    "required_input_digests": [
+      "entry_source",
+      "compiler",
+      "assembler",
+      "linker",
+      "sysroot_tree",
+      "build_recipe"
+    ]
+  },
+  "output_contract": {
+    "name": "dosai-temp-file-holder",
+    "elf_class": 64,
+    "elf_machine": "AARCH64",
+    "byte_order": "LITTLE_ENDIAN",
+    "elf_type": "ET_EXEC",
+    "allow_interpreter": false,
+    "allow_dynamic_segment": false,
+    "max_bytes": 4194304,
+    "required_image_seal_mask": 15,
+    "required_receipt_fields": [
+      "source_manifest_sha256",
+      "source_revision",
+      "build_inputs_sha256",
+      "executable_sha256",
+      "executable_size_bytes",
+      "embedded_reference_filter_sha256"
+    ]
+  },
+  "entry_input": {
+    "role": "HOLDER_ENTRY",
+    "sha256": "d74a9a47f6479fe9141678ff885544f729919f16d4bfc9d2a99d6531546b38cf"
+  },
+  "toolchain_closure": null,
+  "artifact_receipt": null,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0,
+  "predecessor_manifest_sha256": "5d115ca42e5d514db5ead1ff56310a52af6d8a4aa97ffe533bba9c0cf257ad4a",
+  "recipe": {
+    "execution": "DIRECT_ARGV",
+    "workspace": "DISPOSABLE_NATIVE_ARM64_BUILD_ROOT",
+    "driver": "toolchain/bin/aarch64-linux-gnu-gcc",
+    "inherit_environment": false,
+    "environment": {
+      "LC_ALL": "C",
+      "PATH": "toolchain/bin",
+      "TZ": "UTC"
+    },
+    "staged_sources": {
+      "HOLDER_BOOTSTRAP": "src/holder-bootstrap.c",
+      "REFERENCE_FILTER": "src/reference-filter.c",
+      "HOLDER_ENTRY": "src/holder-entry.c"
+    },
+    "argv": [
+      [
+        "-Btoolchain/bin/",
+        "--sysroot=toolchain/sysroot",
+        "-std=c11",
+        "-fno-pie",
+        "-fno-lto",
+        "-c",
+        "src/holder-entry.c",
+        "-o",
+        "obj/holder-entry.o"
+      ],
+      [
+        "-Btoolchain/bin/",
+        "--sysroot=toolchain/sysroot",
+        "-std=c11",
+        "-fno-pie",
+        "-fno-lto",
+        "-c",
+        "src/holder-bootstrap.c",
+        "-o",
+        "obj/holder-bootstrap.o"
+      ],
+      [
+        "-Btoolchain/bin/",
+        "--sysroot=toolchain/sysroot",
+        "-std=c11",
+        "-fno-pie",
+        "-fno-lto",
+        "-c",
+        "src/reference-filter.c",
+        "-o",
+        "obj/reference-filter.o"
+      ],
+      [
+        "-Btoolchain/bin/",
+        "--sysroot=toolchain/sysroot",
+        "-static",
+        "-no-pie",
+        "-fno-lto",
+        "obj/holder-entry.o",
+        "obj/holder-bootstrap.o",
+        "obj/reference-filter.o",
+        "-o",
+        "out/dosai-temp-file-holder"
+      ]
+    ]
+  },
+  "recipe_sha256": "c0c9d991e2da8966a2d8ab53f73935b7465ee3d998c848b52ad85a67350e0272"
+}

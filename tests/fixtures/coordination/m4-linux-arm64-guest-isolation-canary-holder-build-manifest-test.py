@@ -11,8 +11,12 @@ ROOT = Path(__file__).resolve().parents[3]
 TOOLS = ROOT / 'tools/local-coordination-pilot'
 PREFIX = 'm4-linux-arm64-guest-isolation-canary-'
 MANIFEST_FILE = ROOT / 'docs/proposals/m4-linux-arm64-holder-build-manifest-v1.json'
+MANIFEST_V2_FILE = ROOT / 'docs/proposals/m4-linux-arm64-holder-build-manifest-v2.json'
 SOURCE_REVISION = 'db4cd588f0b579116c833edd0341e2d1fa9fbdfb'
 MANIFEST_DIGEST = bytes.fromhex('5d115ca42e5d514db5ead1ff56310a52af6d8a4aa97ffe533bba9c0cf257ad4a')
+SOURCE_REVISION_V2 = '570c9e3c3e951452666ebb2a773ed5d88b68eb13'
+MANIFEST_DIGEST_V2 = bytes.fromhex('d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e')
+RECIPE_DIGEST_V2 = 'c0c9d991e2da8966a2d8ab53f73935b7465ee3d998c848b52ad85a67350e0272'
 
 
 def load(suffix):
@@ -26,7 +30,9 @@ manifest = load('holder-build-manifest')
 harness = load('harness')
 native = load('watchdog-terminator')
 RAW = MANIFEST_FILE.read_bytes()
+RAW_V2 = MANIFEST_V2_FILE.read_bytes()
 SOURCES = tuple((TOOLS / f'{PREFIX}{suffix}.c').read_bytes() for suffix in ('holder-bootstrap', 'reference-filter'))
+SOURCES_V2 = (*SOURCES, (TOOLS / f'{PREFIX}holder-entry.c').read_bytes())
 
 
 def verify(raw=RAW, digest=MANIFEST_DIGEST, revision=SOURCE_REVISION, sources=SOURCES):
@@ -36,6 +42,15 @@ def verify(raw=RAW, digest=MANIFEST_DIGEST, revision=SOURCE_REVISION, sources=SO
 def checked_document(document, sources=SOURCES):
     raw = json.dumps(document).encode('utf-8')
     return verify(raw=raw, digest=sha256(raw).digest(), sources=sources)
+
+
+def verify_v2(raw=RAW_V2, digest=MANIFEST_DIGEST_V2, revision=SOURCE_REVISION_V2, sources=SOURCES_V2):
+    return manifest.verify_fixture_holder_build_manifest_v2(raw, digest, revision, sources)
+
+
+def checked_document_v2(document):
+    raw = json.dumps(document).encode('utf-8')
+    return verify_v2(raw=raw, digest=sha256(raw).digest())
 
 
 class HolderBuildManifestTests(unittest.TestCase):
@@ -130,6 +145,81 @@ class HolderBuildManifestTests(unittest.TestCase):
                 source = json.loads(RAW)
                 source[field] = value
                 self.assertIsNone(checked_document(source))
+
+
+class HolderBuildManifestSuccessorTests(unittest.TestCase):
+    def test_successor_pins_the_entry_and_preserves_the_v1_inputs(self):
+        declaration = verify_v2()
+        self.assertEqual(declaration, manifest.FixtureHolderBuildDeclaration(
+            'SOURCE_ONLY_HOLD', MANIFEST_DIGEST_V2, SOURCE_REVISION_V2, harness.TEMP_REFERENCE_FILTER_DIGEST,
+        ))
+        predecessor, successor = json.loads(RAW), json.loads(RAW_V2)
+        self.assertEqual(successor['predecessor_manifest_sha256'], sha256(RAW).hexdigest())
+        self.assertEqual(successor['sources'][:2], predecessor['sources'])
+        self.assertEqual(successor['entry_input'], {
+            'role': 'HOLDER_ENTRY', 'sha256': sha256(SOURCES_V2[2]).hexdigest(),
+        })
+        self.assertEqual(successor['entry_input']['sha256'], successor['sources'][2]['sha256'])
+        self.assertEqual(successor['output_contract'], predecessor['output_contract'])
+        self.assertEqual(successor['reference_filter'], predecessor['reference_filter'])
+
+    def test_recipe_binds_three_compilations_and_one_static_link(self):
+        declaration = json.loads(RAW_V2)
+        recipe = declaration['recipe']
+        canonical = json.dumps(recipe, sort_keys=True, separators=(',', ':')).encode('ascii')
+        self.assertEqual(declaration['recipe_sha256'], RECIPE_DIGEST_V2)
+        self.assertEqual(sha256(canonical).hexdigest(), RECIPE_DIGEST_V2)
+        steps = recipe['argv']
+        self.assertEqual(len(steps), 4)
+        self.assertEqual([step[step.index('-c') + 1] for step in steps[:3]],
+                         ['src/holder-entry.c', 'src/holder-bootstrap.c', 'src/reference-filter.c'])
+        self.assertEqual(steps[3][-6:], [
+            '-fno-lto', 'obj/holder-entry.o', 'obj/holder-bootstrap.o',
+            'obj/reference-filter.o', '-o', 'out/dosai-temp-file-holder',
+        ])
+        self.assertIn('-static', steps[3])
+        self.assertIn('-no-pie', steps[3])
+        self.assertFalse(recipe['inherit_environment'])
+
+    def test_rehashed_recipe_changes_cannot_widen_inputs_or_execution(self):
+        for field, value in (
+            ('execution', 'SHELL'), ('driver', '/usr/bin/gcc'), ('inherit_environment', True),
+            ('environment', {'PATH': '/usr/bin'}), ('workspace', '..'),
+            ('staged_sources', {'HOLDER_ENTRY': '../guest.c'}),
+        ):
+            document = json.loads(RAW_V2)
+            document['recipe'][field] = value
+            canonical = json.dumps(document['recipe'], sort_keys=True, separators=(',', ':')).encode('ascii')
+            document['recipe_sha256'] = sha256(canonical).hexdigest()
+            self.assertIsNone(checked_document_v2(document))
+        for new_argument in ('-lrecipe_extra', '-Wl,--allow-shlib-undefined', '../other.o'):
+            document = json.loads(RAW_V2)
+            document['recipe']['argv'][3].insert(-2, new_argument)
+            canonical = json.dumps(document['recipe'], sort_keys=True, separators=(',', ':')).encode('ascii')
+            document['recipe_sha256'] = sha256(canonical).hexdigest()
+            self.assertIsNone(checked_document_v2(document))
+
+    def test_v2_rejects_mixed_revisions_missing_entry_and_changed_parent(self):
+        self.assertIsNone(verify_v2(revision=SOURCE_REVISION))
+        self.assertIsNone(verify_v2(sources=SOURCES))
+        self.assertIsNone(verify_v2(sources=(*SOURCES, SOURCES_V2[2] + b'\n')))
+        self.assertIsNone(verify_v2(raw=RAW, digest=MANIFEST_DIGEST))
+        self.assertIsNone(verify(raw=RAW_V2, digest=MANIFEST_DIGEST_V2, revision=SOURCE_REVISION_V2))
+        for field, value in (('predecessor_manifest_sha256', 'a' * 64), ('recipe_sha256', 'b' * 64),
+                             ('entry_input', {'role': 'HOLDER_ENTRY', 'sha256': 'c' * 64})):
+            document = json.loads(RAW_V2)
+            document[field] = value
+            self.assertIsNone(checked_document_v2(document))
+
+    def test_v2_keeps_the_toolchain_artifact_build_launch_and_builder_gates_held(self):
+        for field, value in (
+            ('toolchain_closure', {'sha256': 'a' * 64}), ('artifact_receipt', {'executable_sha256': 'b' * 64}),
+            ('status', 'BUILT'), ('build_authorized', True), ('launch_authorized', True),
+            ('runtime_eligible', True), ('qualifying_native_amd64_builder_receipts_added', 1),
+        ):
+            document = json.loads(RAW_V2)
+            document[field] = value
+            self.assertIsNone(checked_document_v2(document))
 
 
 if __name__ == '__main__':
