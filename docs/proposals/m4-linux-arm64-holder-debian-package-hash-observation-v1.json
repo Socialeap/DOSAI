@@ -1,0 +1,34 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-debian-package-hash-observation:1",
+  "schema_version": 1,
+  "status": "ARCHIVE_BYTES_MATCH_SOURCE_ONLY_HOLD",
+  "source_revision": "b4873a8e72f939e38fa89982ba4c4c515f7ec609",
+  "dependency_candidate_path": "docs/proposals/m4-linux-arm64-holder-debian-dependency-candidate-v1.json",
+  "dependency_candidate_sha256": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+  "raw_receipt_sha256": "fe0d98e1065210ba72ba491353e40d4e282c08f9faabca5f0f55d9bf4a67fb53",
+  "measurement_rows_sha256": "73ab2be679d6053d6a2b7037aee51b6e1b7824513d336812ab6a1672032a7bc1",
+  "source": "https://deb.debian.org/",
+  "started_at": "2026-11-21T06:08:33Z",
+  "finished_at": "2026-11-21T06:08:35Z",
+  "matched_package_count": 35,
+  "matched_package_archive_bytes": 52851844,
+  "package_counts_by_archive": {
+    "debian": 33,
+    "debian-security": 2
+  },
+  "package_counts_by_architecture": {
+    "all": 1,
+    "arm64": 34
+  },
+  "package_archives_saved": false,
+  "package_payloads_extracted": false,
+  "packages_installed": false,
+  "native_staging_observation": null,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}
