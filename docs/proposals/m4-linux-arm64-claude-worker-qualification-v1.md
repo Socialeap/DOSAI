@@ -670,12 +670,29 @@ ARM64 runtime directory. The staged names match the ELF requirements.
 
 The fixtures prove that omitting any of the three paths or the required
 `LIBSFRAME_1.0` or `ZLIB_1.2.0` version leaves the observed dependency
-graph unresolved. The three archive members still need in-memory byte and
-ELF verification. Transitive closure, native readback, relocations, and
-runtime loader behavior remain held.
+graph unresolved. All three pinned archive members later passed in-memory
+ELF verification. Their measured dependencies added no names beyond v4.
 [Debian SFrame file list](https://packages.debian.org/trixie/arm64/libsframe1/filelist) ·
 [Debian zlib file list](https://packages.debian.org/trixie/arm64/zlib1g/filelist) ·
 [Debian Zstandard file list](https://packages.debian.org/trixie/arm64/libzstd1/filelist)
+
+The [linker ELF graph observation](m4-linux-arm64-holder-linker-elf-graph-observation-v1.json)
+records the transitive-library receipt and the in-memory observation of
+`ld-linux-aarch64.so.1` from the pinned `libc6` archive. The loader bytes
+matched the earlier member measurement. The reader observed no `DT_NEEDED`
+entries or unsupported features on the loader and recorded its version
+definitions. The checked-in projection binds the minimized ELF metadata
+to the exact allowlist, archive pins, reader, verifier, and local receipt
+digests.
+
+The offline replay reached nine measured ELF objects from `ld.bfd`,
+including the loader. It resolved all 19 `DT_NEEDED` edges and found
+every required version definition on the matching provider. Both
+`ld.bfd` and `libc.so.6` also declare `/lib/ld-linux-aarch64.so.1` in
+`PT_INTERP`. The v4 allowlist places the measured loader under
+`toolchain/runtime/usr/lib/aarch64-linux-gnu/`. The exact `/lib` binding
+remains held for separate review. Native staging, the approved lock,
+relocations, and runtime loader behavior retain their gates.
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
