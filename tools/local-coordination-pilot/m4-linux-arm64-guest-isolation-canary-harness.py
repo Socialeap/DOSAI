@@ -19,6 +19,7 @@ MAX_RESOURCE_INVENTORY_ROWS = 256
 MAX_REFERENCE_STATUS_BYTES = 8192
 TEMP_REFERENCE_FILTER_DIGEST = bytes.fromhex('be419653d0a20d09847ce283e1d0226ad751670257a57cc2ac42caf3135b8813')
 TEMP_HOLDER_SETUP_FRAME = struct.Struct('<8s32s9Q')
+TEMP_HOLDER_ENTRY_FRAME = struct.Struct('<8s32s7Q')
 ORIGIN = 'SYNTHETIC_ONLY'
 CANARIES = ('HOST_FILE_READ', 'EGRESS_CONNECT', 'LOOPBACK_CONNECT', 'SUBPROCESS_EXEC')
 LEGS = ('CONTROL_BEFORE', 'RESTRICTED', 'CONTROL_AFTER')
@@ -866,6 +867,15 @@ def _valid_temp_file_launch_plan(plan):
         return False
     pins = (plan.directory, plan.control, plan.setup)
     return all(_bootstrap_handle_pin(pin) for pin in pins) and len(set(pins)) == len(pins)
+
+
+def encode_fixture_temp_file_entry_plan(plan):
+    """Encode only the admitted shape for a future trusted launcher."""
+    if not _valid_temp_file_launch_plan(plan):
+        raise ValueError('Invalid synthetic holder entry plan.')
+    return TEMP_HOLDER_ENTRY_FRAME.pack(
+        b'DOSAIE01', plan.nonce, plan.pid, *plan.directory, *plan.control, *plan.setup,
+    )
 
 
 def _launch_plan_for_bootstrap(registration, program_digest):
