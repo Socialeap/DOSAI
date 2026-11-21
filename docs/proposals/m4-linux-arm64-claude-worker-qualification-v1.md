@@ -516,9 +516,7 @@ archives, and loader candidates for the staging layout.
 The candidate SHA-256 is
 `b499f1cecd84044854631bd702dd33d33666d1fcabcfbf706d27317d62735f0e`.
 It records the versions, archive sizes, and SHA-256 values published by
-Debian's package pages. This review used metadata only. Signed
-index verification, package byte verification, and dependency resolution
-remain held.
+Debian's package pages.
 [GCC package](https://packages.debian.org/trixie/arm64/gcc-14-aarch64-linux-gnu/download) ·
 [Frontend package](https://packages.debian.org/trixie/arm64/cpp-14-aarch64-linux-gnu/download) ·
 [Binutils package](https://packages.debian.org/trixie/arm64/binutils-aarch64-linux-gnu/download) ·
@@ -527,14 +525,38 @@ remain held.
 [UAPI header package](https://packages.debian.org/trixie/all/linux-libc-dev/download) ·
 [GCC runtime package](https://packages.debian.org/en/trixie/arm64/libgcc-14-dev/download)
 
-Before selecting the staged lock, verify the exact main and security index
-records through Debian's signed Release metadata under a reviewed archive
-trust root. Resolve the full versioned dependency and loader closure from
-those same indexes. The GCC and binutils roots report dependencies such as
-`libgmp10` and `libbinutils` beyond these roots. Native staging must prove
-that aliases, compiler lookup, and the host loader stay within the isolated
-build root. Only an independently verified staged census can populate the
-toolchain lock.
+The [signed ARM64 dependency candidate](m4-linux-arm64-holder-debian-dependency-candidate-v1.json)
+records the November 21, 2026 metadata check. It pins the exact Debian
+`trixie` and `trixie-security` Release digests, detached signature digests,
+three reviewed Debian 13 signers, and `binary-arm64` and `binary-all`
+`Packages.xz` digests for both suites. In an isolated temporary directory,
+the check compared the public key material to the reviewed fingerprints
+and hashes, split the detached signature packets, and used `gpgv` with only
+the matching reviewed key for each of the three required signatures over
+the exact Release bytes. The signature bundles also carried Debian 12
+signatures. The candidate derives its trust from the Debian 13 signatures.
+The check matched the compressed index sizes and SHA-256 values in those
+Release files to the four downloads by hash. The security Release had a
+validity deadline at observation time. The main Release did not publish
+one. This record identifies the observed snapshot and cannot establish
+freshness for future staging.
+
+All seven roots match the authenticated package records. The frozen set
+includes 35 packages and 105 declared dependency clauses, totaling
+52,851,844 package archive bytes according to the indexes. The
+[offline resolver](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-debian-dependencies.py)
+uses the exact roots, evaluates `Depends` and `Pre-Depends` recursively, and
+checks `Breaks` and `Conflicts` within the chosen set. It reads preverified
+Deb822 records and applies Debian version ordering to concrete providers.
+The fixture suite replays the pinned projection offline. Optional
+relationships, the implicit Essential base, and file-level loader
+resolution are outside this declared-dependency count.
+[Debian package relationships](https://www.debian.org/doc/debian-policy/ch-relationships.html)
+
+Package-byte verification, ELF loader resolution, and approval of the
+staged lock remain held. Native staging must prove that aliases, compiler
+lookup, and the host loader stay within the isolated build root. Only an
+independently verified staged census can populate the toolchain lock.
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)

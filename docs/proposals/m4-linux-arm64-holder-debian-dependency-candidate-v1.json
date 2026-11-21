@@ -1,0 +1,515 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-debian-dependency-candidate:1",
+  "schema_version": 1,
+  "status": "SIGNED_PACKAGE_METADATA_ONLY_HOLD",
+  "observed_at": "2026-11-21T06:00:13Z",
+  "source_revision": "d12f329d4e3515b21fb8449f500cbcf3377f1bde",
+  "toolchain_candidate_sha256": "b499f1cecd84044854631bd702dd33d33666d1fcabcfbf706d27317d62735f0e",
+  "source_manifest_sha256": "d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e",
+  "recipe_sha256": "c0c9d991e2da8966a2d8ab53f73935b7465ee3d998c848b52ad85a67350e0272",
+  "trust_root_recommendation_sha256": "cf6bcfa60dda954cbb8aa59a72a6f5580e1ab67432f73e3b4a7893a44325312c",
+  "release_signature_verifier": "gpgv (GnuPG) 2.5.21",
+  "archives": {
+    "main": {
+      "release_url": "https://deb.debian.org/debian/dists/trixie/Release",
+      "release_sha256": "ed56aac47e7911e65ee63aae8d67e29f20e023f840e49f8ed037043a33de138a",
+      "detached_sha256": "9f80d5c8e4f9fd918a8b4fedd35c00ecc6c1a3ca9eddbc981c83823d4a4b8dc4",
+      "approved_signatures": {
+        "04B54C3CDCA79751B16BC6B5225629DF75B188BD": {
+          "subkey": "B8E5F13176D2A7A75220028078DBA3BC47EF2265",
+          "signature_sha256": "cc89d47c2ad121c777f5cfb87fbf93f047f216018a60d442aee807febc400ae9"
+        },
+        "41587F7DB8C774BCCF131416762F67A0B2C39DE4": {
+          "subkey": "41587F7DB8C774BCCF131416762F67A0B2C39DE4",
+          "signature_sha256": "339161e5e0d390c4a5c1af3712c5f57ad4f4e09afe5bbbe11f2c16333de79e08"
+        }
+      },
+      "fields": {
+        "Origin": "Debian",
+        "Suite": "stable",
+        "Version": "13.7",
+        "Codename": "trixie",
+        "Date": "Sat, 12 Sep 2026 07:55:41 UTC"
+      },
+      "indexes": [
+        {
+          "path": "main/binary-all/Packages.xz",
+          "size_bytes": 4533564,
+          "sha256": "55bef3400f6614ac8bfdd05922310d9ff456e458d0bf9a0a201e6d9359144108",
+          "url": "https://deb.debian.org/debian/dists/trixie/main/binary-all/by-hash/SHA256/55bef3400f6614ac8bfdd05922310d9ff456e458d0bf9a0a201e6d9359144108"
+        },
+        {
+          "path": "main/binary-arm64/Packages.xz",
+          "size_bytes": 9614192,
+          "sha256": "be16b37b2f740f066ea93d35d56f04f94d63693e5a3eb421b052bf86fae75bcd",
+          "url": "https://deb.debian.org/debian/dists/trixie/main/binary-arm64/by-hash/SHA256/be16b37b2f740f066ea93d35d56f04f94d63693e5a3eb421b052bf86fae75bcd"
+        }
+      ]
+    },
+    "security": {
+      "release_url": "https://deb.debian.org/debian-security/dists/trixie-security/Release",
+      "release_sha256": "f168283b6858f299cc7b7585b189fe24b68d6b11eff5d18c05bebc7b00d12ca9",
+      "detached_sha256": "93e490dc1bcc1cd18385b27c30f6e506c9a4562754764dc0fdfac6c7399f923f",
+      "approved_signatures": {
+        "5E04A1E3223A19A20706E20F9904613D4CCE68C6": {
+          "subkey": "89C87ACEA5DD6B8E6A7068808E9F831205B4BA95",
+          "signature_sha256": "e8fc5b613c0d32e3fe29d02b101c2c14083938c8a6835a77b16849aa4c8c8d59"
+        }
+      },
+      "fields": {
+        "Origin": "Debian",
+        "Suite": "stable-security",
+        "Version": "13",
+        "Codename": "trixie-security",
+        "Date": "Sat, 21 Nov 2026 00:53:03 UTC",
+        "Valid-Until": "Sat, 28 Nov 2026 00:53:03 UTC"
+      },
+      "indexes": [
+        {
+          "path": "main/binary-all/Packages.xz",
+          "size_bytes": 126568,
+          "sha256": "57bfb94c710ff78fed185ac2ab06fb4540493eec65a7dc080d4cf72ea6c6359a",
+          "url": "https://deb.debian.org/debian-security/dists/trixie-security/main/binary-all/by-hash/SHA256/57bfb94c710ff78fed185ac2ab06fb4540493eec65a7dc080d4cf72ea6c6359a"
+        },
+        {
+          "path": "main/binary-arm64/Packages.xz",
+          "size_bytes": 308716,
+          "sha256": "d0be9fca9a3b56472c57942e7ae400c2bd221140cbf1e3665273a56b1b81b884",
+          "url": "https://deb.debian.org/debian-security/dists/trixie-security/main/binary-arm64/by-hash/SHA256/d0be9fca9a3b56472c57942e7ae400c2bd221140cbf1e3665273a56b1b81b884"
+        }
+      ]
+    }
+  },
+  "root_count": 7,
+  "package_count": 35,
+  "package_counts_by_architecture": {
+    "all": 1,
+    "arm64": 34
+  },
+  "package_archive_bytes": 52851844,
+  "required_relationship_counts": {
+    "Depends": 105,
+    "Pre-Depends": 0
+  },
+  "packages": [
+    {
+      "Package": "binutils-aarch64-linux-gnu",
+      "Version": "2.44-3",
+      "Architecture": "arm64",
+      "Depends": "binutils-common (= 2.44-3), libbinutils (= 2.44-3), libc6 (>= 2.38), libctf-nobfd0 (>= 2.36), libctf0 (>= 2.36), libjansson4 (>= 2.14), libsframe1 (>= 2.41), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)",
+      "Breaks": "binutils (<< 2.29-6), binutils-dev (<< 2.38.50.20220609-2)",
+      "Multi-Arch": "allowed",
+      "Filename": "pool/main/b/binutils/binutils-aarch64-linux-gnu_2.44-3_arm64.deb",
+      "Size": "820124",
+      "SHA256": "79cbf1459118bce3535133ffbf1fd2adbd57af65271f95c829af5cfa7f474168",
+      "archive": "debian"
+    },
+    {
+      "Package": "binutils-common",
+      "Version": "2.44-3",
+      "Architecture": "arm64",
+      "Breaks": "binutils (<< 2.38.50.20220527-2), binutils-multiarch (<< 2.38.50.20220527-2)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/b/binutils/binutils-common_2.44-3_arm64.deb",
+      "Size": "2508772",
+      "SHA256": "f2d6b7d0b5521c4c90fc105e32819cd5268c1aa69104173b3fb856595f898249",
+      "archive": "debian"
+    },
+    {
+      "Package": "cpp-14-aarch64-linux-gnu",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.38), libgmp10 (>= 2:6.3.0+dfsg), libisl23 (>= 0.15), libmpc3 (>= 1.1.0), libmpfr6 (>= 3.1.3), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)",
+      "Breaks": "hardening-wrapper (<< 2.8+nmu3), libmagics++-dev (<< 2.28.0-4)",
+      "Multi-Arch": "foreign",
+      "Filename": "pool/main/g/gcc-14/cpp-14-aarch64-linux-gnu_14.2.0-19_arm64.deb",
+      "Size": "9168888",
+      "SHA256": "8e588ac3efe06f7784b08feac584c70e6965b74c045bae7e4e80bb42938f7dbe",
+      "archive": "debian"
+    },
+    {
+      "Package": "gcc-14-aarch64-linux-gnu",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Provides": "c-compiler-aarch64-linux-gnu",
+      "Depends": "cpp-14-aarch64-linux-gnu (= 14.2.0-19), gcc-14-base (= 14.2.0-19), libcc1-0 (>= 14.2.0-19), binutils-aarch64-linux-gnu (>= 2.39), libgcc-14-dev (= 14.2.0-19), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgmp10 (>= 2:6.3.0+dfsg), libisl23 (>= 0.15), libmpc3 (>= 1.1.0), libmpfr6 (>= 3.1.3), libstdc++6 (>= 5), libzstd1 (>= 1.5.5), zlib1g (>= 1:1.1.4)",
+      "Multi-Arch": "foreign",
+      "Filename": "pool/main/g/gcc-14/gcc-14-aarch64-linux-gnu_14.2.0-19_arm64.deb",
+      "Size": "17686496",
+      "SHA256": "5ff736a332ba5d60ad463355ed25c8c39da1281acf9155cc2f8a55fc1d478be8",
+      "archive": "debian"
+    },
+    {
+      "Package": "gcc-14-base",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Breaks": "gnat (<< 7)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/gcc-14-base_14.2.0-19_arm64.deb",
+      "Size": "49444",
+      "SHA256": "34ee90679b018c0e64234747a4c4c0ae6b7f63541115037465a8627c2dfbc594",
+      "archive": "debian"
+    },
+    {
+      "Package": "libasan8",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.34), libgcc-s1 (>= 3.3)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libasan8_14.2.0-19_arm64.deb",
+      "Size": "2577836",
+      "SHA256": "5621bd583a3390b45726a8eebe23601f7fad86a25193e5349976cbf17e2bc9ad",
+      "archive": "debian"
+    },
+    {
+      "Package": "libatomic1",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.17)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libatomic1_14.2.0-19_arm64.deb",
+      "Size": "10128",
+      "SHA256": "7ccff90234484bf21ae5ecb79d25b6a84b2f4038f65dd139085b2e3a937cd8dc",
+      "archive": "debian"
+    },
+    {
+      "Package": "libbinutils",
+      "Version": "2.44-3",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.38), libsframe1, libzstd1 (>= 1.5.5), zlib1g (>= 1:1.2.0), binutils-common (= 2.44-3)",
+      "Breaks": "binutils (<< 2.29-6)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/b/binutils/libbinutils_2.44-3_arm64.deb",
+      "Size": "660392",
+      "SHA256": "c51c0cc0272202d00fc3e6da8b96bfed2a428c239b689363abddd3bac6bd7a02",
+      "archive": "debian"
+    },
+    {
+      "Package": "libc-dev-bin",
+      "Version": "2.41-12+deb13u4",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>> 2.41), libc6 (<< 2.42)",
+      "Multi-Arch": "foreign",
+      "Filename": "pool/main/g/glibc/libc-dev-bin_2.41-12+deb13u4_arm64.deb",
+      "Size": "59092",
+      "SHA256": "cd4b3bdf404a01792003f4ca400bc602252ab24e0a8c53e45d474d1818dc02e3",
+      "archive": "debian"
+    },
+    {
+      "Package": "libc6",
+      "Version": "2.41-12+deb13u4",
+      "Architecture": "arm64",
+      "Depends": "libgcc-s1",
+      "Breaks": "base-files (<< 13.3~), chrony (<< 4.2-3~), dhcpcd (<< 1:10.1.0-7~), fakechroot (<< 2.19-3.5), firefox (<< 91~), firefox-esr (<< 91~), gnumach-image-1.8-486 (<< 2:1.8+git20210923~), gnumach-image-1.8-486-dbg (<< 2:1.8+git20210923~), gnumach-image-1.8-xen-486 (<< 2:1.8+git20210923~), gnumach-image-1.8-xen-486-dbg (<< 2:1.8+git20210923~), hurd (<< 1:0.9.git20220301-2), libamdhip64-5 (<< 5.7.1-5+b1), libhiprtc-builtins5 (<< 5.7.1-5+b1), librccl1 (<< 5.4.3-3+b1), libswupdate0.1 (<< 2024.12.1+dfsg-1+b3), locales (<< 2.41), locales-all (<< 2.41), lua-swupdate (<< 2024.12.1+dfsg-1+b3), nscd (<< 2.41), pd-scaf (<< 1:0.14.1+darcs20180201-6+b4), postgresql-15-pllua (<< 1:2.0.12-4), postgresql-17-pllua (<< 1:2.0.12-3+b2), python3-iptables (<< 1.0.0-2), python3-mrgingham (<< 1.25-1), python3-onnxruntime (<< 1.20.1+dfsg-2~), sysvinit (<< 3.09-2~), sysvinit-core (<< 3.09-2~), tinydns (<< 1:1.05-14), uwsgi-plugin-pypy3 (<< 0.0.2+b1), valgrind (<< 1:3.19.0-1~)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/glibc/libc6_2.41-12+deb13u4_arm64.deb",
+      "Size": "2483572",
+      "SHA256": "8784eda966b189c777a384dac5ce009e8fc9b52d006926c5a013e7fa8aa688cc",
+      "archive": "debian"
+    },
+    {
+      "Package": "libc6-dev",
+      "Version": "2.41-12+deb13u4",
+      "Architecture": "arm64",
+      "Provides": "libc-dev (= 2.41-12+deb13u4)",
+      "Depends": "libc6 (= 2.41-12+deb13u4), libc-dev-bin (= 2.41-12+deb13u4), linux-libc-dev, libcrypt-dev, rpcsvc-proto",
+      "Conflicts": "libc0.3-dev, libc6.1-dev",
+      "Breaks": "binutils (<< 2.38), catch (<< 1.12.2-0.1), heimdal-multidev (<= 7.7.0+dfsg-4), igblast (<= 1.19.0-1), libassimp-dev (<= 5.2.4~ds0-1), libasyncns-dev (<= 0.8-6+b2), libatm1-dev (<= 1:2.5.1-4), libaws20-dev (<= 20.2-2+b1), libboinc-app-dev (<= 7.20.2+dfsg-1), libbson-dev (<= 1.22.0-1), libc6-dev-arm64-cross (<< 2.41~), libcups2-dev (<= 2.4.2-1), libdeal.ii-dev (<= 9.4.0-1), libdkim-dev (<= 1:1.0.21-4+b2), libdolfin-dev-common (<= 2019.2.0~git20220407.d29e24d-5), libeckit-dev (<= 1.20.0-1), libfclib-dev (<= 3.1.0+dfsg-2), libfltk1.3-dev (<= 1.3.8-4+b1), libghc-resolv-dev (<= 0.1.2.0-3), libghc-resolv-prof (<= 0.1.2.0-3), libglib2.0-dev (<= 2.72.3-1), libgloox-dev (<= 1.0.24-2+b1), libhesiod-dev (<= 3.2.1-3.1+b1), libinfinity-0.7-dev (<= 0.7.2-1+b1), libinsighttoolkit4-dev (<= 4.13.3withdata-dfsg2-3+b1), libinsighttoolkit5-dev (<= 5.2.1-5+b1), libismrmrd-dev (<= 1.8.0-2), libldap-dev (<= 2.5.12+dfsg-2), liblog4cplus-dev (<= 2.0.7-1), libloudmouth1-dev (<= 1.5.4-1), libmgl-dev (<= 8.0.1-2), libmimalloc2.0 (<= 2.0.6+ds-1), libminc-dev (<= 2.4.03-5), libmongoc-dev (<= 1.22.1-1), libmrpt-ros1bridge-dev (<= 1:2.4.9+ds-4+b2), libmysqlclient-dev (<= 8.0.29-1), libnetcdf-dev (<= 1:4.9.0-3), libnetcdf-mpi-dev (<= 1:4.9.0-1), libnetcdf-pnetcdf-dev (<= 1:4.9.0-1), libnfsidmap-dev (<= 1:2.6.1-2), libns3-dev (<= 3.36.1+dfsg-4), libola-dev (<= 0.10.8.nojsmin-2), libopenafs-dev (<= 1.8.8.1-3), libopendkim-dev (<= 2.11.0~beta2-7), libopendmarc-dev (<= 1.4.2-1), libopenms-dev (<= 2.6.0+cleaned1-3+b1), libopenzwave1.6-dev (<= 1.6.1914+ds-1), libpg-query-dev (<= 13-2.1.2-2), librbl-dev (<= 2.11.0~beta2-7), libre-dev (<= 1.1.0-1+b1), libshishi-dev (<= 1.0.2-11), libslurm-dev (<= 21.08.8.2-1), libsocksd0-dev (<= 1.4.2+dfsg-7+b4), libspf2-dev (<= 1.2.10-7.1+b1), libstrophe-dev (<= 0.12.1-2), libtaningia-dev (<= 0.2.2-2+b1), libtrilinos-amesos-dev (<= 13.2.0-3), libtrilinos-amesos2-dev (<= 13.2.0-3), libtrilinos-anasazi-dev (<= 13.2.0-3), libtrilinos-aztecoo-dev (<= 13.2.0-3), libtrilinos-belos-dev (<= 13.2.0-3), libtrilinos-epetra-dev (<= 13.2.0-3), libtrilinos-epetraext-dev (<= 13.2.0-3), libtrilinos-galeri-dev (<= 13.2.0-3), libtrilinos-ifpack-dev (<= 13.2.0-3), libtrilinos-ifpack2-dev (<= 13.2.0-3), libtrilinos-intrepid-dev (<= 13.2.0-3), libtrilinos-intrepid2-dev (<= 13.2.0-3), libtrilinos-isorropia-dev (<= 13.2.0-3), libtrilinos-kokkos-dev (<= 13.2.0-3), libtrilinos-kokkos-kernels-dev (<= 13.2.0-3), libtrilinos-komplex-dev (<= 13.2.0-3), libtrilinos-ml-dev (<= 13.2.0-3), libtrilinos-moertel-dev (<= 13.2.0-3), libtrilinos-muelu-dev (<= 13.2.0-3), libtrilinos-nox-dev (<= 13.2.0-3), libtrilinos-phalanx-dev (<= 13.2.0-3), libtrilinos-pike-dev (<= 13.2.0-3), libtrilinos-piro-dev (<= 13.2.0-3), libtrilinos-pliris-dev (<= 13.2.0-3), libtrilinos-rol-dev (<= 13.2.0-3), libtrilinos-rtop-dev (<= 13.2.0-3), libtrilinos-rythmos-dev (<= 13.2.0-3), libtrilinos-sacado-dev (<= 13.2.0-3), libtrilinos-shylu-dev (<= 13.2.0-3), libtrilinos-stokhos-dev (<= 13.2.0-3), libtrilinos-stratimikos-dev (<= 13.2.0-3), libtrilinos-teko-dev (<= 13.2.0-3), libtrilinos-teuchos-dev (<= 13.2.0-3), libtrilinos-thyra-dev (<= 13.2.0-3), libtrilinos-tpetra-dev (<= 13.2.0-3), libtrilinos-trilinoscouplings-dev (<= 13.2.0-3), libtrilinos-triutils-dev (<= 13.2.0-3), libtrilinos-xpetra-dev (<= 13.2.0-3), libtrilinos-zoltan2-dev (<= 13.2.0-3), libvbr-dev (<= 2.11.0~beta2-7), libvisp-dev (<= 3.5.0-2+b1), libvotca-dev (<= 2022-3), libvtk6-dev (<= 6.3.0+dfsg2-8.1+b1), libvtk7-dev (<= 7.1.1+dfsg2-10.2), open-vm-tools-dev (<= 2:12.0.5-2), pidgin-librvp (<= 0.9.7cvs-3), proftpd-dev (<= 1.3.7d+dfsg-2), slurm-wlm-basic-plugins-dev (<= 21.08.8.2-1)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/glibc/libc6-dev_2.41-12+deb13u4_arm64.deb",
+      "Size": "1624488",
+      "SHA256": "71e373cb5e9da975b02fb4af555929cb1977560e2dd8245de4eb8a7b03677a08",
+      "archive": "debian"
+    },
+    {
+      "Package": "libcc1-0",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.17), libgcc-s1 (>= 3.0), libstdc++6 (>= 5.2)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libcc1-0_14.2.0-19_arm64.deb",
+      "Size": "42164",
+      "SHA256": "f5e390b5fd65432b820afa403a61ab4d6286948fc07ca3aacb4d230a81f5c9a5",
+      "archive": "debian"
+    },
+    {
+      "Package": "libcrypt-dev",
+      "Version": "1:4.4.38-1",
+      "Architecture": "arm64",
+      "Provides": "libcrypt1-dev",
+      "Depends": "libcrypt1 (= 1:4.4.38-1)",
+      "Conflicts": "libcrypt1-dev, libcrypt2-dev",
+      "Breaks": "libc6-dev (<< 2.29-4), manpages-dev (<< 5.01-1)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/libx/libxcrypt/libcrypt-dev_4.4.38-1_arm64.deb",
+      "Size": "123160",
+      "SHA256": "eec6d4658495cdb8ce505cad91e0918edb8086677f280f3851c07ccd70543054",
+      "archive": "debian"
+    },
+    {
+      "Package": "libcrypt1",
+      "Version": "1:4.4.38-1",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.38)",
+      "Conflicts": "libpam0g (<< 1.4.0-10)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/libx/libxcrypt/libcrypt1_4.4.38-1_arm64.deb",
+      "Size": "91760",
+      "SHA256": "b9aaa808aa3812b3de3e54eb5dfb16762c1779db032604abef2354c02fdc29b8",
+      "archive": "debian"
+    },
+    {
+      "Package": "libctf-nobfd0",
+      "Version": "2.44-3",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.17), zlib1g (>= 1:1.2.0)",
+      "Breaks": "libbinutils (<< 2.33.50.20191128-1~)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/b/binutils/libctf-nobfd0_2.44-3_arm64.deb",
+      "Size": "152088",
+      "SHA256": "7b1894cbd09bd59507af259ba680a1f5d3b68c6ba9e5d69508ea2d75b3f01be6",
+      "archive": "debian"
+    },
+    {
+      "Package": "libctf0",
+      "Version": "2.44-3",
+      "Architecture": "arm64",
+      "Depends": "libbinutils (= 2.44-3), libc6 (>= 2.33), zlib1g (>= 1:1.2.0)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/b/binutils/libctf0_2.44-3_arm64.deb",
+      "Size": "84232",
+      "SHA256": "12cb7df9eafd965c00c38a8720c5b78e7b0106390f69fe180a3b3589f407d550",
+      "archive": "debian"
+    },
+    {
+      "Package": "libgcc-14-dev",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libgcc-s1 (>= 14.2.0-19), libgomp1 (>= 14.2.0-19), libitm1 (>= 14.2.0-19), libatomic1 (>= 14.2.0-19), libasan8 (>= 14.2.0-19), liblsan0 (>= 14.2.0-19), libtsan2 (>= 14.2.0-19), libubsan1 (>= 14.2.0-19), libhwasan0 (>= 14.2.0-19)",
+      "Breaks": "libtsan2 (<< 12-20211113-2~)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libgcc-14-dev_14.2.0-19_arm64.deb",
+      "Size": "2358568",
+      "SHA256": "64b8ebc7182a69aa9525df6eab5e7eb849b947e350d821549f8a8a3e9b19e5ba",
+      "archive": "debian"
+    },
+    {
+      "Package": "libgcc-s1",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Provides": "libgcc1 (= 1:14.2.0-19)",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.35)",
+      "Breaks": "libgcc-7-dev (<< 7.5.0-4), libgcc-8-dev (<< 8.3.0-27), libgcc-9-dev (<< 9.2.1-26)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libgcc-s1_14.2.0-19_arm64.deb",
+      "Size": "54104",
+      "SHA256": "1108bc87879833d6d9a145f22a4a15cddb34e065b4b5f4b97bee586adbac2851",
+      "archive": "debian"
+    },
+    {
+      "Package": "libgmp10",
+      "Version": "2:6.3.0+dfsg-3",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.38)",
+      "Breaks": "postgresql-pgmp (<< 1.0.3-1)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gmp/libgmp10_6.3.0+dfsg-3_arm64.deb",
+      "Size": "535088",
+      "SHA256": "a27bbc27f119161ea9702c8dd66f54131cdf0d2ca73000f50ea91ef2fdfef0fb",
+      "archive": "debian"
+    },
+    {
+      "Package": "libgomp1",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.38)",
+      "Breaks": "gcc-4.3 (<< 4.3.6-1), gcc-4.4 (<< 4.4.6-4), gcc-4.5 (<< 4.5.3-2)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libgomp1_14.2.0-19_arm64.deb",
+      "Size": "123520",
+      "SHA256": "43e84cb7971d8a4d8870cab6204e998ea4f23ee1339bb0ff556dd881bac82d25",
+      "archive": "debian"
+    },
+    {
+      "Package": "libhwasan0",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.34), libgcc-s1 (>= 3.3)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libhwasan0_14.2.0-19_arm64.deb",
+      "Size": "1442000",
+      "SHA256": "5a758db399fafd354b6488c4f250b7670fb1f61c31b4e4f329d0fbb750a17084",
+      "archive": "debian"
+    },
+    {
+      "Package": "libisl23",
+      "Version": "0.27-1",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.17), libgmp10 (>= 2:6.3.0+dfsg)",
+      "Breaks": "libisl-dbg (<< 0.19)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/i/isl/libisl23_0.27-1_arm64.deb",
+      "Size": "600836",
+      "SHA256": "21c490db3fa5f0a517c55090a199334da6164589772ebd922dff1e569c78515d",
+      "archive": "debian"
+    },
+    {
+      "Package": "libitm1",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.34)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libitm1_14.2.0-19_arm64.deb",
+      "Size": "24192",
+      "SHA256": "d6f0255b498af876ab7bf4420672e43cbe58dcd577f0711131cbfbcbee283cdb",
+      "archive": "debian"
+    },
+    {
+      "Package": "libjansson4",
+      "Version": "2.14-2+b3",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.38)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/j/jansson/libjansson4_2.14-2+b3_arm64.deb",
+      "Size": "39228",
+      "SHA256": "7938472b1ddfa8b0c8f58d5f44406ae7a77a342dbb502a02f6bf292b4f853ab0",
+      "archive": "debian"
+    },
+    {
+      "Package": "liblsan0",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.34), libgcc-s1 (>= 3.3)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/liblsan0_14.2.0-19_arm64.deb",
+      "Size": "1161132",
+      "SHA256": "488a54a5fe01a926ae16d73dc7ea9f530f1bf63fae73640f741695eec2541a38",
+      "archive": "debian"
+    },
+    {
+      "Package": "libmpc3",
+      "Version": "1.3.1-1+b3",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.17), libgmp10 (>= 2:6.3.0+dfsg), libmpfr6 (>= 4.0.0)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/m/mpclib3/libmpc3_1.3.1-1+b3_arm64.deb",
+      "Size": "50480",
+      "SHA256": "d4cfe026a624e51641c80ef2af77387185714f62f3b5c87035e62d9ed8d9eec1",
+      "archive": "debian"
+    },
+    {
+      "Package": "libmpfr6",
+      "Version": "4.2.2-1",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.17), libgmp10 (>= 2:6.3.0+dfsg)",
+      "Breaks": "libcgal13 (<< 4.11-2+b1), libflint-2.5.2 (<< 2.5.2-17+b2), libgiac0 (<< 1.2.3.57+dfsg1-2+b4), libgmp3 (<< 4.1.4-3), libmpc3 (<< 1.1.0-1~), libnormaliz3 (<< 3.5.1+ds-4), sagemath (<< 8.1-2+b2)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/m/mpfr4/libmpfr6_4.2.2-1_arm64.deb",
+      "Size": "685000",
+      "SHA256": "628a4ef58cc6815880f72e9d3953984a379a017e4042bc575f1fcbf3954d79ac",
+      "archive": "debian"
+    },
+    {
+      "Package": "libsframe1",
+      "Version": "2.44-3",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.17)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/b/binutils/libsframe1_2.44-3_arm64.deb",
+      "Size": "77772",
+      "SHA256": "d4a90764fa79858347aaa3197bc4489404f005d9cdbea9b2ec75a607ea5ff518",
+      "archive": "debian"
+    },
+    {
+      "Package": "libstdc++6",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.38), libgcc-s1 (>= 4.5)",
+      "Conflicts": "scim (<< 1.4.2-1)",
+      "Breaks": "gcc-4.3 (<< 4.3.6-1), gcc-4.4 (<< 4.4.6-4), gcc-4.5 (<< 4.5.3-2)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libstdc++6_14.2.0-19_arm64.deb",
+      "Size": "637536",
+      "SHA256": "6669b0c52a2e7c6af9adfdabce3ff6e286065cdfbc7b85280862b5f799daebee",
+      "archive": "debian"
+    },
+    {
+      "Package": "libtsan2",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.34), libgcc-s1 (>= 3.3)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libtsan2_14.2.0-19_arm64.deb",
+      "Size": "2383440",
+      "SHA256": "c767c05f3dade13b5780478366029f2ff32e44bea852c6a4d7a1f93f1363d3e3",
+      "archive": "debian"
+    },
+    {
+      "Package": "libubsan1",
+      "Version": "14.2.0-19",
+      "Architecture": "arm64",
+      "Depends": "gcc-14-base (= 14.2.0-19), libc6 (>= 2.34), libgcc-s1 (>= 3.3), libstdc++6 (>= 4.1.1)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/g/gcc-14/libubsan1_14.2.0-19_arm64.deb",
+      "Size": "1038924",
+      "SHA256": "b5539003465ea1e60f66b9e3a1019da182e826c82d480944f3656b12351c74c8",
+      "archive": "debian"
+    },
+    {
+      "Package": "libzstd1",
+      "Version": "1.5.7+dfsg-1",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.34)",
+      "Multi-Arch": "same",
+      "Filename": "pool/main/libz/libzstd/libzstd1_1.5.7+dfsg-1_arm64.deb",
+      "Size": "266052",
+      "SHA256": "924540bd59fdbfa77a0604360efdaca54411a43daf11c7e002a3c64791b67448",
+      "archive": "debian"
+    },
+    {
+      "Package": "linux-libc-dev",
+      "Version": "6.12.117-1",
+      "Architecture": "all",
+      "Multi-Arch": "foreign",
+      "Filename": "pool/updates/main/l/linux/linux-libc-dev_6.12.117-1_all.deb",
+      "Size": "3085840",
+      "SHA256": "8b4848725a2705e5b1612f2135c44300716690ba762368ab87df127e9a5ed416",
+      "archive": "debian-security"
+    },
+    {
+      "Package": "rpcsvc-proto",
+      "Version": "1.4.3-1+b1",
+      "Architecture": "arm64",
+      "Depends": "libc6 (>= 2.38)",
+      "Breaks": "libc-dev-bin (<< 2.31-14), libc6-dev (<< 2.31-14)",
+      "Multi-Arch": "foreign",
+      "Filename": "pool/main/r/rpcsvc-proto/rpcsvc-proto_1.4.3-1+b1_arm64.deb",
+      "Size": "60468",
+      "SHA256": "6ae3c216e6c7d8e042ad3f122b8aa89aff56b2b5174b1c5780a7841b3becd61c",
+      "archive": "debian"
+    },
+    {
+      "Package": "zlib1g",
+      "Version": "1:1.3.dfsg+really1.3.1-1+deb13u1",
+      "Architecture": "arm64",
+      "Provides": "libz1",
+      "Depends": "libc6 (>= 2.17)",
+      "Conflicts": "zlib1 (<= 1:1.0.4-7)",
+      "Breaks": "libxml2 (<< 2.7.6.dfsg-2), texlive-binaries (<< 2023.20230311.66589-8)",
+      "Multi-Arch": "same",
+      "Filename": "pool/updates/main/z/zlib/zlib1g_1.3.dfsg+really1.3.1-1+deb13u1_arm64.deb",
+      "Size": "85028",
+      "SHA256": "0e41b3d7ad8ad7fcd36dd4d61ca91a70018478fc4af652e044f4be770784ddff",
+      "archive": "debian-security"
+    }
+  ],
+  "package_bytes_verified": false,
+  "native_staging_observation": null,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}
