@@ -1,0 +1,67 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-linker-elf-observation:1",
+  "schema_version": 1,
+  "status": "ELF_METADATA_OBSERVED_SOURCE_ONLY_HOLD",
+  "source_revision": "f0c969f9dc16d3bb2841053cf974af1d2c7f243c",
+  "raw_receipt_sha256": "a1f7e7f4a99fa99b32644c4e49b7449973892cb920038f34b8b477e8973f90a8",
+  "linker_observation_sha256": "828a3fa48084ae9b4c8289ce15f7915dbb5271f49a3bf9db8ef8bff2f02bf0c3",
+  "allowlist_sha256": "c068c344e90474eb59d23acaa77dd6e86267c735eda03c65685482a63be72945",
+  "dependency_candidate_sha256": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+  "archive_reader_sha256": "46910b0b5082267c8cc8c05388331b289e3cf829e3a68519783c2a03b06d71e3",
+  "elf_reader_sha256": "bd40b647b1979334686165ff8805aa69780aee97282ce1bfca6f781d2d45e64d",
+  "started_at": "2026-11-21T19:51:07Z",
+  "finished_at": "2026-11-21T19:51:08Z",
+  "linker_member_sha256": "5a284e435cdf41bc05d93f0683da12b8a42608b93c79e187e7d03fab6a22ddf4",
+  "elf_metadata": {
+    "abi": [
+      "ELF64",
+      "LITTLE_ENDIAN",
+      "EM_AARCH64"
+    ],
+    "kind": "DYNAMIC_TOOL",
+    "interpreter": "/lib/ld-linux-aarch64.so.1",
+    "soname": "",
+    "needed": [
+      {
+        "soname": "libbfd-2.44-system.so",
+        "required_versions": []
+      },
+      {
+        "soname": "libctf.so.0",
+        "required_versions": [
+          "LIBCTF_1.1",
+          "LIBCTF_1.0"
+        ]
+      },
+      {
+        "soname": "libjansson.so.4",
+        "required_versions": [
+          "libjansson.so.4"
+        ]
+      },
+      {
+        "soname": "libc.so.6",
+        "required_versions": [
+          "GLIBC_2.27",
+          "GLIBC_2.33",
+          "GLIBC_2.34",
+          "GLIBC_2.38",
+          "GLIBC_2.17"
+        ]
+      }
+    ],
+    "version_definitions": [],
+    "unsupported_features": []
+  },
+  "package_archives_saved": false,
+  "payload_files_saved": false,
+  "native_staging_observed": false,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "qualifying_native_amd64_builder_receipts_added": 0
+}
