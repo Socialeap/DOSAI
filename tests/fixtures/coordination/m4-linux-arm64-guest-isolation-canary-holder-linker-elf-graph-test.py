@@ -1,4 +1,4 @@
-"""Replay the measured ld.bfd metadata graph without constructing a native inventory."""
+"""Replay measured holder tool metadata without constructing a native inventory."""
 
 from hashlib import sha256
 import importlib.util
@@ -50,23 +50,29 @@ def interpreter_catalog(files, rows, policy):
     return closure._ToolchainCatalog({**files, alias_path: alias}, {alias_path: target})
 
 
+def fixture_object(row):
+    path = row['mapping']['staged_path']
+    digest = bytes.fromhex(row['member_sha256'])
+    executable = bool(int(row['member_mode_octal'], 8) & 0o111)
+    entry = closure.FixtureHolderToolchainFile(path, row['member_size_bytes'], digest, executable)
+    elf = row['elf_metadata']
+    obj = closure.FixtureHolderELFObject(
+        path, digest, tuple(elf['abi']), elf['kind'], elf['interpreter'], elf['soname'],
+        tuple((edge['soname'], tuple(edge['required_versions'])) for edge in elf['needed']),
+        tuple(elf['version_definitions']), tuple(elf['unsupported_features']),
+    )
+    return entry, obj
+
+
 def replay_linker_graph(rows, policy, root_path):
     """Resolve exact names and version definitions on the measured subset, with no search or execution."""
     files, metadata = {}, []
     for row in rows:
-        mapping = row['mapping']
-        path = mapping['staged_path']
-        if path in files or mapping not in policy['paths']:
+        entry, obj = fixture_object(row)
+        if entry.path in files or row['mapping'] not in policy['paths']:
             raise ValueError('Duplicate or unallowlisted ELF graph member.')
-        digest = bytes.fromhex(row['member_sha256'])
-        executable = bool(int(row['member_mode_octal'], 8) & 0o111)
-        files[path] = closure.FixtureHolderToolchainFile(path, row['member_size_bytes'], digest, executable)
-        elf = row['elf_metadata']
-        metadata.append(closure.FixtureHolderELFObject(
-            path, digest, tuple(elf['abi']), elf['kind'], elf['interpreter'], elf['soname'],
-            tuple((edge['soname'], tuple(edge['required_versions'])) for edge in elf['needed']),
-            tuple(elf['version_definitions']), tuple(elf['unsupported_features']),
-        ))
+        files[entry.path] = entry
+        metadata.append(obj)
     # This catalog holds the observed ELF subset. No custody or isolation claim is supplied.
     catalog = interpreter_catalog(files, rows, policy)
     objects = closure._elf_objects(tuple(metadata), catalog)
@@ -222,6 +228,165 @@ class HolderLinkerELFGraphTests(unittest.TestCase):
                         {'member_sha256': '0' * 64}, {'member_size_bytes': 1}):
             with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, 'exact executable loader'):
                 replay_linker_graph([*rows, {**measured, **changed}], policy, self.record['root_path'])
+
+
+class HolderToolRootAllowlistTests(unittest.TestCase):
+    def setUp(self):
+        self.v5 = json.loads(BINDING_POLICY_RAW)
+        self.v6 = json.loads((PROPOSALS / 'm4-linux-arm64-holder-staging-allowlist-v6.json').read_bytes())
+        self.receipt_raw = (PROPOSALS / 'm4-linux-arm64-holder-tool-root-elf-observation-v1.json').read_bytes()
+        self.receipt = json.loads(self.receipt_raw)
+        self.graph = json.loads(RECORD_RAW)
+        self.pins_raw = (PROPOSALS / 'm4-linux-arm64-holder-debian-dependency-candidate-v1.json').read_bytes()
+        self.pins = {row['Package']: row for row in json.loads(self.pins_raw)['packages']}
+        self.added = self.v6['paths'][len(self.v5['paths']):]
+
+    def test_receipt_binds_measured_roots_to_merged_source_and_archives(self):
+        receipt = self.receipt
+        self.assertEqual(sha256(self.receipt_raw).hexdigest(),
+                         '93c513ecdc5e6b0d1414fc494bd52eab9e5ac1546da8624492c523baf74e3ca5')
+        self.assertEqual(receipt['raw_receipt_sha256'],
+                         'ac0ff846155157881d47643e4242aa67e44630779ace7cccddba8cb04ec292fa')
+        self.assertEqual(receipt['source_revision'], '72dbaf5f2bbde6868ab538115b21a6025d93f73d')
+        self.assertEqual(receipt['status'], 'TOOL_ELF_METADATA_OBSERVED_SOURCE_ONLY_HOLD')
+        self.assertEqual(receipt['allowlist_sha256'], sha256(BINDING_POLICY_RAW).hexdigest())
+        self.assertEqual(receipt['linker_graph_observation_sha256'], sha256(RECORD_RAW).hexdigest())
+        self.assertEqual(receipt['arm64_dependency_candidate_sha256'], sha256(self.pins_raw).hexdigest())
+        self.assertEqual(receipt['initial_member_observation_sha256'], self.v5['member_observation_sha256'])
+        tools = receipt['tools']
+        self.assertEqual([row['tool'] for row in tools], ['aarch64-linux-gnu-gcc', 'cc1', 'as', 'collect2'])
+        self.assertEqual(len(tools), receipt['measured_tools'])
+        self.assertEqual(len(tools), receipt['matching_restricted_tool_profiles'])
+        self.assertEqual(len(tools), receipt['elf_metadata_observations'])
+        archive_packages = {row['package'] for row in receipt['archives']}
+        self.assertEqual(archive_packages, {row['mapping']['package'] for row in tools})
+        self.assertEqual(receipt['verified_archives'], 3)
+        self.assertEqual(len(receipt['archives']), 3)
+        for archive in receipt['archives']:
+            pin = self.pins[archive['package']]
+            self.assertEqual(archive, {
+                'package': pin['Package'], 'version': pin['Version'], 'architecture': 'arm64',
+                'filename': pin['Filename'], 'size_bytes': int(pin['Size']), 'sha256': pin['SHA256'],
+            })
+        providers = {row['elf_metadata']['soname']: row['elf_metadata']['version_definitions']
+                     for row in self.graph['objects']}
+        missing = {}
+        for row in tools:
+            with self.subTest(tool=row['tool']):
+                self.assertIn(row['mapping'], self.v5['paths'])
+                self.assertEqual(row['mapping']['staged_path'], closure.TOOL_PREFIX + row['tool'])
+                entry, obj = fixture_object(row)
+                self.assertEqual((obj.kind, obj.interpreter, obj.abi, obj.unsupported_features),
+                                 ('DYNAMIC_TOOL', closure.ELF_INTERPRETER, closure.ELF_ABI, ()))
+                self.assertTrue(entry.executable)
+                self.assertGreater(entry.size, 0)
+                self.assertEqual(len(entry.digest), 32)
+                missing[row['tool']] = {name: versions for name, versions in obj.needed if name not in providers}
+                for name, versions in obj.needed:
+                    if name in providers:
+                        self.assertLessEqual(set(versions), set(providers[name]))
+        self.assertEqual(missing, {
+            'aarch64-linux-gnu-gcc': {}, 'collect2': {},
+            'cc1': {'libgmp.so.10': (), 'libisl.so.23': (), 'libm.so.6': ('GLIBC_2.17',),
+                    'libmpc.so.3': (), 'libmpfr.so.6': ()},
+            'as': {'libopcodes-2.44-system.so': ()},
+        })
+        self.assertEqual(receipt['needed_names_without_provider_in_measured_v5_graph'],
+                         sorted({name for edges in missing.values() for name in edges}))
+        self.assertEqual(receipt['known_provider_version_mismatches'], [])
+        for key in ('package_archives_saved', 'payload_files_saved', 'native_staging_observed',
+                    'materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible'):
+            self.assertIs(receipt[key], False)
+        for key in ('native_loader_closure', 'approved_toolchain_lock', 'artifact_receipt'):
+            self.assertIsNone(receipt[key])
+        self.assertEqual(receipt['qualifying_native_amd64_builder_receipts_added'], 0)
+
+    def test_v6_adds_only_the_six_exact_regular_file_candidates(self):
+        self.assertEqual(self.v6['schema_id'], 'urn:dosai:proposal:m4-linux-arm64-holder-staging-allowlist:6')
+        self.assertEqual(self.v6['schema_version'], 6)
+        self.assertEqual(self.v6['source_revision'], self.receipt['source_revision'])
+        self.assertEqual(self.v6['predecessor_sha256'], sha256(BINDING_POLICY_RAW).hexdigest())
+        self.assertEqual(set(self.v6), set(self.v5) | {'tool_root_runtime_extension'})
+        changed = {'schema_id', 'schema_version', 'source_revision', 'predecessor_sha256', 'paths'}
+        for field in self.v5.keys() - changed:
+            self.assertEqual(self.v6[field], self.v5[field], field)
+        self.assertEqual(self.v6['paths'][:19], self.v5['paths'])
+        self.assertEqual(len({row['staged_path'] for row in self.v6['paths']}), 25)
+        self.assertEqual(len(self.pins), self.v6['archive_pin_count'])
+        self.assertEqual(self.v6['tool_root_runtime_extension'], {
+            'scope': 'CC1_AND_AS_OBSERVED_DIRECT_LIBRARY_PATHS_ONLY',
+            'tool_root_elf_observation_sha256': sha256(self.receipt_raw).hexdigest(),
+            'path_count': 6, 'source_member_kind_required': 'FILE',
+            'provider_metadata_observation': None, 'transitive_loader_closure': None,
+        })
+        expected = (
+            ('libgmp10', '2:6.3.0+dfsg-3', 'libgmp.so.10.5.0', 'libgmp.so.10'),
+            ('libisl23', '0.27-1', 'libisl.so.23.4.0', 'libisl.so.23'),
+            ('libc6', '2.41-12+deb13u4', 'libm.so.6', 'libm.so.6'),
+            ('libmpc3', '1.3.1-1+b3', 'libmpc.so.3.3.1', 'libmpc.so.3'),
+            ('libmpfr6', '4.2.2-1', 'libmpfr.so.6.2.2', 'libmpfr.so.6'),
+            ('libbinutils', '2.44-3', 'libopcodes-2.44-system.so', 'libopcodes-2.44-system.so'),
+        )
+        directory = 'usr/lib/aarch64-linux-gnu/'
+        self.assertEqual(self.added, [
+            {'package': package, 'member_path': directory + member,
+             'staged_path': 'toolchain/runtime/' + directory + soname}
+            for package, _, member, soname in expected
+        ])
+        self.assertEqual([soname for _, _, _, soname in expected],
+                         self.receipt['needed_names_without_provider_in_measured_v5_graph'])
+        for package, version, _, _ in expected:
+            with self.subTest(package=package):
+                pin = self.pins[package]
+                self.assertEqual((pin['Version'], pin['Architecture'], pin['archive']), (version, 'arm64', 'debian'))
+
+    def test_synthetic_replay_requires_each_new_provider_and_cc1s_libm_version(self):
+        rows = self.graph['objects'] + self.receipt['tools']
+        measured = [fixture_object(row) for row in rows]
+        for row in rows:
+            self.assertIn(row['mapping'], self.v6['paths'])
+        entries, objects = map(list, zip(*measured))
+        for field in ('runtime_interpreter_binding', 'required_link'):
+            alias = self.v6[field]
+            entries.append(closure.FixtureHolderToolchainAlias(alias['staged_path'], alias['relative_target']))
+        for row in self.v6['paths']:
+            path = row['staged_path']
+            if path.startswith(('toolchain/sysroot/', 'toolchain/lib/')):
+                entries.append(closure.FixtureHolderToolchainFile(path, 1, sha256(path.encode()).digest(), False))
+
+        # The six newly listed providers are synthetic. The tool roots and linker graph are measured.
+        for row in self.added:
+            path = row['staged_path']
+            soname = path.rsplit('/', 1)[-1]
+            digest = sha256(('fixture:' + path).encode()).digest()
+            entries.append(closure.FixtureHolderToolchainFile(path, 1, digest, False))
+            versions = ('GLIBC_2.17',) if soname == 'libm.so.6' else ()
+            objects.append(closure.FixtureHolderELFObject(
+                path, digest, closure.ELF_ABI, 'SHARED_OBJECT', '', soname, (), versions, (),
+            ))
+
+        def verify(entries, objects):
+            entries = tuple(entries)
+            manifest, recipe = closure.MANIFEST_V2_DIGEST, closure.RECIPE_V2_DIGEST
+            lock = closure.FixtureHolderToolchainLock(manifest, recipe, entries)
+            digest = closure.fixture_holder_toolchain_lock_digest(lock)
+            inventory = closure.FixtureHolderToolchainObservation(
+                'SYNTHETIC_ONLY', 'NATIVE_LINUX_ARM64', manifest, recipe, True, True, entries,
+            )
+            observation = closure.FixtureHolderELFObservation('SYNTHETIC_ONLY', digest, True, tuple(objects))
+            return closure.verify_fixture_holder_elf_closure(lock, digest, inventory, observation)
+
+        self.assertEqual(verify(entries, objects).status, 'SOURCE_ONLY_HOLD')
+        for row in self.added:
+            path = row['staged_path']
+            with self.subTest(missing=path):
+                self.assertIsNone(verify([entry for entry in entries if entry.path != path],
+                                         [obj for obj in objects if obj.path != path]))
+        without_version = [obj._replace(version_definitions=()) if obj.soname == 'libm.so.6' else obj
+                           for obj in objects]
+        wrong_soname = [obj._replace(soname='libm.so.0') if obj.soname == 'libm.so.6' else obj for obj in objects]
+        self.assertIsNone(verify(entries, without_version))
+        self.assertIsNone(verify(entries, wrong_soname))
 
 
 if __name__ == '__main__':

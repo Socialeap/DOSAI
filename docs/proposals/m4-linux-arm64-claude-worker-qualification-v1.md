@@ -707,6 +707,40 @@ retain their gates.
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
 
+The [tool-root ELF observation](m4-linux-arm64-holder-tool-root-elf-observation-v1.json)
+records the measured GCC driver, `cc1`, `as`, and `collect2` from three
+pinned Debian ARM64 archives. All four member measurements matched the
+earlier receipt. Their interpreter declarations match the v5 source
+binding, and every dependency already present in the measured linker graph
+provides the versions the four tools require. The GCC driver and
+`collect2` introduce no additional provider names.
+
+The [v6 staging allowlist](m4-linux-arm64-holder-staging-allowlist-v6.json)
+retains the 19 v5 paths and the exact interpreter binding. It adds six
+regular-file candidates under the same runtime library directory.
+
+| Consumer | Debian package | Archive member basename | Staged basename |
+| --- | --- | --- | --- |
+| `cc1` | `libgmp10` | `libgmp.so.10.5.0` | `libgmp.so.10` |
+| `cc1` | `libisl23` | `libisl.so.23.4.0` | `libisl.so.23` |
+| `cc1` | `libc6` | `libm.so.6` | `libm.so.6` |
+| `cc1` | `libmpc3` | `libmpc.so.3.3.1` | `libmpc.so.3` |
+| `cc1` | `libmpfr6` | `libmpfr.so.6.2.2` | `libmpfr.so.6` |
+| `as` | `libbinutils` | `libopcodes-2.44-system.so` | `libopcodes-2.44-system.so` |
+
+The candidate paths match Debian's public ARM64 file lists. The offline
+replay uses synthetic metadata for the six providers and rejects missing
+providers, an incorrect SONAME, and the loss of `GLIBC_2.17` from the
+`libm.so.6` fixture. In-memory measurement and ELF inspection of the six
+pinned provider members, their transitive dependency edges, and native
+staging and qualification remain held.
+[Debian GMP file list](https://packages.debian.org/trixie/arm64/libgmp10/filelist) ·
+[Debian ISL file list](https://packages.debian.org/trixie/arm64/libisl23/filelist) ·
+[Debian libc file list](https://packages.debian.org/trixie/arm64/libc6/filelist) ·
+[Debian MPC file list](https://packages.debian.org/trixie/arm64/libmpc3/filelist) ·
+[Debian MPFR file list](https://packages.debian.org/trixie/arm64/libmpfr6/filelist) ·
+[Debian Binutils library file list](https://packages.debian.org/trixie/arm64/libbinutils/filelist)
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
