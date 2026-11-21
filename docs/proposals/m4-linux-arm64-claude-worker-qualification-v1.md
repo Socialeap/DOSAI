@@ -752,6 +752,24 @@ Native staging and readback, physical loader behavior, relocations,
 compiler lookup, toolchain admission, and independent native builders
 retain their separate evidence gates.
 
+The [staging and readback fixture plan](m4-linux-arm64-holder-staging-readback-plan-v1.json)
+binds the v6 allowlist and v2 manifest and recipe to 24 measured regular
+files, the measured linker symlink, and the planned loader symlink. The
+file rows carry exact size, mode, and SHA-256. The checker expects only
+the directories implied by those paths. It compares two complete,
+ordered synthetic censuses against the exact plan on one mount, under the
+same root identity and fenced writer generation, from a reader distinct
+from the writer. It checks exact alias targets and rejects hard links,
+unexpected entries, changed inodes or change times, and stale samples.
+
+The [fixture readback verifier](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-staging-readback.py)
+returns held census and sysroot digests bound to the plan, manifest, and
+recipe. The offline integration test projects the validated file and
+alias records into the existing v2 inventory verifier and replays the
+measured ELF graph against that inventory. A native proof still requires
+separately approved staging, verified input archives, independent pinned
+root-relative readback, and physical evidence of writer exclusion.
+
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
 exclusive bootstrap evidence with no inherited filters. EOF can also
