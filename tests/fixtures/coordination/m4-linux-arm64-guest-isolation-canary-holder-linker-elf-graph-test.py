@@ -10,11 +10,44 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 PROPOSALS = ROOT / 'docs/proposals'
 POLICY_RAW = (PROPOSALS / 'm4-linux-arm64-holder-staging-allowlist-v4.json').read_bytes()
+BINDING_POLICY_RAW = (PROPOSALS / 'm4-linux-arm64-holder-staging-allowlist-v5.json').read_bytes()
 RECORD_RAW = (PROPOSALS / 'm4-linux-arm64-holder-linker-elf-graph-observation-v1.json').read_bytes()
 VERIFIER = ROOT / 'tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-toolchain-closure.py'
 SPEC = importlib.util.spec_from_file_location('closure', VERIFIER)
 closure = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(closure)
+
+
+def interpreter_catalog(files, rows, policy):
+    """Project only the exact source alias into a read-only replay catalog."""
+    if policy['schema_version'] == 4:
+        return closure._ToolchainCatalog(files, {})
+    binding = policy.get('runtime_interpreter_binding')
+    loader, = (item for item in json.loads(RECORD_RAW)['objects']
+               if item['elf_metadata']['soname'] == closure.ELF_LOADER_SONAME)
+    provider = {**loader['mapping'], **{key: loader[key] for key in ('member_size_bytes', 'member_mode_octal', 'member_sha256')}}
+    alias_path = closure.RUNTIME_PREFIX + closure.ELF_INTERPRETER
+    relative_target = '../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1'
+    expected = {
+        'kind': 'STAGED_RELATIVE_ALIAS', 'linker_graph_observation_sha256': sha256(RECORD_RAW).hexdigest(),
+        'declared_interpreter': closure.ELF_INTERPRETER, 'staged_path': alias_path, 'relative_target': relative_target,
+        'provider': provider, 'native_binding_observation': None,
+    }
+    if policy['schema_version'] != 5 or binding != expected:
+        raise ValueError('Missing or changed source interpreter binding.')
+    if alias_path in {row['staged_path'] for row in policy['paths']} or alias_path in files:
+        raise ValueError('Interpreter binding collides with a staged archive path.')
+
+    target = closure._alias_destination(alias_path, relative_target)
+    required = closure.FixtureHolderToolchainFile(provider['staged_path'], provider['member_size_bytes'],
+                                                   bytes.fromhex(provider['member_sha256']), True)
+    if target != required.path or files.get(target) != required:
+        raise ValueError('Interpreter binding is missing its exact executable loader.')
+    measured, = (row for row in rows if row['mapping']['staged_path'] == target)
+    if measured['mapping'] != loader['mapping'] or measured['member_mode_octal'] != provider['member_mode_octal']:
+        raise ValueError('Interpreter binding is missing its exact executable loader.')
+    alias = closure.FixtureHolderToolchainAlias(alias_path, relative_target)
+    return closure._ToolchainCatalog({**files, alias_path: alias}, {alias_path: target})
 
 
 def replay_linker_graph(rows, policy, root_path):
@@ -35,7 +68,7 @@ def replay_linker_graph(rows, policy, root_path):
             tuple(elf['version_definitions']), tuple(elf['unsupported_features']),
         ))
     # This catalog holds the observed ELF subset. No custody or isolation claim is supplied.
-    catalog = closure._ToolchainCatalog(files, {})
+    catalog = interpreter_catalog(files, rows, policy)
     objects = closure._elf_objects(tuple(metadata), catalog)
     if objects is None or not closure._runtime_inventory_covered(catalog, objects):
         raise ValueError('Observed ELF objects do not match the restricted profile.')
@@ -73,8 +106,11 @@ def replay_linker_graph(rows, policy, root_path):
         raise ValueError('Observed ELF catalog contains unreachable objects.')
 
     encoded = json.dumps(sorted(edges), separators=(',', ':'), ensure_ascii=True).encode('ascii')
+    bound = all(item['runtime_path_bound_in_allowlist'] for item in interpreters)
+    status = ('DT_NEEDED_GRAPH_AND_INTERPRETER_PATH_RESOLVED_SOURCE_ONLY_HOLD' if bound
+              else 'DT_NEEDED_GRAPH_RESOLVED_INTERPRETER_PATH_BINDING_HELD')
     return {
-        'status': 'DT_NEEDED_GRAPH_RESOLVED_INTERPRETER_PATH_BINDING_HELD',
+        'status': status,
         'reachable_objects': len(visited), 'resolved_dt_needed_edges': len(edges),
         'dt_needed_edge_sha256': sha256(encoded).hexdigest(),
         'interpreter_declarations': sorted(interpreters, key=lambda item: item['consumer']),
@@ -140,6 +176,52 @@ class HolderLinkerELFGraphTests(unittest.TestCase):
         loader['elf_metadata']['version_definitions'].remove('GLIBC_PRIVATE')
         with self.assertRaisesRegex(ValueError, 'Missing required ELF versions for ld-linux'):
             self.replay(rows)
+
+    def test_v5_only_adds_the_exact_source_alias_and_resolves_both_interpreters_offline(self):
+        policy = json.loads(BINDING_POLICY_RAW)
+        self.assertEqual(sha256(BINDING_POLICY_RAW).hexdigest(), 'af5ecfeac239d24ed7b983f2a10869b63be1e42200709ca954d14df703fec598')
+        self.assertEqual(policy['source_revision'], 'bd7ed4401ce5dd3357306af68cc26ac4acf13761')
+        self.assertEqual(policy['predecessor_sha256'], sha256(POLICY_RAW).hexdigest())
+        changed = {'schema_id', 'schema_version', 'source_revision', 'predecessor_sha256'}
+        self.assertEqual(set(policy) - set(self.policy), {'runtime_interpreter_binding'})
+        for field in self.policy.keys() - changed:
+            self.assertEqual(policy[field], self.policy[field], field)
+        self.assertEqual(len(policy['paths']), 19)
+        result = replay_linker_graph(self.rows, policy, self.record['root_path'])
+        historical = self.record['offline_graph']
+        self.assertEqual(result['status'], 'DT_NEEDED_GRAPH_AND_INTERPRETER_PATH_RESOLVED_SOURCE_ONLY_HOLD')
+        self.assertEqual(result['dt_needed_edge_sha256'], historical['dt_needed_edge_sha256'])
+        self.assertEqual((result['reachable_objects'], result['resolved_dt_needed_edges']), (9, 19))
+        self.assertEqual(result['interpreter_declarations'], [
+            {**row, 'runtime_path_bound_in_allowlist': True} for row in historical['interpreter_declarations']
+        ])
+
+    def test_v5_rejects_missing_redirected_or_colliding_interpreter_bindings(self):
+        root = self.record['root_path']
+        policy = json.loads(BINDING_POLICY_RAW)
+        exact = policy['runtime_interpreter_binding']
+        for changed in (None, {**exact, 'staged_path': 'toolchain/runtime/lib/other-loader.so'},
+                        {**exact, 'relative_target': '/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1'},
+                        {**exact, 'relative_target': '../../bin/ld'}, {**exact, 'relative_target': '../lib/ld-linux-aarch64.so.1'},
+                        {**exact, 'linker_graph_observation_sha256': '0' * 64},
+                        {**exact, 'provider': {**exact['provider'], 'member_sha256': '0' * 64}}):
+            with self.subTest(binding=changed), self.assertRaisesRegex(ValueError, 'source interpreter binding'):
+                replay_linker_graph(self.rows, {**policy, 'runtime_interpreter_binding': changed}, root)
+        collision = {**exact['provider'], 'staged_path': exact['staged_path']}
+        with self.assertRaisesRegex(ValueError, 'collides with a staged archive path'):
+            replay_linker_graph(self.rows, {**policy, 'paths': [*policy['paths'], collision]}, root)
+
+    def test_v5_refuses_missing_or_changed_loader_bytes_and_mode(self):
+        policy = json.loads(BINDING_POLICY_RAW)
+        loader = policy['runtime_interpreter_binding']['provider']['staged_path']
+        rows = [row for row in self.rows if row['mapping']['staged_path'] != loader]
+        measured, = (row for row in self.rows if row['mapping']['staged_path'] == loader)
+        with self.assertRaisesRegex(ValueError, 'exact executable loader'):
+            replay_linker_graph(rows, policy, self.record['root_path'])
+        for changed in ({'member_mode_octal': '0644'}, {'member_mode_octal': '0711'},
+                        {'member_sha256': '0' * 64}, {'member_size_bytes': 1}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ValueError, 'exact executable loader'):
+                replay_linker_graph([*rows, {**measured, **changed}], policy, self.record['root_path'])
 
 
 if __name__ == '__main__':
