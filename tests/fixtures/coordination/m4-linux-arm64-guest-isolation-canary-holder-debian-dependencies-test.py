@@ -15,6 +15,7 @@ PROPOSALS = ROOT / 'docs/proposals'
 CANDIDATE = (PROPOSALS / 'm4-linux-arm64-holder-toolchain-candidate-v1.json').read_bytes()
 TRUST = (ROOT / 'docs/architecture/p3-debian-archive-trust-root-source-recommendation-v2.json').read_bytes()
 RECEIPT = (PROPOSALS / 'm4-linux-arm64-holder-debian-dependency-candidate-v1.json').read_bytes()
+HASH_OBSERVATION = (PROPOSALS / 'm4-linux-arm64-holder-debian-package-hash-observation-v1.json').read_bytes()
 SPEC = importlib.util.spec_from_file_location(
     'resolver', ROOT / 'tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-debian-dependencies.py',
 )
@@ -91,6 +92,29 @@ class HolderDebianDependenciesTests(unittest.TestCase):
                       'artifact_receipt'):
             self.assertIsNone(self.receipt[field])
         self.assertEqual(self.receipt['qualifying_native_amd64_builder_receipts_added'], 0)
+
+    def test_archive_hash_observation_binds_each_pin_and_preserves_authority_holds(self):
+        observed = json.loads(HASH_OBSERVATION)
+        self.assertEqual(sha256(HASH_OBSERVATION).hexdigest(),
+                         'd24ab63fa183367025ccd175bf42eae81ac0ba98e1ae9595d067fea1ac8a3d21')
+        self.assertEqual(observed['source_revision'], 'b4873a8e72f939e38fa89982ba4c4c515f7ec609')
+        self.assertEqual(observed['dependency_candidate_sha256'], sha256(RECEIPT).hexdigest())
+        self.assertEqual(observed['status'], 'ARCHIVE_BYTES_MATCH_SOURCE_ONLY_HOLD')
+        rows = sorted([p['Package'], p['Version'], p['Architecture'], p['archive'], p['Filename'],
+                       int(p['Size']), p['SHA256']] for p in self.receipt['packages'])
+        normalized = json.dumps(rows, separators=(',', ':'), ensure_ascii=True).encode('ascii')
+        self.assertEqual(observed['measurement_rows_sha256'], sha256(normalized).hexdigest())
+        self.assertEqual(observed['matched_package_count'], len(rows))
+        self.assertEqual(observed['matched_package_archive_bytes'], sum(row[5] for row in rows))
+        self.assertEqual(observed['package_counts_by_archive'], Counter(row[3] for row in rows))
+        self.assertEqual(observed['package_counts_by_architecture'], Counter(row[2] for row in rows))
+        for field in ('package_archives_saved', 'package_payloads_extracted', 'packages_installed',
+                      'build_authorized', 'launch_authorized', 'runtime_eligible'):
+            self.assertIs(observed[field], False)
+        for field in ('native_staging_observation', 'native_loader_closure', 'approved_toolchain_lock',
+                      'artifact_receipt'):
+            self.assertIsNone(observed[field])
+        self.assertEqual(observed['qualifying_native_amd64_builder_receipts_added'], 0)
 
     def test_debian_order_compares_epochs_tildes_numeric_runs_and_revisions(self):
         for earlier, later in [('3.9', '3.10'), ('1.0~rc1-7', '1.0-1'), ('9', '1:1'),

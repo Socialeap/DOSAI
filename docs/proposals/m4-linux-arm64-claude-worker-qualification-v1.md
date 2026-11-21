@@ -553,10 +553,11 @@ relationships, the implicit Essential base, and file-level loader
 resolution are outside this declared-dependency count.
 [Debian package relationships](https://www.debian.org/doc/debian-policy/ch-relationships.html)
 
-Package-byte verification, ELF loader resolution, and approval of the
-staged lock remain held. Native staging must prove that aliases, compiler
-lookup, and the host loader stay within the isolated build root. Only an
-independently verified staged census can populate the toolchain lock.
+The [package-hash observation](m4-linux-arm64-holder-debian-package-hash-observation-v1.json)
+records the matching byte counts and hashes for all 35 archives.
+The [native staging and ELF plan](m4-linux-arm64-holder-native-staging-and-elf-plan-v1.md)
+defines the future payload, custody, and loader checks. Physical staging,
+ELF loader resolution, and approval of the staged lock remain held.
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
