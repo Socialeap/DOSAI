@@ -293,6 +293,51 @@ class HolderELFClosureTests(unittest.TestCase):
         self.assertIsNone(self.verify(entries=tuple(entry for entry in entries if entry.path != INTERPRETER_ALIAS),
                                       objects=(*others, libc)))
 
+    def test_observed_transitive_edges_need_all_three_v4_candidates_and_required_versions(self):
+        proposals = ROOT / 'docs/proposals'
+        policy = json.loads((proposals / 'm4-linux-arm64-holder-staging-allowlist-v4.json').read_bytes())
+        linker = json.loads((proposals / 'm4-linux-arm64-holder-linker-elf-observation-v1.json').read_bytes())
+        recheck = json.loads((proposals / 'm4-linux-arm64-holder-linker-direct-library-recheck-v1.json').read_bytes())
+        needs = {'aarch64-linux-gnu-ld.bfd': linker['elf_metadata']['needed']}
+        needs.update({library['soname']: library['needed'] for library in recheck['libraries']})
+        versions = {}
+        for edges in needs.values():
+            for edge in edges:
+                versions.setdefault(edge['soname'], set()).update(edge['required_versions'])
+
+        link = policy['required_link']
+        linker_path = 'toolchain/bin/' + link['relative_target']
+        entries = tuple(entry for entry in ENTRIES if entry.path not in (link['staged_path'], INTERPRETER_ALIAS))
+        entries += (Alias(link['staged_path'], link['relative_target']), file(linker_path, True), file(LOADER, True),
+                    Alias(INTERPRETER_ALIAS, '../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1'))
+        objects = tuple(obj._replace(needed=()) for obj in self.objects
+                        if obj.kind == 'DYNAMIC_TOOL' and obj.path != link['staged_path'])
+        objects += (elf(linker_path, 'DYNAMIC_TOOL', interpreter=closure.ELF_INTERPRETER,
+                        needed=tuple((edge['soname'], tuple(edge['required_versions']))
+                                     for edge in needs[link['relative_target']])),
+                    elf(LOADER, 'SHARED_OBJECT', soname=closure.ELF_LOADER_SONAME,
+                        versions=tuple(sorted(versions[closure.ELF_LOADER_SONAME]))))
+        interpreters = {library['soname']: library['interpreter'] for library in recheck['libraries']}
+        for row in policy['paths'][-7:]:
+            path = row['staged_path']
+            soname = path.rsplit('/', 1)[-1]
+            interpreter = interpreters.get(soname, '')
+            needed = tuple((edge['soname'], tuple(edge['required_versions'])) for edge in needs.get(soname, ()))
+            entries += (file(path, executable=bool(interpreter)),)
+            objects += (elf(path, 'SHARED_OBJECT', interpreter=interpreter, soname=soname, needed=needed,
+                            versions=tuple(sorted(versions[soname]))),)
+        # New providers and the loader use synthetic metadata. This grants no native admission.
+        self.assertEqual(self.verify(entries=entries, objects=objects).status, 'SOURCE_ONLY_HOLD')
+        for row in policy['paths'][-3:]:
+            missing = row['staged_path']
+            with self.subTest(missing=missing):
+                self.assertIsNone(self.verify(entries=tuple(entry for entry in entries if entry.path != missing),
+                                              objects=tuple(obj for obj in objects if obj.path != missing)))
+        for soname in ('libsframe.so.1', 'libz.so.1'):
+            with self.subTest(missing_version=soname):
+                changed = tuple(obj._replace(version_definitions=()) if obj.soname == soname else obj for obj in objects)
+                self.assertIsNone(self.verify(entries=entries, objects=changed))
+
 
 if __name__ == '__main__':
     unittest.main()

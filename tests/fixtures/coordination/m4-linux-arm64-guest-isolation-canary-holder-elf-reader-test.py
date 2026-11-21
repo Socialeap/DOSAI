@@ -324,7 +324,8 @@ class HolderLinkerLibraryAllowlistTests(unittest.TestCase):
         self.proposals = ROOT / 'docs/proposals'
         self.v2_raw = (self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v2.json').read_bytes()
         self.v2 = json.loads(self.v2_raw)
-        self.v3 = json.loads((self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v3.json').read_bytes())
+        self.v3_raw = (self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v3.json').read_bytes()
+        self.v3 = json.loads(self.v3_raw)
         self.observation_raw = (self.proposals / 'm4-linux-arm64-holder-linker-elf-observation-v1.json').read_bytes()
         self.observation = json.loads(self.observation_raw)
         self.dependencies = (self.proposals / 'm4-linux-arm64-holder-debian-dependency-candidate-v1.json').read_bytes()
@@ -417,6 +418,64 @@ class HolderLinkerLibraryAllowlistTests(unittest.TestCase):
                       'staged_inventory', 'approved_toolchain_lock', 'artifact_receipt', 'materialization_authorized',
                       'build_authorized', 'launch_authorized', 'runtime_eligible', 'qualifying_native_amd64_builder_receipts_added'):
             self.assertEqual(v3[field], self.v2[field])
+
+    def test_recheck_and_v4_allowlist_preserve_the_exact_three_new_dependency_names_and_pins(self):
+        raw = (self.proposals / 'm4-linux-arm64-holder-linker-direct-library-recheck-v1.json').read_bytes()
+        recheck = json.loads(raw)
+        v4 = json.loads((self.proposals / 'm4-linux-arm64-holder-staging-allowlist-v4.json').read_bytes())
+        prior = (self.proposals / 'm4-linux-arm64-holder-linker-direct-library-observation-v1.json').read_bytes()
+        self.assertEqual(sha256(raw).hexdigest(), '99e22bb5dd0f090b7ff657d206afb8a46eb81ecb01c903165c3a2581c4de89ef')
+        self.assertEqual(recheck['raw_receipt_sha256'], '7283b2f037b50e92eb6dbdbb6565ebe0cd8c7e26a186b4a54350710756e780d3')
+        self.assertEqual(recheck['source_revision'], '3f90cfe2161a017aba5fb397120929435966413b')
+        self.assertEqual(recheck['status'], 'DIRECT_LIBRARY_CHECKS_PASSED_SOURCE_ONLY_HOLD')
+        self.assertEqual(recheck['allowlist_sha256'], sha256(self.v3_raw).hexdigest())
+        self.assertEqual(recheck['prior_direct_library_observation_sha256'], sha256(prior).hexdigest())
+        self.assertEqual(recheck['linker_elf_observation_sha256'], sha256(self.observation_raw).hexdigest())
+        self.assertEqual(recheck['dependency_candidate_sha256'], sha256(self.dependencies).hexdigest())
+        self.assertEqual(recheck['elf_reader_sha256'], '6c01e74ebbfb414123e25986247bc37554bef24db6133e9836370b1631649339')
+        self.assertEqual(recheck['object_verifier_sha256'], '51e37dad7b69c0ef76420f1619099ae5d93fb2f1f08e09edc04262b149faaabc')
+        for count in ('verified_archives', 'measured_members', 'elf_metadata_observations', 'passing_direct_library_checks'):
+            self.assertEqual(recheck[count], 4)
+        self.assertEqual(v4['schema_version'], 4)
+        self.assertEqual(v4['source_revision'], recheck['source_revision'])
+        self.assertEqual(v4['predecessor_sha256'], sha256(self.v3_raw).hexdigest())
+        self.assertEqual(v4['paths'][:-3], self.v3['paths'])
+        self.assertEqual(v4['transitive_runtime_extension'], {
+            'scope': 'LD_BFD_OBSERVED_TRANSITIVE_LIBRARY_PATHS_ONLY', 'direct_library_recheck_sha256': sha256(raw).hexdigest(),
+            'path_count': 3, 'source_member_kind_required': 'FILE',
+            'provider_metadata_observation': None, 'transitive_loader_closure': None,
+        })
+        expected = (
+            ('libsframe1', '2.44-3', 'debian', 'libsframe.so.1.0.0', 'libsframe.so.1'),
+            ('zlib1g', '1:1.3.dfsg+really1.3.1-1+deb13u1', 'debian-security', 'libz.so.1.3.1', 'libz.so.1'),
+            ('libzstd1', '1.5.7+dfsg-1', 'debian', 'libzstd.so.1.5.7', 'libzstd.so.1'),
+        )
+        directory = 'usr/lib/aarch64-linux-gnu'
+        self.assertEqual(v4['paths'][-3:], [
+            {'package': package, 'member_path': f'{directory}/{source}', 'staged_path': f'toolchain/runtime/{directory}/{soname}'}
+            for package, _, _, source, soname in expected
+        ])
+        pinned = {row['Package']: row for row in json.loads(self.dependencies)['packages']}
+        self.assertEqual(len(pinned), v4['archive_pin_count'])
+        for package, version, archive, _, _ in expected:
+            self.assertEqual((pinned[package]['Version'], pinned[package]['archive'], pinned[package]['Architecture']),
+                             (version, archive, 'arm64'))
+        known = {path['staged_path'].rsplit('/', 1)[-1] for path in self.v3['paths']
+                 if path['staged_path'].startswith('toolchain/runtime/')}
+        required = {edge['soname'] for library in recheck['libraries'] for edge in library['needed']}
+        self.assertEqual(sorted(required - known), recheck['additional_needed_names_outside_v3_runtime_paths'])
+        self.assertEqual(sorted(required - known), [row[4] for row in expected])
+        for field in ('status', 'input_sha256', 'required_link', 'runtime_extension', 'member_observation_sha256',
+                      'reviewed_member_pins', 'staged_inventory', 'approved_toolchain_lock', 'artifact_receipt',
+                      'materialization_authorized', 'build_authorized', 'launch_authorized', 'runtime_eligible',
+                      'qualifying_native_amd64_builder_receipts_added'):
+            self.assertEqual(v4[field], self.v3[field])
+        for key in ('package_archives_saved', 'payload_files_saved', 'native_staging_observed', 'materialization_authorized',
+                    'build_authorized', 'launch_authorized', 'runtime_eligible'):
+            self.assertIs(recheck[key], False)
+        for key in ('native_loader_closure', 'approved_toolchain_lock', 'artifact_receipt'):
+            self.assertIsNone(recheck[key])
+        self.assertEqual(recheck['qualifying_native_amd64_builder_receipts_added'], 0)
 
 
 if __name__ == '__main__':
