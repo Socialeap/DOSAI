@@ -19,6 +19,8 @@ PT_LOAD, PT_DYNAMIC, PT_INTERP = 1, 2, 3
 PT_GNU_STACK = 0x6474e551
 PF_X, PF_W = 1, 2
 DT_NEEDED, DT_STRTAB, DT_STRSZ, DT_SONAME, DT_FLAGS = 1, 5, 10, 14, 30
+DT_TLSDESC_PLT, DT_TLSDESC_GOT = 0x6ffffef6, 0x6ffffef7
+DT_AARCH64_BTI_PLT = 0x70000001
 DT_FLAGS_1, DT_VERDEF, DT_VERDEFNUM, DT_VERNEED, DT_VERNEEDNUM = range(0x6ffffffb, 0x70000000)
 MAX_ELF_BYTES = 64 * 1024**2
 MAX_PROGRAM_HEADERS = 128
@@ -36,6 +38,7 @@ IDENTIFIER = re.compile(rb'[A-Za-z0-9_.+-]{1,128}')
 KNOWN_DYNAMIC_TAGS = {
     DT_NEEDED, DT_STRTAB, DT_STRSZ, DT_SONAME, DT_FLAGS, DT_FLAGS_1,
     DT_VERDEF, DT_VERDEFNUM, DT_VERNEED, DT_VERNEEDNUM,
+    DT_TLSDESC_PLT, DT_TLSDESC_GOT, DT_AARCH64_BTI_PLT,
     2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28,
     32, 33, 34, 35, 36, 37,  # PREINIT_ARRAY, extended symbol indices, and RELR
     0x6ffffef5, 0x6ffffff0, 0x6ffffff9, 0x6ffffffa,  # GNU_HASH, VERSYM, RELACOUNT, RELCOUNT
@@ -66,6 +69,7 @@ class _Segment(NamedTuple):
     address: int
     file_size: int
     memory_size: int
+    flags: int
 
 
 def _program_headers(data):
@@ -82,7 +86,7 @@ def _program_headers(data):
             continue
         if offset + file_size > len(data) or address + mem_size > ADDRESS_LIMIT:
             raise ValueError('ELF program segment is out of bounds.')
-        segment = _Segment(offset, address, file_size, mem_size)
+        segment = _Segment(offset, address, file_size, mem_size, segment_flags)
         if tag == PT_LOAD:
             if (mem_size == 0 or file_size > mem_size
                     or align > 1 and (align & (align - 1) or offset % align != address % align)
@@ -104,12 +108,13 @@ def _program_headers(data):
     return kind, loads, unique, features, ((0, ehsize), (phoff, phoff + count * phsize))
 
 
-def _file_window(loads, address, size):
+def _file_window(loads, address, size, required_flags=0):
     for load in loads:
         displacement = address - load.address
-        if 0 <= displacement and displacement + size <= load.file_size:
+        if (0 <= displacement and displacement + size <= load.file_size
+                and load.flags & required_flags == required_flags):
             return load.offset + displacement, load.offset + load.file_size
-    raise ValueError('ELF metadata address is outside a file-backed load segment.')
+    raise ValueError('ELF metadata address is outside a file-backed load segment with the required permissions.')
 
 
 def _dynamic_entries(data, segment, loads):
@@ -178,6 +183,20 @@ def _strings(data, tags, loads):
     return _Strings(data, start, end)
 
 
+def _shared_base_auxiliary_bound(data, position, fields, limit):
+    """Recognize the single terminal Verdaux shared by adjacent base and named records."""
+    version, flags, index, count, name_hash, delta, following = fields
+    if (version, flags, index, count) != (1, 1, 1, 1) or not following:
+        raise ValueError('ELF version auxiliary record is out of bounds.')
+    successor = position + following
+    next_version, next_flags, next_index, next_count, next_hash, next_delta, next_record = VERDEF.unpack_from(data, successor)
+    if (next_version != 1 or next_flags & 1 or next_index <= 1 or next_count != 1 or next_hash != name_hash
+            or next_delta < VERDEF.size or next_delta % 4 or successor + next_delta != position + delta):
+        raise ValueError('ELF version auxiliary record is out of bounds.')
+    # The successor independently validates its chain and the terminal auxiliary record.
+    return min(limit, successor + next_record) if next_record else limit
+
+
 def _version_records(data, loads, tags, table_tag, count_tag, header, auxiliary, count_field):
     if table_tag not in tags and count_tag not in tags:
         return (), None
@@ -194,10 +213,12 @@ def _version_records(data, loads, tags, table_tag, count_tag, header, auxiliary,
         last_group = group_index == count - 1
         if (not aux_count or budget < 0 or delta < header.size or delta % 4
                 or last_group != (next_group == 0) or next_group % 4
-                or (next_group and position + next_group + header.size > limit)):
+                or (next_group and (next_group < header.size or position + next_group + header.size > limit))):
             raise ValueError('Invalid ELF version record chain.')
         bound = position + next_group if next_group else limit
         aux_position = position + delta
+        if table_tag == DT_VERDEF and aux_position + auxiliary.size > bound:
+            bound = _shared_base_auxiliary_bound(data, position, fields, limit)
         entries = []
         for aux_index in range(aux_count):
             if aux_position + auxiliary.size > bound:
@@ -236,8 +257,9 @@ def _version_metadata(data, loads, tags, strings, needed):
     for (version, flags, index, _, name_hash, _, _), records in definitions:
         name, *parents = [strings.name(name_offset) for name_offset, _ in records]
         is_base = bool(flags & 1)
+        duplicate_version = name in provided and (is_base or not provided[name])
         if (version != 1 or flags & ~3 or index >= 0x8000 or is_base != (index == 1)
-                or name in provided or (is_base and parents)):
+                or duplicate_version or (is_base and parents)):
             raise ValueError('Invalid ELF version definition.')
         _register_version(indices, index, name, name_hash)
         provided[name] = is_base
@@ -266,7 +288,20 @@ def _held_features(tags, program_features, kind, interpreter, soname):
     flags_1 = tags.get(DT_FLAGS_1, 0)
     if flags_1 & ~(DF_1_NOW | DF_1_PIE) or (flags_1 & DF_1_PIE and (kind != ET_DYN or not interpreter or soname)):
         held.add('DT_FLAGS_1')
+    if tags.get(DT_AARCH64_BTI_PLT, 0) != 0:
+        held.add('DT_AARCH64_BTI_PLT')
     return tuple(sorted(held))
+
+
+def _check_tls_descriptor_locations(tags, loads):
+    locations = ((DT_TLSDESC_PLT, 4, PF_X), (DT_TLSDESC_GOT, 8, PF_W))
+    if DT_TLSDESC_PLT not in tags and DT_TLSDESC_GOT not in tags:
+        return
+    for tag, word_size, permissions in locations:
+        address = tags.get(tag, 0)
+        if address == 0 or address % word_size:
+            raise ValueError('Missing or misaligned ELF TLS descriptor location.')
+        _file_window(loads, address, word_size, permissions)
 
 
 def read_arm64_elf_metadata(data, expected_digest):
@@ -278,6 +313,7 @@ def read_arm64_elf_metadata(data, expected_digest):
     kind, loads, programs, features, header_extents = _program_headers(data)
     dynamic = programs[PT_DYNAMIC]
     tags, name_indices = _dynamic_entries(data, dynamic, loads)
+    _check_tls_descriptor_locations(tags, loads)
     strings = _strings(data, tags, loads)
     needed = tuple(strings.name(index) for index in name_indices)
     if len(set(needed)) != len(needed):

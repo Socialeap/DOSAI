@@ -622,16 +622,39 @@ adds four candidate paths under `toolchain/runtime/usr/lib/aarch64-linux-gnu/`
 in the recorded dependency order. It maps the versioned archive filenames
 `libctf.so.0.0.0` and `libjansson.so.4.14.0` directly to the requested
 loader names `libctf.so.0` and `libjansson.so.4`. `libbfd-2.44-system.so`
-and `libc.so.6` retain their basenames. Future inspection must confirm that
-all four archive members are regular files and that their ELF metadata
-matches the required SONAMEs and symbol versions. The offline fixtures
-check that the graph rejects missing providers, wrong staged names, and
-missing versions. Provider measurements, the transitive closure, native
-readback, relocations, and runtime loader behavior remain held.
+and `libc.so.6` retain their basenames. The offline fixtures check that the
+graph rejects missing providers, wrong staged names, and missing versions.
 [Debian libbinutils file list](https://packages.debian.org/trixie/arm64/libbinutils/filelist) ·
 [Debian libctf0 file list](https://packages.debian.org/trixie/arm64/libctf0/filelist) ·
 [Debian libjansson4 file list](https://packages.debian.org/trixie/arm64/libjansson4/filelist) ·
 [Debian libc6 file list](https://packages.debian.org/trixie/arm64/libc6/filelist)
+
+The [direct-library observation](m4-linux-arm64-holder-linker-direct-library-observation-v1.json)
+records the four verified archive members and the results of the reader
+shipped in PR #98. All four members were regular files measured in memory.
+Three parsed, and only `libctf.so.0` matched the restricted profile. The
+observation records the digests of the original receipt and Jansson layout
+diagnostic. The following source changes are verified with offline fixtures.
+
+- The ELF reader permits an index-one GNU version base record and its next
+  named record to share one terminal auxiliary entry. The record boundaries,
+  version indices, and name hashes still have to agree. The base name is
+  excluded from the offered versions unless the named record defines it.
+  [GNU version definition layout](https://refspecs.linuxfoundation.org/LSB_2.0.0/LSB-Core/LSB-Core/symverdefs.html)
+- The BFD TLS descriptor tags must appear as a pair. The PLT address must
+  be aligned and file-backed in an executable load segment. The GOT
+  address must be aligned and file-backed in a writable load segment.
+  [AArch64 binutils TLS descriptor handling](https://sourceware.org/pipermail/binutils-cvs/2019-April/050454.html)
+- The reader recognizes the zero-valued AArch64 BTI PLT marker. The graph
+  permits an interpreter on the exact staged `libc.so.6` shared object
+  when it is executable, names the reviewed AArch64 interpreter, and has
+  only the corresponding loader as a direct dependency. The graph still
+  checks that loader's path, identity, and required version definitions.
+  [Arm AArch64 dynamic tags](https://github.com/ARM-software/abi-aa/blob/main/sysvabi64/sysvabi64.rst#9103dynamic-section-tags)
+
+The fixed readers still need a separate observation against the pinned
+library bytes. The recorded outcomes are historical. Transitive closure,
+native readback, relocations, and runtime loader behavior remain held.
 [Debian archive authentication](https://manpages.debian.org/trixie/apt/apt-secure.8.en.html) ·
 [GCC dependencies](https://packages.debian.org/trixie/gcc-14-aarch64-linux-gnu) ·
 [Binutils dependencies](https://packages.debian.org/trixie/binutils-aarch64-linux-gnu)
