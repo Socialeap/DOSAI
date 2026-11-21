@@ -1,0 +1,462 @@
+{
+  "schema_id": "urn:dosai:proposal:m4-linux-arm64-holder-linker-elf-graph-observation:1",
+  "schema_version": 1,
+  "status": "SOURCE_ONLY_HOLD",
+  "source_revision": "f689bc5b60e56178b942b9a9986a9d0dc1c6a850",
+  "allowlist_sha256": "46d51270d9110e4784939ba3c3f590ac158cf4f146a29a86aff12717bccbb4e4",
+  "dependency_candidate_sha256": "2b75bc59ee3a90c44dba6be491b2ce7a2099a25cbb30cb2e59cd2e58289602ca",
+  "object_verifier_sha256": "51e37dad7b69c0ef76420f1619099ae5d93fb2f1f08e09edc04262b149faaabc",
+  "receipts": {
+    "linker": {
+      "sha256": "a1f7e7f4a99fa99b32644c4e49b7449973892cb920038f34b8b477e8973f90a8",
+      "source_revision": "f0c969f9dc16d3bb2841053cf974af1d2c7f243c",
+      "elf_reader_sha256": "bd40b647b1979334686165ff8805aa69780aee97282ce1bfca6f781d2d45e64d"
+    },
+    "direct_libraries": {
+      "sha256": "7283b2f037b50e92eb6dbdbb6565ebe0cd8c7e26a186b4a54350710756e780d3",
+      "source_revision": "3f90cfe2161a017aba5fb397120929435966413b",
+      "elf_reader_sha256": "6c01e74ebbfb414123e25986247bc37554bef24db6133e9836370b1631649339"
+    },
+    "transitive_libraries": {
+      "sha256": "0722cf63931685eca1e804500843c548318d6604c7d3da381f90b2076eb787b7",
+      "source_revision": "f689bc5b60e56178b942b9a9986a9d0dc1c6a850",
+      "elf_reader_sha256": "6c01e74ebbfb414123e25986247bc37554bef24db6133e9836370b1631649339"
+    },
+    "loader": {
+      "sha256": "35e32805d33b532663565ca5db0d75ba4a71db9143e748e4003884e0d218f899",
+      "source_revision": "f689bc5b60e56178b942b9a9986a9d0dc1c6a850",
+      "elf_reader_sha256": "6c01e74ebbfb414123e25986247bc37554bef24db6133e9836370b1631649339"
+    }
+  },
+  "transitive_library_observation": {
+    "verified_archives": 3,
+    "measured_members": 3,
+    "elf_metadata_observations": 3,
+    "passing_transitive_library_checks": 3,
+    "new_sonames_outside_v4_runtime_paths": []
+  },
+  "root_path": "toolchain/bin/aarch64-linux-gnu-ld.bfd",
+  "loader_archive_sha256": "8784eda966b189c777a384dac5ce009e8fc9b52d006926c5a013e7fa8aa688cc",
+  "objects": [
+    {
+      "mapping": {
+        "package": "binutils-aarch64-linux-gnu",
+        "member_path": "usr/bin/aarch64-linux-gnu-ld.bfd",
+        "staged_path": "toolchain/bin/aarch64-linux-gnu-ld.bfd"
+      },
+      "member_size_bytes": 2499576,
+      "member_mode_octal": "0755",
+      "member_sha256": "5a284e435cdf41bc05d93f0683da12b8a42608b93c79e187e7d03fab6a22ddf4",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "DYNAMIC_TOOL",
+        "interpreter": "/lib/ld-linux-aarch64.so.1",
+        "soname": "",
+        "needed": [
+          {
+            "soname": "libbfd-2.44-system.so",
+            "required_versions": []
+          },
+          {
+            "soname": "libctf.so.0",
+            "required_versions": [
+              "LIBCTF_1.1",
+              "LIBCTF_1.0"
+            ]
+          },
+          {
+            "soname": "libjansson.so.4",
+            "required_versions": [
+              "libjansson.so.4"
+            ]
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.27",
+              "GLIBC_2.33",
+              "GLIBC_2.34",
+              "GLIBC_2.38",
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libc6",
+        "member_path": "usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1"
+      },
+      "member_size_bytes": 201344,
+      "member_mode_octal": "0755",
+      "member_sha256": "1b882eddacd494b060413a8aa4f0a4754ee3f84775e68cecbf8a86092b59cca6",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "ld-linux-aarch64.so.1",
+        "needed": [],
+        "version_definitions": [
+          "GLIBC_2.17",
+          "GLIBC_2.34",
+          "GLIBC_2.35",
+          "GLIBC_PRIVATE"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libbinutils",
+        "member_path": "usr/lib/aarch64-linux-gnu/libbfd-2.44-system.so",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libbfd-2.44-system.so"
+      },
+      "member_size_bytes": 1648320,
+      "member_mode_octal": "0644",
+      "member_sha256": "7148e290f24b5de218d65be62fa74a595143664ddf95dcc76335b292eeb1bbb4",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libbfd-2.44-system.so",
+        "needed": [
+          {
+            "soname": "libz.so.1",
+            "required_versions": [
+              "ZLIB_1.2.0"
+            ]
+          },
+          {
+            "soname": "libzstd.so.1",
+            "required_versions": []
+          },
+          {
+            "soname": "libsframe.so.1",
+            "required_versions": [
+              "LIBSFRAME_1.0"
+            ]
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.33",
+              "GLIBC_2.34",
+              "GLIBC_2.38",
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libc6",
+        "member_path": "usr/lib/aarch64-linux-gnu/libc.so.6",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libc.so.6"
+      },
+      "member_size_bytes": 1716616,
+      "member_mode_octal": "0755",
+      "member_sha256": "70fa4c4cf57eabeb96097cce47582d02379c4cd1de3db3e98ade4dd7089a1b13",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "/lib/ld-linux-aarch64.so.1",
+        "soname": "libc.so.6",
+        "needed": [
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.35",
+              "GLIBC_PRIVATE",
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [
+          "GLIBC_2.17",
+          "GLIBC_2.18",
+          "GLIBC_2.22",
+          "GLIBC_2.23",
+          "GLIBC_2.24",
+          "GLIBC_2.25",
+          "GLIBC_2.26",
+          "GLIBC_2.27",
+          "GLIBC_2.28",
+          "GLIBC_2.29",
+          "GLIBC_2.30",
+          "GLIBC_2.31",
+          "GLIBC_2.32",
+          "GLIBC_2.33",
+          "GLIBC_2.34",
+          "GLIBC_2.35",
+          "GLIBC_2.36",
+          "GLIBC_2.38",
+          "GLIBC_2.39",
+          "GLIBC_2.41",
+          "GLIBC_ABI_DT_RELR",
+          "GLIBC_PRIVATE"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libctf0",
+        "member_path": "usr/lib/aarch64-linux-gnu/libctf.so.0.0.0",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libctf.so.0"
+      },
+      "member_size_bytes": 265424,
+      "member_mode_octal": "0644",
+      "member_sha256": "def024cba74defbba1928cb4e44d5d7730ba2e08d5855d6620c2ab16a319257d",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libctf.so.0",
+        "needed": [
+          {
+            "soname": "libbfd-2.44-system.so",
+            "required_versions": []
+          },
+          {
+            "soname": "libz.so.1",
+            "required_versions": [
+              "ZLIB_1.2.0"
+            ]
+          },
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.33",
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [
+          "LIBCTF_1.0",
+          "LIBCTF_1.1",
+          "LIBCTF_1.2",
+          "LIBCTF_1.3"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libjansson4",
+        "member_path": "usr/lib/aarch64-linux-gnu/libjansson.so.4.14.0",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libjansson.so.4"
+      },
+      "member_size_bytes": 68000,
+      "member_mode_octal": "0644",
+      "member_sha256": "b7830632c6245b8805ce05240c6818eb77644adef86a55d754acfd93bbf0fb6b",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libjansson.so.4",
+        "needed": [
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.38",
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [
+          "libjansson.so.4"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libsframe1",
+        "member_path": "usr/lib/aarch64-linux-gnu/libsframe.so.1.0.0",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libsframe.so.1"
+      },
+      "member_size_bytes": 67816,
+      "member_mode_octal": "0644",
+      "member_sha256": "5e92ed310274e75e698397260b1da66afc9730287b6478f1f8e0c3c0efd8ad06",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libsframe.so.1",
+        "needed": [
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [
+          "LIBSFRAME_0.0",
+          "LIBSFRAME_1.0"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "zlib1g",
+        "member_path": "usr/lib/aarch64-linux-gnu/libz.so.1.3.1",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libz.so.1"
+      },
+      "member_size_bytes": 133600,
+      "member_mode_octal": "0644",
+      "member_sha256": "ac4b7f163145ca73ddba8e657cc35c5b5380ce01f75cbf3b65f8deeebd9c1e72",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libz.so.1",
+        "needed": [
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [
+          "ZLIB_1.2.0",
+          "ZLIB_1.2.0.2",
+          "ZLIB_1.2.0.8",
+          "ZLIB_1.2.2",
+          "ZLIB_1.2.2.3",
+          "ZLIB_1.2.2.4",
+          "ZLIB_1.2.3.3",
+          "ZLIB_1.2.3.4",
+          "ZLIB_1.2.3.5",
+          "ZLIB_1.2.5.1",
+          "ZLIB_1.2.5.2",
+          "ZLIB_1.2.7.1",
+          "ZLIB_1.2.9",
+          "ZLIB_1.2.12"
+        ],
+        "unsupported_features": []
+      }
+    },
+    {
+      "mapping": {
+        "package": "libzstd1",
+        "member_path": "usr/lib/aarch64-linux-gnu/libzstd.so.1.5.7",
+        "staged_path": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libzstd.so.1"
+      },
+      "member_size_bytes": 723048,
+      "member_mode_octal": "0644",
+      "member_sha256": "1279c4edfbfb08878b5b7fb40d392c1bdc9b30100d9b7a019d4aefaf10d2046c",
+      "elf_metadata": {
+        "abi": [
+          "ELF64",
+          "LITTLE_ENDIAN",
+          "EM_AARCH64"
+        ],
+        "kind": "SHARED_OBJECT",
+        "interpreter": "",
+        "soname": "libzstd.so.1",
+        "needed": [
+          {
+            "soname": "libc.so.6",
+            "required_versions": [
+              "GLIBC_2.34",
+              "GLIBC_2.17"
+            ]
+          },
+          {
+            "soname": "ld-linux-aarch64.so.1",
+            "required_versions": [
+              "GLIBC_2.17"
+            ]
+          }
+        ],
+        "version_definitions": [],
+        "unsupported_features": []
+      }
+    }
+  ],
+  "package_archives_saved": false,
+  "payload_files_saved": false,
+  "native_staging_observed": false,
+  "materialization_authorized": false,
+  "build_authorized": false,
+  "launch_authorized": false,
+  "runtime_eligible": false,
+  "native_loader_closure": null,
+  "approved_toolchain_lock": null,
+  "artifact_receipt": null,
+  "qualifying_native_amd64_builder_receipts_added": 0,
+  "offline_graph": {
+    "status": "DT_NEEDED_GRAPH_RESOLVED_INTERPRETER_PATH_BINDING_HELD",
+    "reachable_objects": 9,
+    "resolved_dt_needed_edges": 19,
+    "dt_needed_edge_sha256": "6cade59682119dc08ba7bbc0e8e5b0870f41e27231f6dfc417ee885979fc1c6e",
+    "interpreter_declarations": [
+      {
+        "consumer": "toolchain/bin/aarch64-linux-gnu-ld.bfd",
+        "declared_path": "/lib/ld-linux-aarch64.so.1",
+        "provider_file": "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+        "runtime_path_bound_in_allowlist": false
+      },
+      {
+        "consumer": "toolchain/runtime/usr/lib/aarch64-linux-gnu/libc.so.6",
+        "declared_path": "/lib/ld-linux-aarch64.so.1",
+        "provider_file": "toolchain/runtime/usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1",
+        "runtime_path_bound_in_allowlist": false
+      }
+    ]
+  }
+}
