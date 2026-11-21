@@ -411,7 +411,7 @@ supplies the filter's identity.
 [Linux file seals](https://man7.org/linux/man-pages/man2/F_GET_SEALS.2const.html) ·
 [ELF program headers](https://man7.org/linux/man-pages/man5/elf.5.html)
 
-The [holder build manifest](m4-linux-arm64-holder-build-manifest-v1.json)
+The [v1 holder build manifest](m4-linux-arm64-holder-build-manifest-v1.json)
 pins the bootstrap and filter C sources from the PR #88 merge and the
 encoded filter words. It records an offline native Linux ARM64 build
 contract for this temporary-file fixture. The output must conform to the
@@ -458,6 +458,25 @@ deadline outside the holder. It sends `B` only after the parked process
 baseline and all launch approvals are accepted. The later `C` byte retains
 its existing close role. Failed admission or pipe EOF exits the shim before
 bootstrap. The shim and offline encoder supply no launch authority.
+
+The [v2 holder build manifest](m4-linux-arm64-holder-build-manifest-v2.json)
+binds the merged entry shim with the prior bootstrap and filter sources.
+It preserves the exact v1 manifest digest and the existing static ELF
+output contract. Its recipe stages only those three sources, declares
+three compilation steps and one static link as direct arguments, and
+names the staged compiler, tool prefix, and sysroot. It declares a clean
+environment on a disposable native ARM64 build root. The recipe requires
+physical enforcement of filesystem and toolchain closure. GCC search
+options alone do not prove it.
+[GCC search and sysroot options](https://gcc.gnu.org/onlinedocs/gcc/Directory-Options.html)
+
+The v2 manifest SHA-256 is
+`d64c75e57e71ca4ff11795f3ebf087a457eb8faaa99ffc4d4bd8e3e72ab87a3e`.
+The recipe SHA-256 is
+`c0c9d991e2da8966a2d8ab53f73935b7465ee3d998c848b52ad85a67350e0272`,
+computed from compact ASCII JSON with sorted keys. Source-only verification
+checks both digests and all three source pins. The native toolchain closure,
+artifact receipt, build approval, and launch approval remain held.
 
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and
