@@ -803,10 +803,22 @@ original pathname. The binding borrows these descriptors and the root and
 closes only acquired children and directory streams. An uncertain close
 withholds the census and consumes the close attempt.
 
-Offline tests supply simulated kernel buffers and cover the native
-factory through a mock syscall. Physical descriptor enrollment and
-custody, writer exclusion, supervisor-enforced deadlines, and native
-qualification retain their gates.
+The [descriptor enrollment](../../tools/local-coordination-pilot/m4-linux-arm64-guest-isolation-canary-holder-staging-readback.py)
+requires the pinned plan, root, writer seal, process instance, descriptor
+table, and exactly one borrowed description for each planned regular file.
+The expected custodian is distinct from the writer and reader. A complete,
+fenced custody sample must match the enrollment before and after each
+census, with a strictly increasing sample sequence for the single prepared
+attempt. At those boundaries the binding checks all enrolled descriptors
+for stable identity, mount, mode, and read-only and close-on-exec flags.
+A content read also checks that the opened object matches its enrolled
+path. Any failed sample withholds the held receipt.
+
+The native transport is prepared lazily after the first valid custody
+sample. Tests use simulated kernel responses and custodian observations.
+A native supervisor still must provide independent process and table
+identity, continuous exclusive custody, writer exclusion, and enforced
+deadlines under the separate qualification gate.
 
 The single-attempt receipt issuer requires the exact setup frame and EOF
 on the registered pipe, the trusted executable and filter digests, and

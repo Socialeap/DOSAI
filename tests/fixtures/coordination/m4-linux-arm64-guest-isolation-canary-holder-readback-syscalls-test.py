@@ -79,7 +79,7 @@ class KernelFixture:
             data[:len(contents)] = contents
             return len(contents)
         if number == 25:
-            assert fd in (12, 13)
+            assert fd in (ROOT, 12, 13)
             command, = args
             return self.fd_flags if command == 3 else 1
         if number == 67:
@@ -155,7 +155,7 @@ class HolderReadbackSyscallTests(unittest.TestCase):
                 directory = ops.open_child(ROOT, 'bin', readback.CHILD_OPEN_FLAGS, readback.CHILD_RESOLVE_FLAGS)
                 file = ops.open_child(directory, Path(LINKER).name, readback.CHILD_OPEN_FLAGS, readback.CHILD_RESOLVE_FLAGS)
                 baseline = len(kernel.calls)
-                with self.assertRaisesRegex(ValueError, 'readable handle'):
+                with self.assertRaisesRegex(ValueError, 'readable handle|descriptor flags'):
                     ops.read_file_at(file, 0, 1)
                 self.assertFalse(any(call[0] in (67, 437) for call in kernel.calls[baseline:]))
                 ops.close_handle(file)
@@ -222,7 +222,7 @@ class HolderReadbackSyscallTests(unittest.TestCase):
         with patch.object(readback.os, 'uname', return_value=SimpleNamespace(sysname='Darwin', machine='arm64')), \
                 patch.object(readback.ctypes, 'CDLL') as libc:
             with self.assertRaises(OSError):
-                readback.prepare_linux_arm64_holder_readback_primitives(ROOT, SEAL, (), lambda _: SEAL, deadline_ns=100)
+                readback._linux_arm64_readback_syscall()
             libc.assert_not_called()
 
     def test_native_factory_marshals_arm64_buffer_arguments_with_a_mock_syscall(self):
@@ -239,7 +239,9 @@ class HolderReadbackSyscallTests(unittest.TestCase):
         with patch.object(readback.os, 'uname', return_value=SimpleNamespace(sysname='Linux', machine='aarch64')), \
                 patch.object(readback.ctypes, 'CDLL', return_value=SimpleNamespace(syscall=syscall)), \
                 patch.object(readback, 'monotonic_ns', return_value=10):
-            ops = readback.prepare_linux_arm64_holder_readback_primitives(ROOT, SEAL, (), lambda _: SEAL, deadline_ns=100)
+            ops = readback._arm64_readback_primitives(
+                readback._linux_arm64_readback_syscall(), ROOT, SEAL, (), lambda _: SEAL, readback.monotonic_ns, 100,
+            )
             self.assertEqual(ops.stat_handle(ROOT, readback.HANDLE_STAT_FLAGS, readback.REQUIRED_STAT_FIELDS).inode,
                              SEAL.root_inode)
         self.assertEqual(calls, [(291, ROOT, b'', 0x1100, 0x4387)])
