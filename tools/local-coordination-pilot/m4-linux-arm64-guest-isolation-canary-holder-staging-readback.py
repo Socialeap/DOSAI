@@ -7,6 +7,7 @@ import os
 import re
 from struct import Struct, unpack_from
 import sys
+from threading import Lock
 from time import monotonic_ns
 from typing import NamedTuple, Optional
 
@@ -392,7 +393,8 @@ def _directory_names(data):
         offset = end
 
 
-def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, clock, deadline_ns):
+def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, clock, deadline_ns, *,
+                               enrolled_paths=None):
     """Bind the fixed readback operations to an ARM64 syscall transport."""
     if (not callable(invoke) or not _descriptor(root_handle) or not _valid_seal(seal)
             or not callable(observe_seal) or not callable(clock) or not _positive(deadline_ns)
@@ -405,7 +407,8 @@ def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, c
             raise ValueError('Invalid borrowed readback file pin.')
         readable[file.inode] = file.descriptor
         borrowed.add(file.descriptor)
-    owned = set()
+    owned = {}
+    enrolled_metadata = None
     last_clock = 0
 
     def budgeted_call(number, *args):
@@ -423,15 +426,42 @@ def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, c
         if not _descriptor(fd) or fd not in owned:
             raise ValueError('ARM64 readback cannot close an unowned handle.')
         # A close error consumes the close attempt. The fd number may already be reusable.
-        owned.remove(fd)
+        del owned[fd]
         status = invoke(_SYS_CLOSE, fd)
         if type(status) is not int or status != 0:
             raise OSError('ARM64 readback descriptor cleanup unconfirmed.')
 
+    def require_readonly(fd, *, allow_path=False):
+        flags = budgeted_call(_SYS_FCNTL, fd, _F_GETFL)
+        prohibited = _O_ACCMODE if allow_path else _O_ACCMODE | _O_PATH
+        if flags & prohibited or budgeted_call(_SYS_FCNTL, fd, _F_GETFD) != _FD_CLOEXEC:
+            raise ValueError('ARM64 readback descriptor flags rejected.')
+
     def root_seal(fd):
+        nonlocal enrolled_metadata
         if not _descriptor(fd) or fd != root_handle:
             raise ValueError('ARM64 readback root is outside the binding.')
-        return observe_seal(fd)
+        current = observe_seal(fd)
+        if enrolled_paths is None:
+            return current
+        if not _valid_seal(current) or current != seal:
+            raise ValueError('ARM64 readback writer seal rejected.')
+        root = stat(fd)
+        if root.kind != 'DIRECTORY' or root.inode != seal.root_inode:
+            raise ValueError('ARM64 enrolled root identity rejected.')
+        require_readonly(fd, allow_path=True)
+        metadata = {ROOT: root}
+        for path, (inode, planned) in enrolled_paths.items():
+            reader = readable[inode]
+            info = stat(reader)
+            if info.inode != inode or not _stat_matches_plan(info, planned, seal):
+                raise ValueError('ARM64 enrolled regular file rejected.')
+            require_readonly(reader)
+            metadata[path] = info
+        if enrolled_metadata is not None and metadata != enrolled_metadata:
+            raise ValueError('ARM64 enrolled metadata changed.')
+        enrolled_metadata = metadata
+        return current
 
     def check_handle(fd):
         if not _descriptor(fd) or (fd != root_handle and fd not in owned):
@@ -457,7 +487,8 @@ def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, c
         child = budgeted_call(_SYS_OPENAT2, fd, name, how, len(how))
         if not _descriptor(child) or child in borrowed or child in owned:
             raise OSError('ARM64 readback openat2 returned an unexpected handle.')
-        owned.add(child)
+        parent = ROOT if fd == root_handle else owned[fd]
+        owned[child] = parent if name == b'.' else parent + '/' + name.decode('ascii')
         return child
 
     def open_child(fd, name, flags, resolution):
@@ -508,10 +539,12 @@ def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, c
         pinned = stat(fd)
         reader = readable.get(pinned.inode)
         if (pinned.kind != 'FILE' or reader is None or offset > pinned.size
-                or count > max(1, pinned.size - offset) or stat(reader) != pinned
-                or budgeted_call(_SYS_FCNTL, reader, _F_GETFL) & (_O_PATH | _O_ACCMODE)
-                or budgeted_call(_SYS_FCNTL, reader, _F_GETFD) != _FD_CLOEXEC):
+                or count > max(1, pinned.size - offset) or stat(reader) != pinned):
             raise ValueError('ARM64 readback readable handle is unconfirmed.')
+        if enrolled_paths is not None and (
+                enrolled_metadata is None or enrolled_metadata.get(owned.get(fd)) != pinned):
+            raise ValueError('ARM64 regular handle differs from the enrolled path.')
+        require_readonly(reader)
         data = bytearray(count)
         size = budgeted_call(_SYS_PREAD64, reader, data, count, offset)
         if size > count or stat(reader) != pinned or stat(fd) != pinned:
@@ -536,8 +569,8 @@ def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, c
     )
 
 
-def prepare_linux_arm64_holder_readback_primitives(root_handle, seal, files, observe_seal, *, deadline_ns):
-    """Prepare dormant bindings for a future supervisor-owned Linux ARM64 session."""
+def _linux_arm64_readback_syscall():
+    """Load the ARM64 transport for the source-only enrollment entry point."""
     platform = os.uname()
     if ((platform.sysname, platform.machine, sys.byteorder) != ('Linux', 'aarch64', 'little')
             or ctypes.sizeof(ctypes.c_long) != 8 or ctypes.sizeof(ctypes.c_void_p) != 8):
@@ -560,4 +593,144 @@ def prepare_linux_arm64_holder_readback_primitives(root_handle, seal, files, obs
             raise OSError(ctypes.get_errno(), 'ARM64 readback syscall failed.')
         return result
 
-    return _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, monotonic_ns, deadline_ns)
+    return invoke
+
+
+class FixtureReadbackTablePin(NamedTuple):
+    boot_id: bytes
+    pid: int
+    start_ticks: int
+    table_id: bytes
+
+
+class FixtureReadbackFilePin(NamedTuple):
+    path: str
+    inode: int
+    descriptor: int
+
+
+class FixtureReadbackEnrollment(NamedTuple):
+    origin: str
+    plan_digest: bytes
+    seal: FixtureStagingSeal
+    reader_id: bytes
+    custodian_id: bytes
+    table: FixtureReadbackTablePin
+    root_handle: int
+    files: tuple
+    deadline_ns: int
+
+
+class FixtureReadbackCustody(NamedTuple):
+    enrollment: FixtureReadbackEnrollment
+    observer_id: bytes
+    sequence: int
+    complete: bool
+    table_fenced: bool
+
+
+class FixtureEnrolledReadbackEvidence(NamedTuple):
+    status: str
+    enrollment_digest: bytes
+    readback: FixtureStagingReadbackEvidence
+
+
+def _valid_readback_enrollment(enrollment, paths):
+    if (type(enrollment) is not FixtureReadbackEnrollment or type(enrollment.origin) is not str
+            or enrollment.origin != 'SYNTHETIC_ONLY' or not _token(enrollment.plan_digest)
+            or enrollment.plan_digest != PLAN_SHA256 or not _valid_seal(enrollment.seal)
+            or not _token(enrollment.reader_id) or not _token(enrollment.custodian_id)
+            or len({enrollment.seal.writer_id, enrollment.reader_id, enrollment.custodian_id}) != 3
+            or type(enrollment.table) is not FixtureReadbackTablePin or not _token(enrollment.table.boot_id)
+            or not _token(enrollment.table.table_id) or not _positive(enrollment.table.pid)
+            or not _descriptor(enrollment.table.pid) or not _positive(enrollment.table.start_ticks)
+            or not _descriptor(enrollment.root_handle) or enrollment.root_handle < 3
+            or type(enrollment.files) is not tuple or not 0 < len(enrollment.files) == len(paths) <= _MAX_READABLE_FILES
+            or not _positive(enrollment.deadline_ns)):
+        return False
+    names, inodes, descriptors = set(), {enrollment.seal.root_inode}, {enrollment.root_handle}
+    for pin in enrollment.files:
+        if (type(pin) is not FixtureReadbackFilePin or type(pin.path) is not str
+                or pin.path not in paths or pin.path in names or not _positive(pin.inode) or pin.inode in inodes
+                or not _descriptor(pin.descriptor) or pin.descriptor < 3 or pin.descriptor in descriptors):
+            return False
+        names.add(pin.path)
+        inodes.add(pin.inode)
+        descriptors.add(pin.descriptor)
+    return True
+
+
+def prepare_fixture_holder_readback_enrollment(plan_bytes, enrollment, read_custody, *, invoke, clock):
+    """Prepare one held readback attempt against an independently witnessed table."""
+    plan = _pinned_plan(plan_bytes)
+    if plan is None or not all(callable(port) for port in (read_custody, invoke, clock)):
+        raise ValueError('Invalid source-only readback enrollment.')
+    planned = {path: content for path, content in _planned_nodes(plan).items() if content.kind == 'FILE'}
+    if not _valid_readback_enrollment(enrollment, planned):
+        raise ValueError('Invalid source-only readback enrollment.')
+    seal, table = enrollment.seal, enrollment.table
+    ordered_files = tuple(sorted(enrollment.files))
+    enrollment = enrollment._replace(files=ordered_files)
+    identity = (
+        'DOSAI_HOLDER_READBACK_ENROLLMENT_V1', enrollment.plan_digest.hex(),
+        [seal.writer_id.hex(), seal.mount_id, seal.root_inode, seal.generation],
+        enrollment.reader_id.hex(), enrollment.custodian_id.hex(),
+        [table.boot_id.hex(), table.pid, table.start_ticks, table.table_id.hex()],
+        enrollment.root_handle, ordered_files, enrollment.deadline_ns,
+    )
+    digest = sha256(json.dumps(identity, separators=(',', ':')).encode('ascii')).digest()
+    readable = tuple(StagingReadableFile(pin.inode, pin.descriptor) for pin in ordered_files)
+    enrolled_paths = {pin.path: (pin.inode, planned[pin.path]) for pin in ordered_files}
+    consumed = False
+    attempt_lock = Lock()
+    last_sequence = 0
+
+    def observe_seal(fd):
+        nonlocal last_sequence
+        try:
+            current = read_custody(fd, digest)
+        except Exception:
+            raise OSError('ARM64 readback custody unavailable.') from None
+        if (type(current) is not FixtureReadbackCustody or not _token(current.observer_id)
+                or current.observer_id != enrollment.custodian_id
+                or current.complete is not True or current.table_fenced is not True
+                or not _positive(current.sequence) or current.sequence <= last_sequence
+                or not _valid_readback_enrollment(current.enrollment, planned)):
+            raise ValueError('ARM64 readback custody evidence rejected.')
+        observed = current.enrollment._replace(files=tuple(sorted(current.enrollment.files)))
+        if observed != enrollment:
+            raise ValueError('ARM64 readback custody changed.')
+        last_sequence = current.sequence
+        return seal
+
+    def collect():
+        nonlocal consumed
+        with attempt_lock:
+            if consumed:
+                return None
+            consumed = True
+        ops = _arm64_readback_primitives(invoke, enrollment.root_handle, seal, readable, observe_seal,
+                                         clock, enrollment.deadline_ns, enrolled_paths=enrolled_paths)
+        evidence = collect_fixture_holder_staging_readback(
+            plan_bytes, enrollment.root_handle, seal, enrollment.reader_id, ops, deadline_ns=enrollment.deadline_ns,
+        )
+        if evidence is None:
+            return None
+        return FixtureEnrolledReadbackEvidence('SOURCE_ONLY_HOLD', digest, evidence)
+
+    return collect
+
+
+def prepare_linux_arm64_holder_readback_enrollment(plan_bytes, enrollment, read_custody):
+    """Prepare the same held attempt with the dormant, platform-checked transport."""
+    transport = None
+
+    def invoke(number, *args):
+        nonlocal transport
+        if transport is None:
+            transport = _linux_arm64_readback_syscall()
+        return transport(number, *args)
+
+    return prepare_fixture_holder_readback_enrollment(
+        plan_bytes, enrollment, read_custody, invoke=invoke, clock=monotonic_ns,
+    )
