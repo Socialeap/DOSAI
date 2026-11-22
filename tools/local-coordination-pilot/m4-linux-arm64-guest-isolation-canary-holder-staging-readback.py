@@ -1,7 +1,13 @@
 """Collect and compare synthetic pinned-handle ARM64 staging readbacks."""
 
+import ctypes
 from hashlib import sha256
 import json
+import os
+import re
+from struct import Struct, unpack_from
+import sys
+from time import monotonic_ns
 from typing import NamedTuple, Optional
 
 
@@ -317,3 +323,241 @@ def collect_fixture_holder_staging_readback(plan_bytes, root_handle, seal, reade
         return result
     except (OSError, ValueError):
         return None
+
+
+# Linux ARM64 LP64 UAPI, using the architecture's O_DIRECTORY and O_NOFOLLOW.
+_SYS_FCNTL, _SYS_CLOSE, _SYS_GETDENTS64, _SYS_PREAD64, _SYS_READLINKAT = 25, 57, 61, 67, 78
+_SYS_STATX, _SYS_OPENAT2 = 291, 437
+_O_DIRECTORY, _O_NOFOLLOW, _O_CLOEXEC, _O_PATH = 0o40000, 0o100000, 0o2000000, 0o10000000
+_F_GETFD, _F_GETFL, _FD_CLOEXEC, _O_ACCMODE = 1, 3, 1, 3
+_RESOLVE_FLAGS = 0x0F  # BENEATH | NO_SYMLINKS | NO_MAGICLINKS | NO_XDEV
+_AT_FLAGS = 0x1100  # AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW
+_STATX_FLAGS = 0x4387  # Required fields plus STATX_MNT_ID_UNIQUE.
+_FILE_TYPES = {0o040000: 'DIRECTORY', 0o100000: 'FILE', 0o120000: 'SYMLINK'}
+_OPEN_HOW = Struct('<QQQ')
+_DIRENT = Struct('<QqHB')
+_COMPONENT = re.compile(rb'[A-Za-z0-9_.+-]{1,255}')
+_DIRENT_BUFFER_BYTES = 4096
+_MAX_LIST_ENTRIES = 513
+_MAX_READABLE_FILES = 512
+
+
+class StagingReadableFile(NamedTuple):
+    """A regular-file description borrowed from the independent supervisor."""
+
+    inode: int
+    descriptor: int
+
+
+def _descriptor(value):
+    return type(value) is int and 0 <= value < 2**31
+
+
+def _component(name):
+    if type(name) is not bytes or name in (b'.', b'..') or _COMPONENT.fullmatch(name) is None:
+        raise ValueError('Invalid readback child component.')
+    return name
+
+
+def _decode_statx(data):
+    mask = unpack_from('<I', data)[0]
+    if mask & _STATX_FLAGS != _STATX_FLAGS:
+        raise ValueError('Readback statx omitted required fields.')
+    links = unpack_from('<I', data, 0x10)[0]
+    mode = unpack_from('<H', data, 0x1C)[0]
+    inode, size = unpack_from('<QQ', data, 0x20)
+    seconds, nanos = unpack_from('<qI', data, 0x60)
+    mount = unpack_from('<Q', data, 0x90)[0]
+    kind = _FILE_TYPES.get(mode & 0o170000)
+    if (kind is None or seconds < 0 or nanos >= 1_000_000_000
+            or not all((links, inode, mount)) or (kind != 'DIRECTORY' and links != 1)):
+        raise ValueError('Readback statx returned invalid object metadata.')
+    return PinnedStagingStat(REQUIRED_STAT_FIELDS, kind, mode & 0o7777, size, mount, inode, links,
+                             seconds * 1_000_000_000 + nanos)
+
+
+def _directory_names(data):
+    offset = 0
+    while offset < len(data):
+        if len(data) - offset < 24:
+            raise ValueError('Truncated readback directory entry.')
+        inode, _, length, _ = _DIRENT.unpack_from(data, offset)
+        end = offset + length
+        if not inode or length < 24 or length % 8 or end > len(data):
+            raise ValueError('Invalid readback directory record.')
+        name, separator, _ = data[offset + _DIRENT.size:end].partition(b'\0')
+        if not separator:
+            raise ValueError('Unterminated readback directory name.')
+        yield name if name in (b'.', b'..') else _component(name)
+        offset = end
+
+
+def _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, clock, deadline_ns):
+    """Bind the fixed readback operations to an ARM64 syscall transport."""
+    if (not callable(invoke) or not _descriptor(root_handle) or not _valid_seal(seal)
+            or not callable(observe_seal) or not callable(clock) or not _positive(deadline_ns)
+            or type(files) is not tuple or len(files) > _MAX_READABLE_FILES):
+        raise ValueError('Invalid ARM64 readback binding.')
+    readable, borrowed = {}, {root_handle}
+    for file in files:
+        if (type(file) is not StagingReadableFile or not _positive(file.inode) or not _descriptor(file.descriptor)
+                or file.inode in readable or file.descriptor in borrowed):
+            raise ValueError('Invalid borrowed readback file pin.')
+        readable[file.inode] = file.descriptor
+        borrowed.add(file.descriptor)
+    owned = set()
+    last_clock = 0
+
+    def budgeted_call(number, *args):
+        nonlocal last_clock
+        now = clock()
+        if type(now) is not int or not last_clock <= now < deadline_ns:
+            raise TimeoutError('ARM64 syscall readback deadline reached.')
+        last_clock = now
+        value = invoke(number, *args)
+        if type(value) is not int or value < 0:
+            raise OSError('ARM64 readback syscall failed.')
+        return value
+
+    def close_handle(fd):
+        if not _descriptor(fd) or fd not in owned:
+            raise ValueError('ARM64 readback cannot close an unowned handle.')
+        # A close error consumes the close attempt. The fd number may already be reusable.
+        owned.remove(fd)
+        status = invoke(_SYS_CLOSE, fd)
+        if type(status) is not int or status != 0:
+            raise OSError('ARM64 readback descriptor cleanup unconfirmed.')
+
+    def root_seal(fd):
+        if not _descriptor(fd) or fd != root_handle:
+            raise ValueError('ARM64 readback root is outside the binding.')
+        return observe_seal(fd)
+
+    def check_handle(fd):
+        if not _descriptor(fd) or (fd != root_handle and fd not in owned):
+            raise ValueError('ARM64 readback handle is outside the binding.')
+
+    def stat(fd):
+        data = bytearray(256)
+        if budgeted_call(_SYS_STATX, fd, b'', _AT_FLAGS, _STATX_FLAGS, data) != 0:
+            raise OSError('ARM64 readback statx returned an unexpected status.')
+        result = _decode_statx(data)
+        if result.mount_id != seal.mount_id:
+            raise ValueError('ARM64 readback mount changed.')
+        return result
+
+    def stat_handle(fd, flags, fields):
+        check_handle(fd)
+        if flags != HANDLE_STAT_FLAGS or fields != REQUIRED_STAT_FIELDS:
+            raise ValueError('ARM64 readback statx contract changed.')
+        return stat(fd)
+
+    def open_relative(fd, name, flags):
+        how = bytearray(_OPEN_HOW.pack(flags, 0, _RESOLVE_FLAGS))
+        child = budgeted_call(_SYS_OPENAT2, fd, name, how, len(how))
+        if not _descriptor(child) or child in borrowed or child in owned:
+            raise OSError('ARM64 readback openat2 returned an unexpected handle.')
+        owned.add(child)
+        return child
+
+    def open_child(fd, name, flags, resolution):
+        check_handle(fd)
+        if (type(name) is not str or flags != CHILD_OPEN_FLAGS or resolution != CHILD_RESOLVE_FLAGS
+                or stat(fd).kind != 'DIRECTORY'):
+            raise ValueError('ARM64 readback child open contract changed.')
+        return open_relative(fd, _component(name.encode('ascii')), _O_PATH | _O_NOFOLLOW | _O_CLOEXEC)
+
+    def list_children(fd, limit):
+        check_handle(fd)
+        if type(limit) is not int or not 1 <= limit <= _MAX_LIST_ENTRIES:
+            raise ValueError('Invalid ARM64 directory limit.')
+        before = stat(fd)
+        if before.kind != 'DIRECTORY':
+            raise ValueError('ARM64 directory read requires a pinned directory.')
+        stream = open_relative(fd, b'.', _O_DIRECTORY | _O_NOFOLLOW | _O_CLOEXEC)
+        try:
+            if stat(stream) != before:
+                raise ValueError('ARM64 directory stream identity changed.')
+            names, seen = [], set()
+            buffer = bytearray(_DIRENT_BUFFER_BYTES)
+            for _ in range(limit + 3):
+                count = budgeted_call(_SYS_GETDENTS64, stream, buffer, len(buffer))
+                if count > len(buffer):
+                    raise OSError('ARM64 directory byte count exceeded its buffer.')
+                if count == 0:
+                    if stat(stream) != before or stat(fd) != before:
+                        raise ValueError('ARM64 directory changed during enumeration.')
+                    return PinnedDirectoryEntries(tuple(names), True)
+                for name in _directory_names(bytes(buffer[:count])):
+                    if name in seen:
+                        raise ValueError('ARM64 directory contains a duplicate entry.')
+                    seen.add(name)
+                    if name not in (b'.', b'..'):
+                        names.append(name.decode('ascii'))
+                    if len(names) == limit:
+                        return PinnedDirectoryEntries(tuple(names), False)
+            raise ValueError('ARM64 directory census exceeded its read bound.')
+        finally:
+            close_handle(stream)
+
+    def read_file_at(fd, offset, count):
+        check_handle(fd)
+        if (type(offset) is not int or not 0 <= offset < 2**63
+                or type(count) is not int or not 1 <= count <= READ_CHUNK_BYTES):
+            raise ValueError('Invalid ARM64 readback file range.')
+        pinned = stat(fd)
+        reader = readable.get(pinned.inode)
+        if (pinned.kind != 'FILE' or reader is None or offset > pinned.size
+                or count > max(1, pinned.size - offset) or stat(reader) != pinned
+                or budgeted_call(_SYS_FCNTL, reader, _F_GETFL) & (_O_PATH | _O_ACCMODE)
+                or budgeted_call(_SYS_FCNTL, reader, _F_GETFD) != _FD_CLOEXEC):
+            raise ValueError('ARM64 readback readable handle is unconfirmed.')
+        data = bytearray(count)
+        size = budgeted_call(_SYS_PREAD64, reader, data, count, offset)
+        if size > count or stat(reader) != pinned or stat(fd) != pinned:
+            raise ValueError('ARM64 readback file identity or range changed.')
+        return bytes(data[:size])
+
+    def read_link(fd, count):
+        check_handle(fd)
+        if type(count) is not int or not 1 <= count <= 513:
+            raise ValueError('Invalid ARM64 readback link limit.')
+        pinned = stat(fd)
+        if pinned.kind != 'SYMLINK':
+            raise ValueError('ARM64 readback link handle is unconfirmed.')
+        data = bytearray(count)
+        size = budgeted_call(_SYS_READLINKAT, fd, b'', data, count)
+        if size >= count or size != pinned.size or stat(fd) != pinned:
+            raise ValueError('ARM64 readback link changed or exceeded its buffer.')
+        return bytes(data[:size])
+
+    return FixturePinnedReadbackPrimitives(
+        root_seal, open_child, stat_handle, list_children, read_file_at, read_link, close_handle, clock,
+    )
+
+
+def prepare_linux_arm64_holder_readback_primitives(root_handle, seal, files, observe_seal, *, deadline_ns):
+    """Prepare dormant bindings for a future supervisor-owned Linux ARM64 session."""
+    platform = os.uname()
+    if ((platform.sysname, platform.machine, sys.byteorder) != ('Linux', 'aarch64', 'little')
+            or ctypes.sizeof(ctypes.c_long) != 8 or ctypes.sizeof(ctypes.c_void_p) != 8):
+        raise OSError('Linux ARM64 little-endian LP64 is required for readback bindings.')
+    syscall = ctypes.CDLL(None, use_errno=True).syscall
+    syscall.argtypes = [ctypes.c_long]
+    syscall.restype = ctypes.c_long
+
+    def invoke(number, *args):
+        converted = []
+        for value in args:
+            if type(value) is int:
+                converted.append(ctypes.c_long(value))
+            elif type(value) is bytes:
+                converted.append(ctypes.c_char_p(value))
+            else:
+                converted.append((ctypes.c_char * len(value)).from_buffer(value))
+        result = syscall(number, *converted)
+        if result == -1:
+            raise OSError(ctypes.get_errno(), 'ARM64 readback syscall failed.')
+        return result
+
+    return _arm64_readback_primitives(invoke, root_handle, seal, files, observe_seal, monotonic_ns, deadline_ns)
