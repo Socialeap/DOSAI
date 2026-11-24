@@ -44,6 +44,51 @@ explicit local approval for one exact run only after those checks pass.
 
 Native-builder gates and private-beta release acceptance still apply.
 
+## Included-only Codex launcher fixture
+
+The optional host-only Codex fixture runs the two lead turns of the Hydrogen
+review through an injected App Server port. The existing local approval
+digest binds the executable, app registration digest, observed app limit,
+fixed model and turns, Hydrogen reviewer, and zero external cost ceiling.
+The same evidence must pass before a prompt appears, after approval, and
+before and after each Codex turn. It expires after 60 seconds. A positive
+app limit below 100% blocks purchased credit use on the documented personal
+plan route. Remaining included usage comes from a separate observation.
+None of these observations reserves allowance. Exhaustion, uncertain
+availability, identity changes, inconsistent replies, and Stop end the run
+without retry, provider fallback, or credit or reset requests.
+[App usage controls](https://help.openai.com/en/articles/20001542-using-your-chatgpt-plan-in-other-apps-and-sites)
+
+The binary pin is OpenAI's standalone Codex App Server 0.172.0 for Apple
+Silicon. On 2026-11-24 the downloaded release archive matched GitHub's
+published SHA-256. The named Mach-O member was measured and passed strict
+macOS signature verification against the Apple chain and OpenAI team ID
+`2DC432GLL2`. The pin records both hashes. The measurement did not install or
+execute the binary. The proposed model is `gpt-6.2-sol`, which OpenAI uses in
+the plan-sharing examples. Account-specific model availability remains a
+preflight requirement.
+[OpenAI release assets](https://github.com/openai/codex/releases/expanded_assets/rust-v0.172.0) ·
+[App Server configuration](https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server) ·
+[Plan-sharing model discovery](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
+
+The port only accepts synthetic turns and bounded fixtures representing
+validated terminal replies. There is no real stdio client, OAuth consent,
+provider call, or change to the desktop Run button in this increment.
+Before activation, review the exact installed executable and the isolated
+credential and process boundary, including verified egress, effective tool
+denial, and cleanup. Confirm the exact DOSAI app registration and provider
+credit controls, included availability, and the selected Hydrogen test
+project's remaining quota. The existing Codex/Claude account exception does
+not authorize this route. Any later one-run dispatch also requires the
+accepted provider scope and fresh local approval bound to the reviewed plan.
+
+Run the source-only integration tests under the shared Mac workload gate
+with Node 24.18.0.
+
+```sh
+"$HOME/.local/bin/codex-heavy" node --test --test-concurrency=1 tests/coordination/included-codex-launcher.test.mjs
+```
+
 ## DOSAI-managed review
 
 The [local dashboard](../coordination-prototype/README.md#run-one-managed-review-offline)

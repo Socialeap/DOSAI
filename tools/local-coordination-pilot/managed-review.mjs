@@ -1,8 +1,9 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createPilotBroker, pilotRoles, reviewFixture, reviewStudy } from './broker.mjs';
 import { managedTurn, readManagedOutput } from './managed-turn.mjs';
 import { runManagedFixtureTurn } from './managed-fixture-runner.mjs';
 import { hydrogenModel, createAntigravitySdkFixtureTurn } from './antigravity-sdk-fixture.mjs';
+import { createIncludedCodexFixture } from './included-codex-launcher.mjs';
 
 // The desktop entry keeps its fixed Codex/Claude offline fixture.
 export function createManagedReview(project, publish, { confirm, execute = runManagedFixtureTurn }) {
@@ -10,24 +11,24 @@ export function createManagedReview(project, publish, { confirm, execute = runMa
   return createReview(project, publish, { confirm, execute, roles: pilotRoles() });
 }
 
-export function createAntigravityFixtureReview(project, publish, { confirm, sdkFixture }) {
+export function createAntigravityFixtureReview(project, publish, { confirm, sdkFixture, codexFixture }) {
   if (project.mode !== 'antigravity-review') throw new Error('A dedicated Antigravity review database is required.');
   const review = createAntigravitySdkFixtureTurn(sdkFixture);
+  const includedLead = codexFixture === undefined ? undefined : createIncludedCodexFixture(codexFixture);
   return createReview(project, publish, {
-    confirm, roles: pilotRoles('carbon'), reviewerModel: hydrogenModel,
+    confirm, roles: pilotRoles('carbon'), reviewerModel: hydrogenModel, includedLead,
     execute(turn, options) {
       return turn.actor === 'codex' ? runManagedFixtureTurn(turn, options) : review(options);
     },
   });
 }
 
-function createReview(project, publish, { confirm, execute, roles, reviewerModel }) {
-  const plan = Object.freeze({
+function createReview(project, publish, { confirm, execute, roles, reviewerModel, includedLead }) {
+  const fixturePlan = Object.freeze({
     version: 1, mode: 'offline-fixture', study: reviewStudy, fixture: reviewFixture,
     lead: roles.lead, reviewer: roles.review, turns: 3, externalCostLimitCents: 0,
     ...(reviewerModel ? { reviewerModel } : {}),
   });
-  const planDigest = createHash('sha256').update(JSON.stringify(plan)).digest('hex');
   const tasks = Object.keys(project.snapshot().tasks);
   if (tasks.length !== 1 || tasks[0] !== 'review') throw new Error('A dedicated review database is required.');
 
@@ -56,6 +57,10 @@ function createReview(project, publish, { confirm, execute, roles, reviewerModel
     let started = false;
     try {
       signal.throwIfAborted();
+      const leadPreflight = includedLead?.preflight();
+      const plan = leadPreflight ?
+        Object.freeze({ ...fixturePlan, attemptId: randomUUID(), leadPreflight }) : fixturePlan;
+      const planDigest = createHash('sha256').update(JSON.stringify(plan)).digest('hex');
       notice = 'Awaiting local approval';
       publish(view());
       signal.throwIfAborted();
@@ -66,6 +71,8 @@ function createReview(project, publish, { confirm, execute, roles, reviewerModel
         return;
       }
 
+      includedLead?.revalidate(leadPreflight);
+      signal.throwIfAborted();
       project.start(roles);
       started = true;
       const broker = createPilotBroker(project, { lifetimeMs: 12_000, reviewer: roles.review });
@@ -76,6 +83,9 @@ function createReview(project, publish, { confirm, execute, roles, reviewerModel
       async function turn(step, finding, onStart) {
         signal.throwIfAborted();
         lead.call('dosai_read_project', {});
+        if (includedLead && step !== 'review') {
+          return includedLead.execute(step, finding, leadPreflight, { signal });
+        }
         const request = managedTurn(step, finding, roles.review);
         const output = await execute(request, { signal, onStart });
         signal.throwIfAborted();
