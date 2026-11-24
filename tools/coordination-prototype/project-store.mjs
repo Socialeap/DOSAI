@@ -18,9 +18,10 @@ function taskState(events, id) {
 }
 
 export function openProject(path, { mode = 'demo' } = {}) {
-  if (mode !== 'demo' && mode !== 'managed-review') throw new Error('Unknown coordination mode.');
-  // Bind the task scope to the database identity. Existing demo databases keep their original identity.
-  const applicationId = mode === 'demo' ? 0x444f5341 : 0x44535231;
+  const applicationIds = { demo: 0x444f5341, 'managed-review': 0x44535231, 'antigravity-review': 0x44535232 };
+  if (typeof mode !== 'string' || !Object.hasOwn(applicationIds, mode)) throw new Error('Unknown coordination mode.');
+  // Each reviewed fixture uses its own database identity.
+  const applicationId = applicationIds[mode];
   const taskIds = mode === 'demo' ? Object.keys(tasks) : ['review'];
   const db = new DatabaseSync(path);
 
@@ -70,10 +71,15 @@ export function openProject(path, { mode = 'demo' } = {}) {
     }
   }
 
+  function rolesAllowed(roles) {
+    return isRoleMap(roles) &&
+      (mode !== 'antigravity-review' || (roles.lead === 'codex' && roles.review === 'carbon'));
+  }
+
   function read() {
     const team = db.prepare('SELECT lead, reviewer, tester, stopped FROM team WHERE id = 1').get();
     const roles = team ? { lead: team.lead, review: team.reviewer, test: team.tester } : defaultRoles;
-    if (!isRoleMap(roles)) throw new Error('Invalid recorded roles.');
+    if (team && !rolesAllowed(roles)) throw new Error('Invalid recorded roles.');
     const rows = db.prepare('SELECT sequence, task, type, actor, note FROM event ORDER BY sequence LIMIT ?')
       .all(maxEvents + 1);
     if (rows.length > maxEvents || (!team && rows.length)) throw new Error('Invalid saved activity.');
@@ -101,7 +107,7 @@ export function openProject(path, { mode = 'demo' } = {}) {
   }
 
   function start(roles) {
-    if (!isRoleMap(roles)) throw new Error('Invalid team.');
+    if (!rolesAllowed(roles)) throw new Error('Invalid team.');
     return transaction('BEGIN IMMEDIATE', () => {
       if (read().phase !== 'idle') throw new Error('Project already has a team.');
       db.prepare('INSERT INTO team (id, lead, reviewer, tester) VALUES (1, ?, ?, ?)')
@@ -143,7 +149,7 @@ export function openProject(path, { mode = 'demo' } = {}) {
     });
   }
 
-  return Object.freeze({ snapshot, start, forActor, stop, close: () => db.close() });
+  return Object.freeze({ mode, snapshot, start, forActor, stop, close: () => db.close() });
 }
 
 function validNote(note) {

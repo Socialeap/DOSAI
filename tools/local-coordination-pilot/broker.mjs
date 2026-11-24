@@ -1,5 +1,4 @@
 // Only a trusted supervisor may call bind(). It is not part of the agent API.
-const actors = ['codex', 'claude'];
 const assignment = 'Review the synthetic input handling fixture.';
 export const reviewStudy = 'synthetic-empty-input-review';
 export const reviewFixture = Object.freeze({ suppliedInput: '', expected: 'reject empty input', observed: 'accepted' });
@@ -39,33 +38,30 @@ const schemas = {
   }, ['expectedRevision', 'note']),
 };
 const tool = (name, description) => ({ name, description, inputSchema: schemas[name] });
-const catalog = {
-  codex: [readTool, tool('dosai_assign_review', 'Assign the fixed review to the specialist.')],
-  claude: [
-    readTool,
-    tool('dosai_report_review', 'Record a synthetic review status for the assigned task.'),
-    tool('dosai_complete_review', 'Complete the assigned review with a synthetic result.'),
-  ],
-};
+const leadTools = [readTool, tool('dosai_assign_review', 'Assign the fixed review to the specialist.')];
+const specialistTools = [
+  readTool,
+  tool('dosai_report_review', 'Record a synthetic review status for the assigned task.'),
+  tool('dosai_complete_review', 'Complete the assigned review with a synthetic result.'),
+];
+
+export function pilotRoles(reviewer = 'claude') {
+  if (reviewer !== 'claude' && reviewer !== 'carbon') throw new Error('Pilot reviewer rejected.');
+  return Object.freeze({ lead: 'codex', review: reviewer, test: reviewer === 'claude' ? 'carbon' : 'claude' });
+}
 
 function keysAre(value, expected) {
   return value !== null && typeof value === 'object' && !Array.isArray(value) &&
     Object.keys(value).length === expected.length && expected.every(key => Object.hasOwn(value, key));
 }
 
-function requireScope(saved) {
-  if (saved.roles.lead !== 'codex' || saved.roles.review !== 'claude' || saved.roles.test !== 'carbon' ||
+function requireScope(saved, roles) {
+  if (Object.keys(roles).some(role => saved.roles[role] !== roles[role]) ||
       saved.events.some(event => event.task !== 'review' || (
         event.type === 'assignment' ? event.text !== assignment : !Object.values(notes[event.type]).includes(event.text)
       ))) {
     throw new Error('Project does not match the synthetic pilot scope.');
   }
-}
-
-function scopedSnapshot(project) {
-  const saved = project.snapshot();
-  requireScope(saved);
-  return saved;
 }
 
 function projectView(saved) {
@@ -78,8 +74,13 @@ function projectView(saved) {
   };
 }
 
-export function createPilotBroker(project, { clock = () => performance.now(), lifetimeMs = 120_000 } = {}) {
-  const initial = scopedSnapshot(project);
+export function createPilotBroker(project, { clock = () => performance.now(), lifetimeMs = 120_000, reviewer } = {}) {
+  const roles = pilotRoles(reviewer);
+  if (roles.review === 'carbon' && project.mode !== 'antigravity-review') {
+    throw new Error('A dedicated Antigravity review database is required.');
+  }
+  const initial = project.snapshot();
+  requireScope(initial, roles);
   if (initial.phase !== 'running' || initial.tasks.review.status === 'complete') {
     throw new Error('An admitted synthetic project is required.');
   }
@@ -108,7 +109,7 @@ export function createPilotBroker(project, { clock = () => performance.now(), li
 
   function requireUnchangedScope(saved) {
     try {
-      requireScope(saved);
+      requireScope(saved, roles);
     } catch (error) {
       revoke();
       throw error;
@@ -123,9 +124,10 @@ export function createPilotBroker(project, { clock = () => performance.now(), li
 
   function bind(actor) {
     requireOpen();
-    if (!actors.includes(actor) || leases.has(actor) || readProject().phase !== 'running') {
+    if ((actor !== roles.lead && actor !== roles.review) || leases.has(actor) || readProject().phase !== 'running') {
       throw new Error('Pilot endpoint rejected.');
     }
+    const catalog = actor === roles.lead ? leadTools : specialistTools;
     const lease = ++generation;
     leases.set(actor, lease);
 
@@ -149,7 +151,7 @@ export function createPilotBroker(project, { clock = () => performance.now(), li
     });
     function call(name, args) {
       const saved = readScoped();
-      if (!catalog[actor].some(entry => entry.name === name)) throw new Error('Tool rejected.');
+      if (!catalog.some(entry => entry.name === name)) throw new Error('Tool rejected.');
       if (name === readTool.name) {
         if (!keysAre(args, [])) throw new Error('Read arguments rejected.');
         return projectView(saved);
@@ -173,7 +175,7 @@ export function createPilotBroker(project, { clock = () => performance.now(), li
     return Object.freeze({
       tools() {
         readScoped();
-        return structuredClone(catalog[actor]);
+        return structuredClone(catalog);
       },
       call,
       close() {

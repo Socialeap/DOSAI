@@ -47,7 +47,15 @@
     return project ? managed || graph.dataset.phase !== 'idle' : session?.snapshot().phase === 'running';
   }
 
+  function agentLabel(agent) {
+    if (managed && savedProject.reviewerModel === 'gemini-4-hydrogen' && agent === 'carbon') {
+      return 'Antigravity Hydrogen';
+    }
+    return names[agent];
+  }
+
   function render({ phase, states: tasks, events }) {
+    byId('name-carbon').textContent = agentLabel('carbon');
     const running = phase === 'running';
     graph.dataset.phase = phase;
     status.textContent = outcomes[phase];
@@ -76,7 +84,7 @@
     activity.replaceChildren(...events.map(event => {
       const item = document.createElement('li');
       const direction = document.createElement('strong');
-      direction.textContent = names[event.from] + ' → ' + names[event.to];
+      direction.textContent = agentLabel(event.from) + ' → ' + agentLabel(event.to);
       item.append(direction, event.text);
       return item;
     }));
@@ -119,7 +127,7 @@
     for (const [task, item] of Object.entries(saved.tasks)) {
       byId('done-' + task).checked = item.status === 'complete';
       byId('note-' + task).textContent = item.note || (item.status === 'pending' ? 'Waiting for assignment' : '');
-      byId('owner-' + task).textContent = names[roles[task]];
+      byId('owner-' + task).textContent = agentLabel(roles[task]);
     }
   }
 

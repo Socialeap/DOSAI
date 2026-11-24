@@ -1,18 +1,20 @@
 import { Buffer } from 'node:buffer';
 import { parseStrictJsonBytes } from '../../src/contracts/strict-json.ts';
-import { reviewFindings, reviewFixture, reviewStudy } from './broker.mjs';
+import { pilotRoles, reviewFindings, reviewFixture, reviewStudy } from './broker.mjs';
 
 export const maxTurnBytes = 16 * 1024;
 
-export function managedTurn(step, finding) {
+export function managedTurn(step, finding, reviewer = 'claude') {
+  const roles = pilotRoles(reviewer);
+  const reviewerName = reviewer === 'carbon' ? 'Antigravity Hydrogen' : 'Claude Code';
   const fixture = JSON.stringify(reviewFixture);
   const turns = {
     assign: {
       actor: 'codex', field: 'assignment', choices: [reviewStudy],
-      instruction: 'As lead engineer, assign Claude Code one read-only review of the synthetic input fixture.',
+      instruction: `As lead engineer, assign ${reviewerName} one read-only review of the synthetic input fixture.`,
     },
     review: {
-      actor: 'claude', field: 'finding', choices: reviewFindings,
+      actor: roles.review, field: 'finding', choices: reviewFindings,
       instruction: 'As review specialist, compare the observed and expected behavior. Choose one finding.',
     },
     acknowledge: {
@@ -74,6 +76,8 @@ export function readManagedOutput(turn, bytes) {
       throw new Error('Claude Code review did not complete.');
     }
     reply = result.structured_output;
+  } else if (turn.actor === 'carbon' && turn.step === 'review') {
+    reply = parseStrictJsonBytes(bytes);
   }
   const [field] = turn.schema.required;
   if (reply === null || typeof reply !== 'object' || Array.isArray(reply) ||
