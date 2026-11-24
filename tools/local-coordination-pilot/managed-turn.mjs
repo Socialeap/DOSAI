@@ -79,6 +79,10 @@ export function readManagedOutput(turn, bytes) {
   } else if (turn.actor === 'carbon' && turn.step === 'review') {
     reply = parseStrictJsonBytes(bytes);
   }
+  return readManagedReply(turn, reply);
+}
+
+export function readManagedReply(turn, reply) {
   const [field] = turn.schema.required;
   if (reply === null || typeof reply !== 'object' || Array.isArray(reply) ||
       Object.keys(reply).length !== 1 || !Object.hasOwn(reply, field) ||
