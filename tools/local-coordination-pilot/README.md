@@ -71,9 +71,20 @@ preflight requirement.
 [App Server configuration](https://developers.openai.com/siwc/token-sharing-open-source/codex-app-server) ·
 [Plan-sharing model discovery](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
 
-The port only accepts synthetic turns and bounded fixtures representing
-validated terminal replies. There is no real stdio client, OAuth consent,
-provider call, or change to the desktop Run button in this increment.
+The stdio adapter implements the pinned App Server JSON-RPC exchange over
+supplied streams. The fixture supplies a fresh in-memory channel for each
+Codex turn. The adapter initializes the connection and checks the returned
+ephemeral thread, model, provider, approval policy, sandbox and instruction
+sources before sending a fixed synthetic turn. It requests no execution
+environment and carries only the bounded terminal reply forward. An
+unexpected server request, tool item, retry, or scoped ID closes the channel.
+Stop closes both streams and discards a late reply. These checks exercise
+wire behavior and the review broker. A real process and teardown boundary
+still need qualification.
+[App Server protocol at the pinned tag](https://github.com/openai/codex/blob/rust-v0.172.0/codex-rs/app-server-protocol/src/protocol/v2/thread.rs)
+
+The adapter takes already-owned streams. It grants no process launch,
+credential access, provider call, or change to the desktop Run button.
 Before activation, review the exact installed executable and the isolated
 credential and process boundary, including verified egress, effective tool
 denial, and cleanup. Confirm the exact DOSAI app registration and provider
@@ -86,7 +97,7 @@ Run the source-only integration tests under the shared Mac workload gate
 with Node 24.18.0.
 
 ```sh
-"$HOME/.local/bin/codex-heavy" node --test --test-concurrency=1 tests/coordination/included-codex-launcher.test.mjs
+"$HOME/.local/bin/codex-heavy" node --test --test-concurrency=1 tests/coordination/included-codex-launcher.test.mjs tests/coordination/codex-app-server-stdio.test.mjs
 ```
 
 ## DOSAI-managed review
