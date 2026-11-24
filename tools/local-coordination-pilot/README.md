@@ -6,6 +6,44 @@ The broker works against one admitted SQLite fixture project. A trusted host bin
 
 The MCP handler consumes one complete message from an injected control endpoint. It supports initialization, ping, and the scoped tool list and calls. A payload field, client name, or project path cannot choose an actor. Rebinding requires a fresh in-process generation. Expiry is rechecked within the write transaction. Stop revokes endpoints and persists the project stop. A process restart restores the checklist, while any later live session must establish fresh approval and endpoint binding.
 
+## Antigravity Hydrogen fixture
+
+The host-only `createAntigravityFixtureReview` entry reuses the managed
+checklist and a dedicated fixture database. The local approval plan pins
+`gemini-4-hydrogen`, the synthetic input, three fixture turns, and a $0
+external cost limit. The Codex stand-in assigns the task, the SDK fixture
+reports one allowed finding, and the Codex stand-in acknowledges it.
+Only the supervisor applies progress and result updates. Stop cancels the
+review wait, revokes the checklist lease, and rejects a late result before
+a Codex acknowledgement or a database write.
+
+The Python adapter translates one exact request into the documented SDK
+session API. Its source configuration disables tool access, subagents,
+and retries. The SDK port returns bounded raw bytes for DOSAI to validate.
+The test harness supplies the simulated SDK API. The desktop Run button
+retains its existing offline fixture and exposes no Antigravity launcher.
+[Antigravity SDK](https://antigravity.google/docs/sdk/overview/) ·
+[SDK tool controls](https://antigravity.google/docs/sdk/tools/) ·
+[SDK retry configuration](https://github.com/google-antigravity/antigravity-sdk-python/blob/main/google/antigravity/types.py)
+
+Run the offline checks with Python 3 and Node 24.18.0.
+
+```sh
+/usr/bin/python3 -I -B tests/fixtures/coordination/antigravity-sdk-adapter-test.py
+"$HOME/.local/bin/codex-heavy" node --test --test-concurrency=1 tests/coordination/antigravity-fixture-review.test.mjs tests/coordination/managed-review.test.mjs tests/coordination/local-agent-connector.test.mjs
+```
+
+A live pilot requires separate provider scope approval. Review the exact
+SDK and runtime identity, effective tool restrictions, process isolation,
+approved egress, and cancellation. Verify Hydrogen free-tier eligibility
+for the exact Gemini API project and the Codex spend basis while keeping
+billing settings intact. Hold on unknown or metered exposure. Obtain fresh
+explicit local approval for one exact run only after those checks pass.
+[Gemini API pricing](https://aistudio.google.com/docs/pricing#gemini-4-hydrogen) ·
+[Existing one-run decision](../../docs/decisions/0022-one-run-existing-account-coordination-review.md)
+
+Native-builder gates and private-beta release acceptance still apply.
+
 ## DOSAI-managed review
 
 The [local dashboard](../coordination-prototype/README.md#run-one-managed-review-offline)
