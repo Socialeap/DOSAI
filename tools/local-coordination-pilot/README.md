@@ -100,6 +100,40 @@ with Node 24.18.0.
 "$HOME/.local/bin/codex-heavy" node --test --test-concurrency=1 tests/coordination/included-codex-launcher.test.mjs tests/coordination/codex-app-server-stdio.test.mjs
 ```
 
+### Pinned App Server startup proof
+
+The local startup probe copies the pinned Apple Silicon App Server and Node
+canary into an owner-only temporary directory. It rechecks the measurements
+and verifies the App Server's Apple signature before execution. The proof
+requires an empty profile and passes a fixed environment without credentials.
+It uses the same default-deny policy for the canary and the App Server.
+Before starting App Server, the canary must be denied an outside file read
+and write, a subprocess launch, and an outbound loopback connection. The
+probe opens no listener.
+
+The supervisor sends only `initialize` and `initialized`. It checks the
+owned process identity before requesting termination, reaps the direct child,
+and checks that the new process group is absent. The receipt follows temporary
+directory cleanup. A startup timeout, canary failure, or uncertain cleanup
+holds the proof. Process-group readback and the fork canary are bounded
+startup evidence. They do not qualify the independent P3 containment or
+watchdog gates.
+
+Use the executable member from the pinned release archive, with the published
+archive hash verified before extraction. Set `app_server_binary` and
+`node_binary` to the canonical paths of the extracted App Server and pinned
+Node 24.18.0 executables. This signed-out proof does not use a saved profile.
+
+```sh
+"$HOME/.local/bin/codex-heavy" /usr/bin/python3 -I -B \
+  tools/local-coordination-pilot/startup-only-launcher.py \
+  --app-server-startup "$app_server_binary" "$node_binary"
+```
+
+A pass reports `STARTUP_ONLY`, zero inference requests, and
+`live_launch_permitted: false`. The signed-in credential boundary, actual
+provider egress, spend verification and local approval remain separate gates.
+
 ## DOSAI-managed review
 
 The [local dashboard](../coordination-prototype/README.md#run-one-managed-review-offline)

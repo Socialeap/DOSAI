@@ -9,6 +9,7 @@ from pathlib import Path
 import platform
 import re
 import selectors
+import shutil
 import signal
 import socket
 import stat
@@ -28,6 +29,23 @@ CREDENTIAL_FILES = {'codex': 'auth.json', 'claude': '.credentials.json'}
 CLIENTS = tuple(CREDENTIAL_FILES)
 MAX_REPLY_BYTES = 32768
 STARTUP_SECONDS = 5
+APP_SERVER_PIN = ('codex-app-server-aarch64-apple-darwin', 236747952,
+                  'b6d4ae3a01f5a044d80deba107b27e995944d012a8132cee8a4f3e05c2fd2448')
+APP_SERVER_SIGNER = '=anchor apple generic and identifier "codex-app-server" and certificate leaf[subject.OU] = "2DC432GLL2"'
+APP_SERVER_PROVIDER = 'openai_chatgpt_plan'
+APP_SERVER_ARGS = ['--listen', 'stdio://',
+                   '-c', f'model_provider="{APP_SERVER_PROVIDER}"',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.name="ChatGPT plan"',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.base_url="https://api.openai.com/v1"',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.env_key="ACCESS_TOKEN"',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.wire_api="responses"',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.requires_openai_auth=false',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.supports_websockets=false',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.request_max_retries=0',
+                   '-c', f'model_providers.{APP_SERVER_PROVIDER}.stream_max_retries=0',
+                   '-c', 'approval_policy="never"', '-c', 'sandbox_mode="read-only"',
+                   '-c', 'cli_auth_credentials_store="file"', '-c', 'mcp_servers={}',
+                   '-c', 'web_search="disabled"']
 
 # The allowlisted commands and messages are literals. No caller supplies prompts,
 # arguments, a provider endpoint, credentials, an inference method, or a shell.
@@ -127,20 +145,41 @@ def sandbox_profile(binary, home):
 (deny mach-lookup)'''
 
 
+def app_server_profile(binary, home):
+    target = json.dumps(str(binary))
+    directory = json.dumps(str(home))
+    return f'''(version 1)
+(deny default)
+(allow process-exec (literal {target}))
+(allow file-read-metadata)
+(allow file-read-data (literal {target}) (subpath {directory})
+  (subpath "/System/Library") (subpath "/usr/lib")
+  (literal "/dev/null") (literal "/dev/random") (literal "/dev/urandom"))
+(allow file-write* (subpath {directory}) (literal "/dev/null"))
+(allow signal (target self))'''
+
+
 @contextmanager
-def scoped_process(binary, client, home, args, *, status_on_stderr=False):
+def scoped_process(binary, client, home, args, *, status_on_stderr=False,
+                   profile=sandbox_profile, own_session=False):
     # Never send output to the terminal or evidence store. The supervisor reads
     # only a bounded response and reports closed status labels.
-    with subprocess.Popen(['/usr/bin/sandbox-exec', '-p', sandbox_profile(binary, home),
-                           str(binary), *args], cwd=home / 'work', env=local_environment(client, home),
-                          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT if status_on_stderr else subprocess.DEVNULL) as child:
+    child = subprocess.Popen(['/usr/bin/sandbox-exec', '-p', profile(binary, home),
+                              str(binary), *args], cwd=home / 'work', env=local_environment(client, home),
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=own_session,
+                             stderr=subprocess.STDOUT if status_on_stderr else subprocess.DEVNULL)
+    try:
+        yield child
+    finally:
         try:
-            yield child
-        finally:
             if child.poll() is None:
                 child.kill()
                 child.wait(timeout=3)
+        finally:
+            try:
+                child.stdin.close()
+            finally:
+                child.stdout.close()
 
 
 def unique_json(pairs):
@@ -311,6 +350,93 @@ def verify_fence(node):
                     raise Hold('The startup fence did not deny all canaries.')
 
 
+def stage_pinned_executable(source, root, pin):
+    candidate = root / pin[0]
+    source_path = pin_binary(source, pin)
+    shutil.copyfile(source_path, candidate)
+    candidate.chmod(0o500)
+    return pin_binary(str(candidate), pin)
+
+
+def verify_app_server_signer(binary):
+    result = subprocess.run(['/usr/bin/codesign', '--verify', '--strict', '-R',
+                             APP_SERVER_SIGNER, str(binary)], env={'PATH': '/usr/bin:/bin'},
+                            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, timeout=10)
+    if result.returncode != 0:
+        raise Hold('The App Server executable signature was rejected.')
+
+
+def verify_app_server_fence(node, root):
+    home = root / 'codex'
+    sibling = root / 'outside'
+    sibling.write_text('synthetic')
+    # No listener is opened. The policy must deny the loopback connect, even
+    # when an ordinary uncontained attempt would report connection refused.
+    script = CANARY + """
+const marker = process.env.CODEX_HOME + '/canary';
+fs.writeFileSync(marker, 'synthetic', { flag: 'wx' });
+if (fs.readFileSync(marker, 'utf8') !== 'synthetic') throw new Error('Private profile unavailable');
+fs.unlinkSync(marker);
+"""
+    with scoped_process(node, 'codex', home, ['-e', script, '1', str(sibling)],
+                        profile=app_server_profile, own_session=True) as child:
+        if child.wait(timeout=5) != 0:
+            raise Hold('The App Server fence did not deny every canary.')
+        require_group_absent(child.pid)
+
+
+def require_group_absent(group):
+    try:
+        os.killpg(group, 0)
+    except ProcessLookupError:
+        return
+    raise Hold('The startup session still has a process group.')
+
+
+def app_server_startup(binary, home):
+    if any((home / 'config').iterdir()):
+        raise Hold('The startup proof requires empty app-server configuration.')
+    request = {'id': 1, 'method': 'initialize',
+               'params': {'clientInfo': {'name': 'dosai-private-beta', 'version': '0.1.0'}}}
+    with scoped_process(binary, 'codex', home, APP_SERVER_ARGS,
+                        profile=app_server_profile, own_session=True) as child:
+        if os.getpgid(child.pid) != child.pid:
+            raise Hold('The startup process does not own a distinct process group.')
+        with closing(read_messages(child, lines=True)) as replies:
+            send(child, request)
+            reply = next(replies, None)
+            if (not isinstance(reply, dict) or type(reply.get('id')) is not int or reply['id'] != 1 or
+                    'error' in reply or 'method' in reply or not isinstance(reply.get('result'), dict) or
+                    not isinstance(reply['result'].get('userAgent'), str) or not reply['result']['userAgent']):
+                raise Hold('App Server initialization was rejected.')
+            send(child, {'method': 'initialized'})
+        cancel_ready(child, binary, (0, -signal.SIGTERM))
+        require_group_absent(child.pid)
+
+
+def verify_app_server_startup(binary, node):
+    with tempfile.TemporaryDirectory(prefix='dosai-app-server-startup-', dir=PILOT) as folder:
+        root = Path(folder)
+        private_directory(root)
+        prepare(root)
+        app_server = stage_pinned_executable(binary, root, APP_SERVER_PIN)
+        canary = stage_pinned_executable(node, root, PINS[2])
+        verify_app_server_signer(app_server)
+        verify_app_server_fence(canary, root)
+        app_server_startup(app_server, root / 'codex')
+        if os.path.lexists(root / 'codex/config/auth.json'):
+            raise Hold('The startup proof unexpectedly created a credential file.')
+    print(json.dumps({
+        'status': 'PASS', 'scope': 'STARTUP_ONLY', 'executable_sha256': APP_SERVER_PIN[2],
+        'signature_verified': True, 'fence_canaries_denied': True,
+        'stdio_initialized': True, 'direct_child_reaped': True, 'process_group_absent': True,
+        'credential_file_absent': True, 'temporary_profile_removed': True,
+        'inference_requests': 0, 'live_launch_permitted': False,
+    }))
+    return 0
+
+
 def verify(root, binaries, rehearsal):
     validate_profile(root)
     validate_credential_metadata(root)
@@ -343,7 +469,10 @@ def main(args):
     if len(args) == 5 and args[0] == '--check':
         binaries = [pin_binary(arg, pin) for arg, pin in zip(args[2:], PINS)]
         return verify(Path(args[1]), binaries, rehearsal=False)
-    raise Hold('Use --prepare, --rehearse CODEX CLAUDE NODE, or --check PROFILE CODEX CLAUDE NODE.')
+    if len(args) == 3 and args[0] == '--app-server-startup':
+        return verify_app_server_startup(*args[1:])
+    raise Hold('Use --prepare, --rehearse CODEX CLAUDE NODE, --check PROFILE CODEX CLAUDE NODE, '
+               'or --app-server-startup APP_SERVER NODE.')
 
 
 if __name__ == '__main__':
